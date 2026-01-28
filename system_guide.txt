@@ -1,0 +1,93 @@
+SYSTEM GUIDE
+This document reflects the exact status of the project as of January 29, 2026. Use this as context for future development sessions to ensure continuity.
+
+1. Project Structure (File Tree)
+src/pages
+Actual files present in the directory:
+
+LandingPage.tsx: Public landing page for unauthenticated users.
+LoginPage.tsx: Authentication page (Supabase Auth).
+DashboardPage.tsx: Main artist dashboard. Manages tracks, views feedback, and handles replies/unlocking.
+ProfilePage.tsx: User settings page. Updates handle, bio, and avatar.
+ArtistPublicPage.tsx: Public profile page (/u/:handle). Lists artist's tracks.
+PublicFeedbackPage.tsx: Public track page (/track/:trackId). Listeners play music and leave anonymous feedback.
+src/components
+Layout.tsx: Wrapper component providing consistent structure (Navbar + Main Content Area).
+Navbar.tsx: Responsive navigation bar.
+Logic:
+Guest: Shows [Login] button.
+User: Shows "Avatar + Hamburger" menu (Dashboard, My Artist Page, Settings, Sign Out).
+My Artist Page Link: Uses client-side <Link> to /u/{handle} (no new tab).
+2. Database Schema (Inferred from Code)
+The following schema is currently in use by the application logic.
+
+users
+id (uuid, PK) - Linked to Supabase Auth ID.
+handle (text, unique) - Custom artist handle.
+avatar_url (text) - Profile picture URL.
+bio (text) - Artist biography.
+tracks
+id (uuid, PK)
+user_id (uuid, FK -> users.id)
+title (text)
+url (text) - YouTube or SoundCloud URL.
+platform (text) - 'youtube' | 'soundcloud'.
+created_at (timestamptz)
+feedbacks
+id (uuid, PK)
+track_id (uuid, FK -> tracks.id)
+content (text) - The anonymous feedback text.
+reply (text | null) - Artist's reply.
+created_at (timestamptz)
+is_unlocked (boolean) - Verified in DashboardPage.tsx. Used to manually unlock feedback if the artist chooses to (feature implementation exists).
+3. Routing Map
+These are the actual routes defined in App.tsx.
+
+Path	Component	Auth Required?	Notes
+/	LandingPage	No	
+/login	LoginPage	No	
+/dashboard	DashboardPage	Yes	Protected Route
+/profile	ProfilePage	Yes	Protected Route
+/u/:handle	ArtistPublicPage	No	Definitive Public Profile URL
+/track/:trackId	PublicFeedbackPage	No	Public feedback submission page
+*	Navigate to /	-	Fallback for 404
+Note: The experimental /@:handle route has been removed and cleaned up.
+
+4. Key Business Logic
+Dashboard Logic (DashboardPage.tsx)
+Data Fetching:
+Fetches the current user's handle from users.
+Fetches all tracks for the user, including joined feedbacks.
+Feedback Sorting:
+Feedbacks are essentially displayed as a list under each track (Accordion style).
+Interaction:
+Reply: Artist can reply to feedback. This updates the reply column in feedbacks.
+Unlock: Explicit logic exists to update is_unlocked = true in feedbacks table.
+Copy Links:
+Track Link: Copies origin/track/:trackId
+Profile Link: Copies origin/u/:handle
+Public Page Logic (PublicFeedbackPage.tsx)
+Player:
+Uses a native <iframe> approach.
+Regex Logic: detect YouTube vs SoundCloud and construct embed URLs manually (no react-player dependency for playback).
+Feedback Submission:
+Inserts new row into feedbacks with track_id and content.
+Anonymous submission (no user ID attached).
+Visuals:
+Displays "Locked" feedback if reply is null (Reveal-on-reply mechanic).
+Displays "Artist Reply" if exists.
+5. Current UI/UX Status
+Navigation: Unified "Header" across all pages (Dashboard, Public Profile, Feedback Page).
+Styling: Dark Mode (Slate-950 base) with Indigo/Violet accents. Glassmorphism on dropdowns and cards.
+Responsiveness: Fully responsive. Mobile users see the same Hamburger menu logic.
+6. Environment & Infrastructure
+**Required Environment Variables (.env):**
+- `VITE_SUPABASE_URL`: Supabase Project URL
+- `VITE_SUPABASE_ANON_KEY`: Supabase Anonymous API Key
+
+**Storage Bucket:**
+- Name: `avatars`
+- Policy: Public Read / Authenticated Upload & Update (Owner only)
+
+**Deployment Config:**
+- `vercel.json`: Exists in root to handle SPA routing (Rewrites all paths to `/index.html`).
