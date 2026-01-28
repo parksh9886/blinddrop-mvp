@@ -49,7 +49,7 @@ const PublicFeedbackPage: React.FC = () => {
 
                 // Fetch Feedbacks
                 const { data: feedbackData, error: feedbackError } = await supabase
-                    .from('feedbacks')
+                    .from('feedbacks_secure_view')
                     .select('*')
                     .eq('track_id', trackId)
                     .order('created_at', { ascending: false });

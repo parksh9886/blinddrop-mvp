@@ -47,14 +47,36 @@ const Dashboard: React.FC = () => {
             if (userData) setHandle(userData.handle);
 
             // Fetch Tracks
-            const { data: tracksData, error } = await supabase
+            const { data: tracksData, error: tracksError } = await supabase
                 .from('tracks')
-                .select('*, feedbacks(*)')
+                .select('*')
                 .eq('user_id', user.id)
                 .order('created_at', { ascending: false });
 
-            if (error) throw error;
-            setTracks(tracksData || []);
+            if (tracksError) throw tracksError;
+
+            if (tracksData && tracksData.length > 0) {
+                const trackIds = tracksData.map(t => t.id);
+
+                // Fetch Feedbacks from Secure View
+                const { data: feedbacksData, error: feedbacksError } = await supabase
+                    .from('feedbacks_secure_view')
+                    .select('*')
+                    .in('track_id', trackIds)
+                    .order('created_at', { ascending: false });
+
+                if (feedbacksError) throw feedbacksError;
+
+                // Merge feedbacks into tracks
+                const tracksWithFeedbacks = tracksData.map(track => ({
+                    ...track,
+                    feedbacks: feedbacksData?.filter(fb => fb.track_id === track.id) || []
+                }));
+
+                setTracks(tracksWithFeedbacks);
+            } else {
+                setTracks([]);
+            }
         } catch (error) {
             console.error('Error fetching data:', error);
         } finally {
