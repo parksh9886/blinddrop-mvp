@@ -47,7 +47,7 @@ const PublicFeedbackPage: React.FC = () => {
                 if (trackError) throw trackError;
                 setTrack(trackData);
 
-                // Fetch Feedbacks
+                // Fetch Feedbacks (Secure View)
                 const { data: feedbackData, error: feedbackError } = await supabase
                     .from('feedbacks_secure_view')
                     .select('*')
