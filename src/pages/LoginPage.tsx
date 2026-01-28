@@ -9,14 +9,18 @@ const LoginPage: React.FC = () => {
     const [loading, setLoading] = React.useState(false);
 
     useEffect(() => {
+        // Parse returnUrl from query params
+        const params = new URLSearchParams(window.location.search);
+        const returnUrl = params.get('returnUrl') || '/dashboard';
+
         // Check if user is already logged in
         supabase.auth.getSession().then(({ data: { session } }) => {
-            if (session) navigate('/dashboard');
+            if (session) navigate(returnUrl);
         });
 
         // Listen for auth changes
         const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-            if (session) navigate('/dashboard');
+            if (session) navigate(returnUrl);
         });
 
         return () => subscription.unsubscribe();
@@ -24,11 +28,14 @@ const LoginPage: React.FC = () => {
 
     const handleGoogleLogin = async () => {
         setLoading(true);
+        const params = new URLSearchParams(window.location.search);
+        const returnUrl = params.get('returnUrl') || '/dashboard';
+
         try {
             const { error } = await supabase.auth.signInWithOAuth({
                 provider: 'google',
                 options: {
-                    redirectTo: `${window.location.origin}/dashboard`,
+                    redirectTo: `${window.location.origin}/login?returnUrl=${encodeURIComponent(returnUrl)}`,
                 },
             });
             if (error) throw error;

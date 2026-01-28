@@ -156,7 +156,7 @@ const Navbar: React.FC = () => {
                         ) : (
                             // Guest: Login Button
                             <Link
-                                to="/login"
+                                to={`/login?returnUrl=${encodeURIComponent(location.pathname)}`}
                                 className="px-5 py-2 rounded-full bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold transition-all shadow-lg shadow-indigo-500/20"
                             >
                                 Login

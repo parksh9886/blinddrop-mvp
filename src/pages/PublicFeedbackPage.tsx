@@ -214,22 +214,26 @@ const PublicFeedbackPage: React.FC = () => {
 
                                 return sortedFeedbacks.map((fb) => {
                                     const isLocked = !fb.reply;
+                                    // Check if content is effectively masked (mostly asterisks)
+                                    const isMasked = /^\s*\*+\s*$/.test(fb.content) || fb.content.includes('****');
+                                    const shouldBlur = isLocked || isMasked;
+
                                     return (
                                         <div key={fb.id} className="relative group">
-                                            <div className={`bg-slate-900 border border-slate-800 rounded-2xl p-6 transition-all ${isLocked ? 'select-none' : ''}`}>
+                                            <div className={`bg-slate-900 border border-slate-800 rounded-2xl p-6 transition-all ${shouldBlur ? 'select-none' : ''}`}>
                                                 {/* Header */}
                                                 <div className="flex items-center gap-3 mb-4">
                                                     <div className="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center font-bold text-white text-xs">
                                                         <User className="w-4 h-4" />
                                                     </div>
                                                     <div>
-                                                        <div className={`font-bold text-sm ${isLocked ? 'text-slate-500' : 'text-slate-300'}`}>Anonymous Listener</div>
+                                                        <div className={`font-bold text-sm ${shouldBlur ? 'text-slate-500' : 'text-slate-300'}`}>Anonymous Listener</div>
                                                         <div className="text-xs text-slate-600">{new Date(fb.created_at).toLocaleDateString()}</div>
                                                     </div>
                                                 </div>
 
                                                 {/* Content */}
-                                                <p className={`text-sm leading-relaxed ${isLocked ? 'text-slate-600 blur-md pointer-events-none' : 'text-slate-300'}`}>
+                                                <p className={`text-sm leading-relaxed ${shouldBlur ? 'text-slate-600 blur-md pointer-events-none' : 'text-slate-300'}`}>
                                                     {fb.content}
                                                 </p>
 
