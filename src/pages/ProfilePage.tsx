@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
 import Layout from '../components/Layout';
-import { Save, Loader2, User as UserIcon, Camera, AlertTriangle, Check, Link as LinkIcon, Plus, Trash2, ExternalLink, GripVertical } from 'lucide-react';
+import { Save, Loader2, User as UserIcon, Camera, AlertTriangle, Check, Plus, Trash2, ExternalLink, GripVertical } from 'lucide-react';
 
 const ROLES = [
     { value: 'Singer', label: 'Singer' },
@@ -513,7 +513,7 @@ const ProfilePage: React.FC = () => {
 
                             {/* Links List */}
                             <div className="space-y-3">
-                                {links.map((link, index) => (
+                                {links.map((link) => (
                                     <div key={link.id} className="group flex items-center gap-3 bg-slate-800/50 p-3 rounded-xl border border-slate-700 hover:border-slate-500 transition-colors">
                                         <div className="text-slate-500 cursor-move">
                                             <GripVertical className="w-5 h-5" />
