@@ -287,51 +287,51 @@ const ArtistPublicPage: React.FC = () => {
                 {/* Main Content */}
                 <div className="min-h-screen w-full snap-start flex flex-col">
 
-                    {/* Sticky Header */}
+                    {/* Sticky Header with Gradient Overlay */}
                     <div
-                        className="sticky top-0 z-20 pt-20 pb-6 px-8 border-b border-transparent transition-colors duration-300"
+                        className="sticky top-0 z-20 pt-32 pb-10 px-8 transition-all duration-300 bg-gradient-to-t from-black via-black/60 to-transparent"
                         style={{
-                            backgroundColor: `rgba(0, 0, 0, ${headerBgOpacity})`,
-                            borderColor: scrollProgress > 0.8 ? 'rgba(255, 255, 255, 0.1)' : 'transparent',
-                            backdropFilter: scrollProgress > 0.5 ? 'blur(12px)' : 'none'
+                            // We keep the dynamic opacity for the *base* black, but the gradient adds readability.
+                            // However, the gradient 'from-black' might be too opaque if we want the bg to show through initially?
+                            // User said: "bg-gradient-to-t ... so darkness comes up from bottom".
+                            // And "pt-20".
+                            // Let's rely on the class for gradient.
+                            pointerEvents: 'none' // verify if clicks need to pass through, buttons have pointer-events-auto
                         }}
                     >
-                        <div className="max-w-[300px] space-y-6">
+                        <div className="max-w-[300px] space-y-6 pointer-events-auto">
 
                             {/* Header Content Wrapper */}
-                            <div className="flex flex-col gap-4">
-                                <div className="space-y-2">
-                                    <h1 className="text-5xl font-black tracking-tighter text-white drop-shadow-2xl leading-none">
+                            <div className="flex flex-col gap-3">
+                                <div className="space-y-1">
+                                    <h1 className="text-5xl font-bold tracking-tighter text-white drop-shadow-2xl leading-none">
                                         {displayNameText}
                                     </h1>
-                                    <p className="text-white/90 text-sm font-medium tracking-wide drop-shadow-lg leading-relaxed">
+                                    <p className="text-lg text-white/60 font-medium tracking-wide drop-shadow-lg leading-relaxed">
                                         {profile.bio || "Artist"}
                                     </p>
                                 </div>
 
-                                <div className="w-8 h-1 bg-white/30 rounded-full" />
-
                                 <div className="space-y-4">
-                                    {/* Collab Badge */}
-                                    <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full backdrop-blur-md border shadow-lg ${isCollabOpen
-                                        ? 'bg-green-500/10 border-green-400/30'
-                                        : 'bg-red-500/10 border-red-400/30'
+                                    {/* Collab Badge - Soft Style */}
+                                    <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full backdrop-blur-md transition-colors ${isCollabOpen
+                                        ? 'bg-green-500/20 text-green-200'
+                                        : 'bg-red-500/20 text-red-200'
                                         }`}>
-                                        <div className={`w-2 h-2 rounded-full shadow-[0_0_8px] ${isCollabOpen
-                                            ? 'bg-green-400 shadow-green-400'
-                                            : 'bg-red-400 shadow-red-400'
+                                        <div className={`w-2 h-2 rounded-full ${isCollabOpen
+                                            ? 'bg-green-400 shadow-[0_0_8px_rgba(74,222,128,0.5)]'
+                                            : 'bg-red-400 shadow-[0_0_8px_rgba(248,113,113,0.5)]'
                                             }`} />
-                                        <span className={`text-xs font-bold tracking-wide ${isCollabOpen ? 'text-green-300' : 'text-red-300'
-                                            }`}>
+                                        <span className="text-xs font-bold tracking-wide">
                                             {isCollabOpen ? 'OPEN FOR COLLAB' : 'NOT TAKING REQUESTS'}
                                         </span>
                                     </div>
 
-                                    {/* Collab Types */}
+                                    {/* Collab Types - Soft Glassmorphism */}
                                     {isCollabOpen && profile.collab_types && profile.collab_types.length > 0 && (
                                         <div className="flex flex-wrap gap-2">
                                             {profile.collab_types.map((type, i) => (
-                                                <span key={i} className="px-3 py-1 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 backdrop-blur-sm text-xs font-semibold text-white tracking-wide transition-colors cursor-default">
+                                                <span key={i} className="px-3 py-1 rounded-full bg-white/10 hover:bg-white/20 text-white/90 text-sm font-medium backdrop-blur-sm transition-colors cursor-default">
                                                     {type}
                                                 </span>
                                             ))}
@@ -339,29 +339,8 @@ const ArtistPublicPage: React.FC = () => {
                                     )}
 
                                     {/* Social Trigger Icons */}
-                                    {/* Hide when scrolling down, just like before, but now with new logic */}
-                                    <div className={`space-y-2 pt-2 transition-all duration-300 ${scrollProgress > 0.8 ? 'opacity-0 h-0 overflow-hidden' : 'opacity-100 h-auto'}`}>
-                                        <div className="w-8 h-1 bg-white/30 rounded-full mb-2" />
-                                        {/* Optional Label if needed, but per request just the red bar style or just the label? User asked for "Social Links" text */}
-                                        {/* Rerading request: "red box marked area, add small gray bold 'Social Links'" */}
-                                        {/* The red box in the image is actually highlighting the SECTION. I should add the text label. */}
-                                    </div>
-                                    <div className={`flex flex-col gap-2 pt-1 transition-all duration-300 ${scrollProgress > 0.8 ? 'opacity-0 h-0 overflow-hidden' : 'opacity-100 h-auto'}`}>
-                                        {/* Wait, the user image shows a red box around the AREA where links are.
-                                            The user request says: "add small gray bold Social Links"
-                                         */}
-                                        {triggerButtons && (
-                                            <>
-                                                {/* Red bar exists in my code? Line 312 is a white bar. The user screenshot has a red bar? No, the user drew a red box.
-                                                The user screenshot shows the "Open for collab" buttons. Below that is a red box the user drew.
-                                                Inside/near that red box (which is below collab buttons), they want "Social Links" text.
-                                                */}
-                                                <h3 className="text-xs font-bold text-white/40 uppercase tracking-wider">Social Links</h3>
-                                                <div className="flex gap-3">
-                                                    {triggerButtons}
-                                                </div>
-                                            </>
-                                        )}
+                                    <div className={`flex gap-3 pt-2 transition-all duration-300 ${scrollProgress > 0.8 ? 'opacity-0 h-0 overflow-hidden' : 'opacity-100 h-auto'}`}>
+                                        {triggerButtons}
                                     </div>
                                 </div>
                             </div>
