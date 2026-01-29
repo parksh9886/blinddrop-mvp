@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
-import { Play, Loader2, Pause } from 'lucide-react';
+import { Play, Loader2, Pause, Instagram, Youtube, Music2 } from 'lucide-react';
 import Navbar from '../components/Navbar';
 
 interface UserProfile {
@@ -158,14 +158,12 @@ const ArtistPublicPage: React.FC = () => {
     // Brightness: 100% -> 40%
     const blurAmount = scrollProgress * 20;
     const brightnessAmount = 100 - (scrollProgress * 60); // Down to 40%
+    const headerBgOpacity = scrollProgress * 0.9; // 0 -> 0.9
 
     return (
         <div className="relative w-full h-screen overflow-hidden bg-black text-white">
             {/* Navbar - Fixed at top z-50 */}
             <div className="absolute z-50 w-full top-0 left-0 pointer-events-none">
-                {/* Wrap Navbar in pointer-events-auto if it has interactive elements, 
-                     but standard pointer-events-none lets clicks pass through to background/scroll 
-                     if navbar is transparent. Assuming Navbar handles its own pointer events. */}
                 <div className="pointer-events-auto">
                     <Navbar />
                 </div>
@@ -179,10 +177,11 @@ const ArtistPublicPage: React.FC = () => {
                     className="w-full h-full object-cover transition-all duration-100 ease-out"
                     style={{
                         filter: `blur(${blurAmount}px) brightness(${brightnessAmount}%)`,
-                        transform: 'scale(1.1)' // Slight scale to avoid blur edge artifacts
+                        transform: 'scale(1.1)'
                     }}
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-60" />
+                {/* Global Gradient Overlay - Always present for text readability in Hero Mode */}
+                <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-90" />
             </div>
 
             {/* Hidden BGM Player */}
@@ -201,69 +200,94 @@ const ArtistPublicPage: React.FC = () => {
                 className="relative z-10 h-full overflow-y-auto snap-y snap-mandatory scroll-smooth"
                 onScroll={handleScroll}
             >
-                {/* Snap Item 1: Invisible Spacer (To push content to bottom effectively) */}
+                {/* Snap Item 1: Spacer to push content to bottom */}
                 <div className="w-full h-[60vh] snap-start bg-transparent pointer-events-none" />
 
                 {/* Snap Item 2: Main Content Area */}
-                <div className="h-screen w-full snap-start flex flex-col bg-black/40 backdrop-blur-sm">
+                <div className="min-h-screen w-full snap-start flex flex-col">
 
                     {/* Sticky Header: Artist Info */}
-                    <div className="sticky top-0 z-20 pt-20 pb-6 px-8 bg-gradient-to-b from-black/90 via-black/80 to-transparent backdrop-blur-md border-b border-white/5">
-                        <div className="max-w-2xl mx-auto space-y-6">
+                    {/* Background turns black only as we scroll (sticky) */}
+                    <div
+                        className="sticky top-0 z-20 pt-10 pb-6 px-8 border-b border-transparent transition-colors duration-300"
+                        style={{
+                            backgroundColor: `rgba(0, 0, 0, ${headerBgOpacity})`,
+                            borderColor: scrollProgress > 0.8 ? 'rgba(255, 255, 255, 0.1)' : 'transparent',
+                            backdropFilter: scrollProgress > 0.5 ? 'blur(12px)' : 'none'
+                        }}
+                    >
+                        <div className="max-w-[240px] space-y-6">
 
                             {/* Header Content Wrapper */}
                             <div className="flex flex-col gap-4">
                                 {/* Text Info */}
                                 <div className="space-y-2">
-                                    <h1 className="text-4xl md:text-5xl font-black tracking-tighter text-white drop-shadow-md">
+                                    <h1 className="text-5xl font-black tracking-tighter text-white drop-shadow-2xl leading-none">
                                         {displayNameText}
                                     </h1>
-                                    <p className="text-white/80 text-sm md:text-base font-medium">
+                                    <p className="text-white/90 text-sm font-medium tracking-wide drop-shadow-lg leading-relaxed">
                                         {profile.bio || "Artist"}
                                     </p>
                                 </div>
 
+                                {/* Divider */}
+                                <div className="w-8 h-1 bg-white/30 rounded-full" />
+
                                 {/* Controls Row */}
-                                <div className="flex items-center justify-between gap-4">
-                                    <div className="flex flex-col">
-                                        <span className="text-white/50 text-[10px] font-bold uppercase tracking-wider">
+                                <div className="space-y-4">
+                                    <div>
+                                        <p className="text-white/60 text-[10px] font-bold uppercase tracking-widest mb-1">
                                             Latest Release
-                                        </span>
-                                        <span className="text-white text-base font-medium truncate max-w-[200px]">
+                                        </p>
+                                        <p className="text-white text-base font-medium drop-shadow-lg truncate">
                                             {mainTrackTitle}
-                                        </span>
+                                        </p>
                                     </div>
 
                                     {/* Play Button */}
                                     <button
                                         onClick={handlePlayClick}
                                         disabled={!bgmTrack}
-                                        className="flex items-center gap-3 bg-white text-black px-5 py-2.5 rounded-full hover:scale-105 active:scale-95 transition-all shadow-lg shadow-white/10"
+                                        className="group flex items-center gap-3 bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/20 rounded-full pl-2 pr-6 py-2 transition-all duration-300 hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed w-fit"
                                     >
-                                        {isPlaying ? (
-                                            <Pause className="w-4 h-4 fill-current" />
-                                        ) : (
-                                            <Play className="w-4 h-4 fill-current ml-0.5" />
-                                        )}
-                                        <span className="text-sm font-bold">
-                                            {isPlaying ? "Pause" : "Play"}
+                                        <div
+                                            className={`flex items-center justify-center w-10 h-10 rounded-full bg-white text-black transition-transform duration-300 ${isPlaying ? "scale-95" : "group-hover:scale-110"}`}
+                                        >
+                                            {isPlaying ? (
+                                                <Pause className="w-4 h-4" fill="currentColor" />
+                                            ) : (
+                                                <Play className="w-4 h-4 ml-0.5" fill="currentColor" />
+                                            )}
+                                        </div>
+                                        <span className="text-white text-sm font-bold tracking-tight text-left">
+                                            {isPlaying ? "Pause" : "Play Now"}
                                         </span>
                                     </button>
+
+                                    {/* Social Icons (Restored) */}
+                                    <div className={`flex gap-3 pt-1 transition-all duration-300 ${scrollProgress > 0.8 ? 'opacity-0 h-0 overflow-hidden' : 'opacity-100 h-auto'}`}>
+                                        <a href="#" className="flex items-center justify-center w-8 h-8 rounded-full bg-white/5 hover:bg-white/20 backdrop-blur-md border border-white/10 text-white transition-all transform hover:scale-110"><Instagram className="w-3.5 h-3.5" /></a>
+                                        <a href="#" className="flex items-center justify-center w-8 h-8 rounded-full bg-white/5 hover:bg-white/20 backdrop-blur-md border border-white/10 text-white transition-all transform hover:scale-110"><Youtube className="w-3.5 h-3.5" /></a>
+                                        <a href="#" className="flex items-center justify-center w-8 h-8 rounded-full bg-white/5 hover:bg-white/20 backdrop-blur-md border border-white/10 text-white transition-all transform hover:scale-110"><Music2 className="w-3.5 h-3.5" /></a>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
 
                     {/* Scrollable Track List */}
-                    <div className="flex-1 overflow-y-auto p-4 md:p-6 pb-24">
+                    {/* Initially invisible/below fold due to spacer, appears on scroll */}
+                    {/* Background needs to be semi-transparent black to read text over the blurred image */}
+                    <div className="flex-1 overflow-y-auto p-4 md:p-6 pb-24 bg-black/40 backdrop-blur-md min-h-screen">
                         <div className="max-w-2xl mx-auto space-y-2">
+                            {/* ... Track List Items ... */}
                             {tracks.map((track, idx) => (
                                 <div
                                     key={track.id}
                                     onClick={() => handleTrackSelect(track)}
                                     className={`group flex items-center gap-4 p-4 rounded-xl cursor-pointer transition-all border ${bgmTrack?.id === track.id && isPlaying
-                                        ? 'bg-white/20 border-white/30 shadow-inner' // Active style
-                                        : 'bg-white/5 border-white/5 hover:bg-white/10 hover:border-white/20'
+                                            ? 'bg-white/20 border-white/30 shadow-inner' // Active style
+                                            : 'bg-white/5 border-white/5 hover:bg-white/10 hover:border-white/20'
                                         }`}
                                 >
                                     <div className="text-white/40 text-sm font-mono w-6 text-center">
