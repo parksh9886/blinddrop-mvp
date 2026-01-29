@@ -278,7 +278,7 @@ const ArtistPublicPage: React.FC = () => {
                     {/* Scrollable Track List */}
                     {/* Initially invisible/below fold due to spacer, appears on scroll */}
                     {/* Background needs to be semi-transparent black to read text over the blurred image */}
-                    <div className="flex-1 overflow-y-auto p-4 md:p-6 pb-24 bg-black/40 backdrop-blur-md min-h-screen">
+                    <div className="flex-1 overflow-y-auto p-4 md:p-6 pb-40 bg-black/40 backdrop-blur-md min-h-screen">
                         <div className="max-w-2xl mx-auto space-y-2">
                             {/* ... Track List Items ... */}
                             {tracks.map((track, idx) => (
