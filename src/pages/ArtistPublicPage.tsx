@@ -252,7 +252,7 @@ const ArtistPublicPage: React.FC = () => {
                             ))}
 
                             {linkCount === 0 && isOwner && (
-                                <Link to="/profile" className="flex items-center justify-center p-4 rounded-xl border border-dashed border-white/20 text-white/50 hover:text-white hover:border-white/40 transition-colors">
+                                <Link to="/profile?tab=links" className="flex items-center justify-center p-4 rounded-xl border border-dashed border-white/20 text-white/50 hover:text-white hover:border-white/40 transition-colors">
                                     + Add your first link
                                 </Link>
                             )}

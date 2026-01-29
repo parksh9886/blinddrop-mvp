@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
 import Layout from '../components/Layout';
@@ -58,6 +59,7 @@ interface LinkItem {
 
 const ProfilePage: React.FC = () => {
     const { user } = useAuth();
+    const location = useLocation();
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [activeTab, setActiveTab] = useState<'profile' | 'links'>('profile');
@@ -82,6 +84,12 @@ const ProfilePage: React.FC = () => {
     // Fetch Profile & Links
     useEffect(() => {
         if (!user) return;
+
+        // Check for tab param
+        const params = new URLSearchParams(location.search);
+        if (params.get('tab') === 'links') {
+            setActiveTab('links');
+        }
 
         const fetchData = async () => {
             try {
@@ -208,13 +216,18 @@ const ProfilePage: React.FC = () => {
 
         setSaving(true);
         try {
+            let formattedUrl = newLink.url.trim();
+            if (!/^https?:\/\//i.test(formattedUrl)) {
+                formattedUrl = `https://${formattedUrl}`;
+            }
+
             const { data, error } = await supabase
                 .from('artist_links')
                 .insert({
                     user_id: user.id,
                     platform: newLink.platform,
                     title: newLink.title,
-                    url: newLink.url,
+                    url: formattedUrl,
                     order_index: links.length // Append to end
                 })
                 .select()
@@ -494,7 +507,7 @@ const ProfilePage: React.FC = () => {
                                                 {getIconForPlatform(newLink.platform, "w-4 h-4")}
                                             </div>
                                             <input
-                                                type="url"
+                                                type="text"
                                                 placeholder="Paste any link (YouTube, Instagram, Spotify...)"
                                                 value={newLink.url}
                                                 onChange={(e) => {
