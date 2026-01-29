@@ -341,7 +341,7 @@ const ArtistPublicPage: React.FC = () => {
                                     {/* Social Trigger Icons */}
                                     {/* Hide when scrolling down, just like before, but now with new logic */}
                                     <div className={`space-y-2 pt-2 transition-all duration-300 ${scrollProgress > 0.8 ? 'opacity-0 h-0 overflow-hidden' : 'opacity-100 h-auto'}`}>
-                                        <div className="w-10 h-1 bg-red-500 mb-2"></div>
+                                        <div className="w-8 h-1 bg-white/30 rounded-full mb-2" />
                                         {/* Optional Label if needed, but per request just the red bar style or just the label? User asked for "Social Links" text */}
                                         {/* Rerading request: "red box marked area, add small gray bold 'Social Links'" */}
                                         {/* The red box in the image is actually highlighting the SECTION. I should add the text label. */}
