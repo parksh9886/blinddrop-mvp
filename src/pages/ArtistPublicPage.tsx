@@ -151,6 +151,7 @@ const ArtistPublicPage: React.FC = () => {
     // Styles
     const blurAmount = scrollProgress * 20;
     const brightnessAmount = 100 - (scrollProgress * 60);
+    const headerBgOpacity = scrollProgress * 0.9;
 
     // --- Link Trigger Logic ---
     const linkCount = artistLinks.length;
@@ -286,55 +287,83 @@ const ArtistPublicPage: React.FC = () => {
                 {/* Main Content */}
                 <div className="min-h-screen w-full snap-start flex flex-col">
 
-                    {/* Hero Section with Bottom-Left Content */}
-                    <div className="relative h-[85vh] w-full snap-start flex flex-col justify-end">
-                        {/* Gradient Overlay for Readability */}
-                        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent pointer-events-none" />
+                    {/* Sticky Header */}
+                    <div
+                        className="sticky top-0 z-20 pt-20 pb-6 px-8 border-b border-transparent transition-colors duration-300"
+                        style={{
+                            backgroundColor: `rgba(0, 0, 0, ${headerBgOpacity})`,
+                            borderColor: scrollProgress > 0.8 ? 'rgba(255, 255, 255, 0.1)' : 'transparent',
+                            backdropFilter: scrollProgress > 0.5 ? 'blur(12px)' : 'none'
+                        }}
+                    >
+                        <div className="max-w-[300px] space-y-6">
 
-                        <div className="relative z-20 p-8 pb-12 w-full max-w-4xl">
-                            <div className="flex flex-col items-start text-left space-y-6">
-                                {/* Name & Bio */}
+                            {/* Header Content Wrapper */}
+                            <div className="flex flex-col gap-4">
                                 <div className="space-y-2">
-                                    <h1 className="text-6xl md:text-8xl font-black tracking-tighter text-white drop-shadow-2xl leading-none">
+                                    <h1 className="text-5xl font-black tracking-tighter text-white drop-shadow-2xl leading-none">
                                         {displayNameText}
                                     </h1>
-                                    <p className="text-white/70 text-xl font-medium tracking-wide drop-shadow-md max-w-2xl">
+                                    <p className="text-white/90 text-sm font-medium tracking-wide drop-shadow-lg leading-relaxed">
                                         {profile.bio || "Artist"}
                                     </p>
                                 </div>
 
-                                {/* Status Badge */}
-                                <div className={`inline-flex items-center gap-3 px-4 py-2 rounded-full backdrop-blur-md transition-all duration-300 ${isCollabOpen
-                                    ? 'bg-green-500/10'
-                                    : 'bg-red-500/10'
-                                    }`}>
-                                    <div className={`w-2.5 h-2.5 rounded-full shadow-[0_0_8px] ${isCollabOpen
-                                        ? 'bg-green-400 shadow-green-400'
-                                        : 'bg-red-400 shadow-red-400'
-                                        }`} />
-                                    <span className={`text-sm font-bold tracking-wide ${isCollabOpen ? 'text-green-300' : 'text-red-300'
+                                <div className="w-8 h-1 bg-white/30 rounded-full" />
+
+                                <div className="space-y-4">
+                                    {/* Collab Badge */}
+                                    <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full backdrop-blur-md border shadow-lg ${isCollabOpen
+                                        ? 'bg-green-500/10 border-green-400/30'
+                                        : 'bg-red-500/10 border-red-400/30'
                                         }`}>
-                                        {isCollabOpen ? 'OPEN FOR COLLAB' : 'NOT TAKING REQUESTS'}
-                                    </span>
+                                        <div className={`w-2 h-2 rounded-full shadow-[0_0_8px] ${isCollabOpen
+                                            ? 'bg-green-400 shadow-green-400'
+                                            : 'bg-red-400 shadow-red-400'
+                                            }`} />
+                                        <span className={`text-xs font-bold tracking-wide ${isCollabOpen ? 'text-green-300' : 'text-red-300'
+                                            }`}>
+                                            {isCollabOpen ? 'OPEN FOR COLLAB' : 'NOT TAKING REQUESTS'}
+                                        </span>
+                                    </div>
+
+                                    {/* Collab Types */}
+                                    {isCollabOpen && profile.collab_types && profile.collab_types.length > 0 && (
+                                        <div className="flex flex-wrap gap-2">
+                                            {profile.collab_types.map((type, i) => (
+                                                <span key={i} className="px-3 py-1 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 backdrop-blur-sm text-xs font-semibold text-white tracking-wide transition-colors cursor-default">
+                                                    {type}
+                                                </span>
+                                            ))}
+                                        </div>
+                                    )}
+
+                                    {/* Social Trigger Icons */}
+                                    {/* Hide when scrolling down, just like before, but now with new logic */}
+                                    <div className={`space-y-2 pt-2 transition-all duration-300 ${scrollProgress > 0.8 ? 'opacity-0 h-0 overflow-hidden' : 'opacity-100 h-auto'}`}>
+                                        <div className="w-8 h-1 bg-white/30 rounded-full mb-2" />
+                                        {/* Optional Label if needed, but per request just the red bar style or just the label? User asked for "Social Links" text */}
+                                        {/* Rerading request: "red box marked area, add small gray bold 'Social Links'" */}
+                                        {/* The red box in the image is actually highlighting the SECTION. I should add the text label. */}
+                                    </div>
+                                    <div className={`flex flex-col gap-2 pt-1 transition-all duration-300 ${scrollProgress > 0.8 ? 'opacity-0 h-0 overflow-hidden' : 'opacity-100 h-auto'}`}>
+                                        {/* Wait, the user image shows a red box around the AREA where links are.
+                                            The user request says: "add small gray bold Social Links"
+                                         */}
+                                        {triggerButtons && (
+                                            <>
+                                                {/* Red bar exists in my code? Line 312 is a white bar. The user screenshot has a red bar? No, the user drew a red box.
+                                                The user screenshot shows the "Open for collab" buttons. Below that is a red box the user drew.
+                                                Inside/near that red box (which is below collab buttons), they want "Social Links" text.
+                                                */}
+                                                <h3 className="text-xs font-bold text-white/40 uppercase tracking-wider">Social Links</h3>
+                                                <div className="flex gap-3">
+                                                    {triggerButtons}
+                                                </div>
+                                            </>
+                                        )}
+                                    </div>
                                 </div>
-
-                                {/* Collab Types */}
-                                {isCollabOpen && profile.collab_types && profile.collab_types.length > 0 && (
-                                    <div className="flex flex-wrap gap-2">
-                                        {profile.collab_types.map((type, i) => (
-                                            <span key={i} className="px-4 py-1.5 rounded-full bg-white/10 hover:bg-white/20 text-white/90 text-sm backdrop-blur-sm transition-colors cursor-default border border-white/5">
-                                                {type}
-                                            </span>
-                                        ))}
-                                    </div>
-                                )}
-
-                                {/* Social Icons */}
-                                {triggerButtons && (
-                                    <div className="pt-2 flex gap-4">
-                                        {triggerButtons}
-                                    </div>
-                                )}
                             </div>
                         </div>
                     </div>
