@@ -172,7 +172,8 @@ const Dashboard: React.FC = () => {
         if (!editingTrack) return;
 
         try {
-            const { error } = await supabase
+            console.log('Updating track:', editingTrack);
+            const { data, error } = await supabase
                 .from('tracks')
                 .update({
                     title: editingTrack.title,
@@ -182,13 +183,18 @@ const Dashboard: React.FC = () => {
                 .select();
 
             if (error) throw error;
+            if (!data || data.length === 0) {
+                console.error('Update returned no data. RLS may be blocking update.');
+                throw new Error('Update failed - no permission or track not found.');
+            }
 
+            console.log('Update success:', data);
             setTracks(tracks.map(t => t.id === editingTrack.id ? { ...t, title: editingTrack.title, url: editingTrack.url } : t));
             setEditingTrack(null);
             setToast({ message: 'Track updated successfully!', type: 'success' });
         } catch (error: any) {
             console.error('Error updating track:', error);
-            setToast({ message: 'Failed to update track', type: 'error' });
+            setToast({ message: `Failed to update track: ${error.message}`, type: 'error' });
         }
     };
 
@@ -298,7 +304,7 @@ const Dashboard: React.FC = () => {
 
             <div className="grid md:grid-cols-3 gap-8">
                 {/* Left Column: Stats or Profile Summary could go here */}
-                <div className="md:col-span-1 space-y-6">
+                <div className="md:col-span-1 space-y-6 min-w-0">
                     <div className="bg-gradient-to-br from-indigo-900/50 to-slate-900 border border-indigo-500/20 p-6 rounded-2xl">
                         <h2 className="text-lg font-bold mb-2">Welcome Back!</h2>
                         <p className="text-slate-400 text-sm mb-4">Start collecting feedback on your latest demos.</p>
@@ -321,7 +327,7 @@ const Dashboard: React.FC = () => {
                 </div>
 
                 {/* Right Column: Tracks List & Add Form */}
-                <div className="md:col-span-2 space-y-8">
+                <div className="md:col-span-2 space-y-8 min-w-0">
                     {/* Add Track Form */}
                     <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6">
                         <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
