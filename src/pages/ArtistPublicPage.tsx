@@ -120,7 +120,7 @@ const ArtistPublicPage: React.FC = () => {
             const videoId = (match && match[7].length === 11) ? match[7] : null;
 
             if (videoId) {
-                return `https://www.youtube.com/embed/${videoId}?autoplay=1&controls=0&disablekb=1&fs=0&modestbranding=1`;
+                return `https://www.youtube.com/embed/${videoId}?autoplay=1&playsinline=1&enablejsapi=1&origin=${window.location.origin}&widgetid=1&controls=0&disablekb=1&fs=0&modestbranding=1`;
             }
             return null;
         }
@@ -184,8 +184,8 @@ const ArtistPublicPage: React.FC = () => {
                 <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-90" />
             </div>
 
-            {/* Hidden BGM Player */}
-            <div className="absolute w-1 h-1 overflow-hidden opacity-0 pointer-events-none">
+            {/* Hidden BGM Player (Ghost Element) */}
+            <div className="absolute top-0 left-0 w-px h-px opacity-0 pointer-events-none -z-50 overflow-hidden">
                 {isPlaying && bgmTrack && getBgmEmbedUrl(bgmTrack) && (
                     <iframe
                         src={getBgmEmbedUrl(bgmTrack)!}
