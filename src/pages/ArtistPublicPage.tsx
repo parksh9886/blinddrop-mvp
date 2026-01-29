@@ -221,30 +221,50 @@ const ArtistPublicPage: React.FC = () => {
                         <div className="max-w-2xl mx-auto space-y-2">
                             <h3 className="text-white/50 text-xs font-bold uppercase tracking-widest pl-2 mb-4">Released Tracks</h3>
 
-                            {tracks.map((track, idx) => (
-                                <a
-                                    key={track.id}
-                                    href={track.url}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="group flex items-center gap-4 p-4 rounded-xl cursor-pointer transition-all border bg-white/5 border-white/5 hover:bg-white/10 hover:border-white/20"
-                                >
-                                    <div className="text-white/40 text-sm font-mono w-6 text-center">
-                                        {idx + 1}
-                                    </div>
-                                    <div className="flex-1 min-w-0">
-                                        <h3 className="text-sm md:text-base font-medium text-white group-hover:text-indigo-300 transition-colors truncate">
-                                            {track.title}
-                                        </h3>
-                                        <p className="text-xs text-white/40 capitalize">
-                                            {track.platform}
-                                        </p>
-                                    </div>
-                                    <div className="opacity-0 group-hover:opacity-100 transition-opacity -translate-x-2 group-hover:translate-x-0 transform duration-300">
-                                        <Play className="w-4 h-4 text-white" />
-                                    </div>
-                                </a>
-                            ))}
+                            {tracks.map((track, idx) => {
+                                // Thumbnail Logic
+                                let thumbnailUrl = '/placeholder-track.png'; // Fallback
+                                if (track.platform === 'youtube') {
+                                    const videoId = track.url.split('v=')[1]?.split('&')[0] || track.url.split('/').pop();
+                                    if (videoId) thumbnailUrl = `https://img.youtube.com/vi/${videoId}/mqdefault.jpg`;
+                                } else if (track.platform === 'soundcloud') {
+                                    thumbnailUrl = 'https://a-v2.sndcdn.com/assets/images/default-track-cover-0c30953.png'; // Generic SC
+                                }
+
+                                return (
+                                    <Link
+                                        key={track.id}
+                                        to={`/track/${track.id}`}
+                                        className="group flex items-center gap-4 p-3 rounded-xl cursor-pointer transition-all border bg-white/5 border-white/5 hover:bg-white/10 hover:border-white/20"
+                                    >
+                                        <div className="relative w-12 h-12 rounded-md overflow-hidden flex-shrink-0 bg-slate-800">
+                                            <img
+                                                src={thumbnailUrl}
+                                                alt={track.title}
+                                                className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity"
+                                                onError={(e) => {
+                                                    (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=100&h=100&fit=crop';
+                                                }}
+                                            />
+                                        </div>
+
+                                        <div className="text-white/40 text-sm font-mono w-6 text-center">
+                                            {idx + 1}
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                            <h3 className="text-sm md:text-base font-medium text-white group-hover:text-indigo-300 transition-colors truncate">
+                                                {track.title}
+                                            </h3>
+                                            <p className="text-xs text-white/40 capitalize">
+                                                {track.platform}
+                                            </p>
+                                        </div>
+                                        <div className="opacity-0 group-hover:opacity-100 transition-opacity -translate-x-2 group-hover:translate-x-0 transform duration-300">
+                                            <Play className="w-4 h-4 text-white" />
+                                        </div>
+                                    </Link>
+                                );
+                            })}
 
                             {tracks.length === 0 && (
                                 <div className="text-center text-white/30 py-10">
