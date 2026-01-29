@@ -178,11 +178,12 @@ const Dashboard: React.FC = () => {
                     title: editingTrack.title,
                     url: editingTrack.url
                 })
-                .eq('id', editingTrack.id);
+                .eq('id', editingTrack.id)
+                .select();
 
             if (error) throw error;
 
-            setTracks(prev => prev.map(t => t.id === editingTrack.id ? { ...t, title: editingTrack.title, url: editingTrack.url } : t));
+            setTracks(tracks.map(t => t.id === editingTrack.id ? { ...t, title: editingTrack.title, url: editingTrack.url } : t));
             setEditingTrack(null);
             setToast({ message: 'Track updated successfully!', type: 'success' });
         } catch (error: any) {
@@ -377,7 +378,7 @@ const Dashboard: React.FC = () => {
                             tracks.map(track => (
                                 <div key={track.id} className="group bg-slate-900/50 border border-slate-800 hover:border-indigo-500/30 rounded-2xl p-4 transition-all hover:bg-slate-900 relative">
                                     <div className="flex items-start justify-between">
-                                        <div className="flex-1 min-w-0 flex gap-4">
+                                        <div className="flex gap-4 flex-1 min-w-0">
                                             {/* Thumbnail Logic */}
                                             <div className="w-16 h-16 bg-slate-800 rounded-lg flex-shrink-0 overflow-hidden relative">
                                                 {getThumbnailUrl(track.url) ? (
@@ -395,36 +396,34 @@ const Dashboard: React.FC = () => {
 
                                             {/* Content: Edit Mode vs View Mode */}
                                             {editingTrack?.id === track.id ? (
-                                                <form onSubmit={handleUpdateTrack} className="flex-1 space-y-2 mr-4 min-w-0">
+                                                <div className="flex-1 space-y-2 mr-4">
                                                     <input
                                                         type="text"
                                                         value={editingTrack.title}
                                                         onChange={(e) => setEditingTrack({ ...editingTrack, title: e.target.value })}
-                                                        className="w-full bg-slate-950 border border-slate-700 rounded px-2 py-1 text-sm text-white focus:outline-none focus:ring-1 focus:ring-indigo-500"
-                                                        autoFocus
+                                                        className="w-full bg-slate-950 border border-slate-700 rounded px-2 py-1 text-sm text-white"
                                                     />
                                                     <input
                                                         type="text"
                                                         value={editingTrack.url}
                                                         onChange={(e) => setEditingTrack({ ...editingTrack, url: e.target.value })}
-                                                        className="w-full bg-slate-950 border border-slate-700 rounded px-2 py-1 text-xs text-slate-400 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                                                        className="w-full bg-slate-950 border border-slate-700 rounded px-2 py-1 text-xs text-slate-400"
                                                     />
                                                     <div className="flex gap-2">
                                                         <button
-                                                            type="submit"
+                                                            onClick={handleUpdateTrack}
                                                             className="text-xs bg-indigo-600 text-white px-3 py-1 rounded hover:bg-indigo-500"
                                                         >
                                                             Save
                                                         </button>
                                                         <button
-                                                            type="button"
                                                             onClick={() => setEditingTrack(null)}
                                                             className="text-xs bg-slate-700 text-white px-3 py-1 rounded hover:bg-slate-600"
                                                         >
                                                             Cancel
                                                         </button>
                                                     </div>
-                                                </form>
+                                                </div>
                                             ) : (
                                                 <div className="flex-1 min-w-0">
                                                     <h4 className="font-medium text-white line-clamp-1 text-lg truncate pr-2">{track.title || "Untitled Track"}</h4>
