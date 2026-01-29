@@ -151,7 +151,6 @@ const ArtistPublicPage: React.FC = () => {
     // Styles
     const blurAmount = scrollProgress * 20;
     const brightnessAmount = 100 - (scrollProgress * 60);
-    const headerBgOpacity = scrollProgress * 0.9;
 
     // --- Link Trigger Logic ---
     const linkCount = artistLinks.length;
