@@ -116,6 +116,16 @@ const Navbar: React.FC = () => {
                                                     Dashboard
                                                 </Link>
 
+                                                {/* My Tracks */}
+                                                <Link
+                                                    to="/tracks"
+                                                    onClick={() => setIsDropdownOpen(false)}
+                                                    className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-slate-300 hover:text-white hover:bg-white/10 transition-all"
+                                                >
+                                                    <Music className="w-4 h-4 text-purple-400" />
+                                                    My Tracks
+                                                </Link>
+
                                                 {/* My Artist Page (Only if handle exists) */}
                                                 {handle && (
                                                     <Link

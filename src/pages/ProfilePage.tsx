@@ -499,6 +499,19 @@ const ProfilePage: React.FC = () => {
                                 </h3>
 
                                 <div className="space-y-4">
+                                    {/* Title Input */}
+                                    <div>
+                                        <label className="block text-xs font-medium text-slate-400 mb-1.5 ml-1">Link Title</label>
+                                        <input
+                                            type="text"
+                                            placeholder="e.g. Listen on Spotify"
+                                            value={newLink.title}
+                                            onChange={(e) => setNewLink({ ...newLink, title: e.target.value })}
+                                            className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                            required
+                                        />
+                                    </div>
+
                                     {/* URL Input with Auto-Detect Icon */}
                                     <div>
                                         <label className="block text-xs font-medium text-slate-400 mb-1.5 ml-1">Link URL</label>
@@ -524,19 +537,6 @@ const ProfilePage: React.FC = () => {
                                                 </div>
                                             )}
                                         </div>
-                                    </div>
-
-                                    {/* Title Input */}
-                                    <div>
-                                        <label className="block text-xs font-medium text-slate-400 mb-1.5 ml-1">Button Title</label>
-                                        <input
-                                            type="text"
-                                            placeholder="e.g. Listen on Spotify"
-                                            value={newLink.title}
-                                            onChange={(e) => setNewLink({ ...newLink, title: e.target.value })}
-                                            className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                                            required
-                                        />
                                     </div>
                                 </div>
 
