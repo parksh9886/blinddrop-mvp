@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
-import { Play, Instagram, Youtube, Music2, Loader2, Pause } from 'lucide-react';
+import { Play, Music2, Loader2, Pause } from 'lucide-react';
 import Navbar from '../components/Navbar';
 
 interface UserProfile {
@@ -30,6 +30,12 @@ const ArtistPublicPage: React.FC = () => {
     // BGM State
     const [isPlaying, setIsPlaying] = useState(false);
     const [bgmTrack, setBgmTrack] = useState<Track | null>(null);
+
+    // Scroll Blur State
+    const [scrollBlur, setScrollBlur] = useState(0);
+
+    // Track List State
+    const [trackList, setTrackList] = useState<Track[]>([]);
 
     useEffect(() => {
         const fetchData = async () => {
@@ -61,6 +67,7 @@ const ArtistPublicPage: React.FC = () => {
                 if (tracksError) throw tracksError;
 
                 const loadedTracks = tracksData || [];
+                setTrackList(loadedTracks);
 
                 // Determine BGM Track
                 if (loadedTracks.length > 0) {
@@ -83,6 +90,15 @@ const ArtistPublicPage: React.FC = () => {
         fetchData();
     }, [handle]);
 
+    const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
+        const scrollTop = e.currentTarget.scrollTop;
+        const windowHeight = window.innerHeight;
+        // Map 0 -> 0 blur, 60vh -> Max Blur/Darkness
+        const maxScroll = windowHeight * 0.6;
+        const progress = Math.min(scrollTop / maxScroll, 1);
+        setScrollBlur(progress);
+    };
+
     const handlePlayClick = () => {
         if (!bgmTrack) return;
         setIsPlaying(!isPlaying);
@@ -98,7 +114,6 @@ const ArtistPublicPage: React.FC = () => {
             const videoId = (match && match[7].length === 11) ? match[7] : null;
 
             if (videoId) {
-                // autoplay=1 is key. modestbranding/controls=0 to keep it lightweight/clean if visible (though hidden).
                 return `https://www.youtube.com/embed/${videoId}?autoplay=1&controls=0&disablekb=1&fs=0&modestbranding=1`;
             }
             return null;
@@ -106,7 +121,6 @@ const ArtistPublicPage: React.FC = () => {
 
         if (track.platform === 'soundcloud') {
             const encodedUrl = encodeURIComponent(track.url);
-            // auto_play=true
             return `https://w.soundcloud.com/player/?url=${encodedUrl}&color=%234f46e5&auto_play=true&hide_related=true&show_comments=false&show_user=false&show_reposts=false&show_teaser=false`;
         }
 
@@ -131,10 +145,15 @@ const ArtistPublicPage: React.FC = () => {
     const placeholderImage = "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&q=80&w=1080";
     const displayImage = profile.avatar_url || placeholderImage;
     const mainTrackTitle = bgmTrack?.title || "No tracks released yet";
-    const displayNameText = profile.display_name || profile.handle; // Fallback to handle
+    const displayNameText = profile.display_name || profile.handle;
+
+    // Dynamic Style for Blur
+    const blurStyle = {
+        filter: `blur(${scrollBlur * 20}px) brightness(${100 - (scrollBlur * 40)}%)`,
+    };
 
     return (
-        <div className="relative w-full min-h-screen overflow-hidden bg-black text-white">
+        <div className="relative w-full h-screen overflow-hidden bg-black text-white">
             <div className="absolute z-50 w-full top-0 left-0">
                 <Navbar />
             </div>
@@ -150,41 +169,33 @@ const ArtistPublicPage: React.FC = () => {
                 )}
             </div>
 
-            {/* PC: Background Blur */}
-            <div className="absolute inset-0 flex items-center justify-center">
-                <div className="absolute inset-0">
-                    <img
-                        src={displayImage}
-                        alt="Background blur"
-                        className="w-full h-full object-cover blur-3xl scale-110 opacity-60"
-                    />
-                </div>
+            {/* 1. Fixed Background */}
+            <div className="fixed inset-0 z-0">
+                <img
+                    src={displayImage}
+                    alt="Background"
+                    style={blurStyle}
+                    className="w-full h-full object-cover transition-all duration-75 ease-out will-change-transform"
+                />
+                {/* Dark Gradient Overlay */}
+                <div className="absolute inset-0 bg-gradient-to-t from-black via-black/10 to-transparent opacity-80" />
             </div>
 
-            {/* Mobile Fixed Container */}
-            <div className="relative mx-auto w-full max-w-md min-h-screen bg-black md:bg-transparent shadow-2xl">
-                {/* Main Background Image - Visible on Mobile/Container */}
-                <div className="absolute inset-0">
-                    <img
-                        src={displayImage}
-                        alt="Musician background"
-                        className="w-full h-full object-cover"
-                    />
-                </div>
+            {/* 2. Scroll Container (Snap Wrapper) */}
+            <div
+                className="relative z-10 h-full w-full overflow-y-auto snap-y snap-mandatory scroll-smooth"
+                onScroll={handleScroll}
+            >
+                {/* Snap Item 1: Spacer (Hero Mode) */}
+                <div className="w-full h-[60vh] snap-start bg-transparent pointer-events-none" />
 
-                {/* Left Gradient Overlay - Stronger at bottom for text visibility */}
-                <div
-                    className="absolute inset-0"
-                    style={{
-                        background:
-                            "linear-gradient(to bottom, rgba(0,0,0,0) 0%, rgba(0,0,0,0.2) 50%, rgba(0,0,0,0.9) 90%, black 100%)",
-                    }}
-                />
+                {/* Snap Item 2: Main Content Area */}
+                <div className="w-full h-screen snap-start flex flex-col bg-black/60 backdrop-blur-sm">
 
-                {/* Content Area - Bottom Aligned */}
-                <div className="relative z-10 w-full min-h-screen flex flex-col justify-end">
-                    <div className="w-full px-8 pb-24">
-                        {/* Constrained Width Container to match user request (Red Box) */}
+                    {/* Header Wrapper (Artist Info) */}
+                    {/* Sticky logic is implicit because Snap Item 2 is h-screen, so top of this div IS top of viewport when snapped */}
+                    <div className="w-full px-8 pt-8 pb-6 flex-shrink-0 animate-fade-in shadow-2xl">
+                        {/* Constraint Container */}
                         <div className="space-y-6 max-w-[240px]">
                             {/* Main Title & Bio */}
                             <div className="space-y-2">
@@ -192,7 +203,7 @@ const ArtistPublicPage: React.FC = () => {
                                     {displayNameText}
                                 </h1>
 
-                                {/* Roles (formerly Bio) */}
+                                {/* Roles */}
                                 <p className="text-white/90 text-sm font-medium tracking-wide drop-shadow-lg leading-relaxed">
                                     {profile.bio || "Artist"}
                                 </p>
@@ -212,7 +223,7 @@ const ArtistPublicPage: React.FC = () => {
                                     </p>
                                 </div>
 
-                                {/* Play Button - Compact Width */}
+                                {/* Play Button */}
                                 <button
                                     onClick={handlePlayClick}
                                     disabled={!bgmTrack}
@@ -232,32 +243,37 @@ const ArtistPublicPage: React.FC = () => {
                                     </span>
                                 </button>
                             </div>
-
-                            {/* Social Media Icons */}
-                            <div className="flex gap-3 pt-1">
-                                <a
-                                    href="#"
-                                    className="flex items-center justify-center w-8 h-8 rounded-full bg-white/5 hover:bg-white/20 backdrop-blur-md border border-white/10 text-white transition-all duration-300 hover:scale-110"
-                                    aria-label="Instagram"
-                                >
-                                    <Instagram className="w-3.5 h-3.5" />
-                                </a>
-                                <a
-                                    href="#"
-                                    className="flex items-center justify-center w-8 h-8 rounded-full bg-white/5 hover:bg-white/20 backdrop-blur-md border border-white/10 text-white transition-all duration-300 hover:scale-110"
-                                    aria-label="YouTube"
-                                >
-                                    <Youtube className="w-3.5 h-3.5" />
-                                </a>
-                                <a
-                                    href="#"
-                                    className="flex items-center justify-center w-8 h-8 rounded-full bg-white/5 hover:bg-white/20 backdrop-blur-md border border-white/10 text-white transition-all duration-300 hover:scale-110"
-                                    aria-label="Spotify"
-                                >
-                                    <Music2 className="w-3.5 h-3.5" />
-                                </a>
-                            </div>
                         </div>
+                    </div>
+
+                    {/* Scrollable Track List */}
+                    <div className="flex-1 w-full overflow-y-auto px-6 pb-32">
+                        {trackList.length > 0 ? (
+                            <div className="space-y-3 max-w-xl">
+                                <h3 className="text-white/50 text-xs font-bold uppercase tracking-widest mb-4 mt-2">All Tracks</h3>
+                                {trackList.map((track) => (
+                                    <div
+                                        key={track.id}
+                                        className="group relative flex items-center gap-4 bg-white/5 hover:bg-white/10 border border-white/5 hover:border-white/10 rounded-xl p-4 transition-all"
+                                    >
+                                        <div className="w-10 h-10 rounded-lg bg-indigo-500/20 flex items-center justify-center text-indigo-400 group-hover:text-white transition-colors">
+                                            <Music2 className="w-5 h-5" />
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                            <p className="text-white text-base font-medium truncate">{track.title}</p>
+                                            <p className="text-white/40 text-xs truncate capitalize">{track.platform}</p>
+                                        </div>
+                                        <a href={track.url} target="_blank" rel="noopener noreferrer" className="opacity-0 group-hover:opacity-100 transition-opacity p-2 hover:bg-white/10 rounded-full">
+                                            <Play className="w-4 h-4 text-white" fill="currentColor" />
+                                        </a>
+                                    </div>
+                                ))}
+                            </div>
+                        ) : (
+                            <div className="text-white/30 text-center py-10 text-sm">
+                                No tracks found.
+                            </div>
+                        )}
                     </div>
                 </div>
             </div>
