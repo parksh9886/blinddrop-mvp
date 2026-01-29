@@ -161,7 +161,7 @@ const ArtistPublicPage: React.FC = () => {
     const headerBgOpacity = scrollProgress * 0.9; // 0 -> 0.9
 
     return (
-        <div className="relative w-full h-screen overflow-hidden bg-black text-white">
+        <div className="fixed inset-0 w-full h-[100dvh] overflow-hidden bg-black text-white">
             {/* Navbar - Fixed at top z-50 */}
             <div className="absolute z-50 w-full top-0 left-0 pointer-events-none">
                 <div className="pointer-events-auto">
@@ -197,7 +197,7 @@ const ArtistPublicPage: React.FC = () => {
 
             {/* 2. Scroll Container (Snap Wrapper) */}
             <div
-                className="relative z-10 h-full overflow-y-auto snap-y snap-mandatory scroll-smooth"
+                className="relative z-10 h-full overflow-y-auto snap-y snap-mandatory scroll-smooth overscroll-y-none"
                 onScroll={handleScroll}
             >
                 {/* Snap Item 1: Spacer to push content to bottom */}

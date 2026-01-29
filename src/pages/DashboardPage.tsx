@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
 import Layout from '../components/Layout';
-import { Plus, Loader2, Music, ExternalLink, Trash2, Link as LinkIcon, AlertCircle, MessageSquare, ChevronDown, ChevronUp, CheckCircle2, User, Lock } from 'lucide-react';
+import { Plus, Loader2, Music, ExternalLink, Trash2, Link as LinkIcon, AlertCircle, MessageSquare, ChevronDown, ChevronUp, CheckCircle2, User, Lock, Pencil } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -424,9 +424,9 @@ const Dashboard: React.FC = () => {
                                                     </div>
                                                 </div>
                                             ) : (
-                                                <div className="flex-1">
-                                                    <h4 className="font-medium text-white line-clamp-1 text-lg">{track.title || "Untitled Track"}</h4>
-                                                    <a href={track.url} target="_blank" rel="noopener noreferrer" className="text-xs text-slate-500 hover:text-indigo-400 line-clamp-1 block mt-1 leading-relaxed">
+                                                <div className="flex-1 min-w-0">
+                                                    <h4 className="font-medium text-white line-clamp-1 text-lg truncate pr-2">{track.title || "Untitled Track"}</h4>
+                                                    <a href={track.url} target="_blank" rel="noopener noreferrer" className="text-xs text-slate-500 hover:text-indigo-400 line-clamp-1 block mt-1 leading-relaxed truncate">
                                                         {track.url}
                                                     </a>
                                                     <div className="flex items-center gap-2 mt-2">
@@ -437,23 +437,26 @@ const Dashboard: React.FC = () => {
                                                             {new Date(track.created_at).toLocaleDateString()}
                                                         </span>
 
-                                                        {/* Edit Button */}
-                                                        <button
-                                                            onClick={() => setEditingTrack(track)}
-                                                            className="text-xs text-slate-500 hover:text-white underline ml-2"
-                                                        >
-                                                            Edit
-                                                        </button>
+
                                                     </div>
                                                 </div>
                                             )}
                                         </div>
 
                                         <div className="flex items-center gap-2 flex-shrink-0 ml-4">
+                                            {/* Edit Button */}
+                                            <button
+                                                onClick={() => setEditingTrack(track)}
+                                                className="p-2 text-slate-400 hover:text-white transition-colors"
+                                                title="Edit Track"
+                                            >
+                                                <Pencil className="w-4 h-4" />
+                                            </button>
+
                                             <Link
-                                                to={`/u/${track.id}`}
+                                                to={`/track/${track.id}`}
                                                 className="p-2 text-slate-400 hover:text-indigo-400 transition-colors"
-                                                title="View Public Page"
+                                                title="View Public Link"
                                             >
                                                 <ExternalLink className="w-4 h-4" />
                                             </Link>
