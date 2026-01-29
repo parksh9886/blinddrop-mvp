@@ -160,7 +160,7 @@ const ArtistPublicPage: React.FC = () => {
     if (linkCount === 0) {
         if (isOwner) {
             triggerButtons = (
-                <Link to="/profile" className="flex items-center justify-center w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 text-white transition-all transform hover:scale-110">
+                <Link to="/profile?tab=links" className="flex items-center justify-center w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 text-white transition-all transform hover:scale-110">
                     <Plus className="w-4 h-4" />
                 </Link>
             );
