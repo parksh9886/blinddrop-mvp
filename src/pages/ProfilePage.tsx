@@ -2,7 +2,11 @@ import React, { useEffect, useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
 import Layout from '../components/Layout';
-import { Save, Loader2, User as UserIcon, Camera, AlertTriangle, Check, Plus, Trash2, ExternalLink, GripVertical } from 'lucide-react';
+import {
+    Save, Loader2, User as UserIcon, Camera, AlertTriangle, Check, Plus, Trash2,
+    ExternalLink, GripVertical, Instagram, Youtube, Twitter, Music2, Disc3,
+    Facebook, Linkedin, Globe, Link as LinkIcon
+} from 'lucide-react';
 
 const ROLES = [
     { value: 'Singer', label: 'Singer' },
@@ -12,17 +16,37 @@ const ROLES = [
     { value: 'Beatmaker', label: 'Beatmaker' }
 ];
 
-const PLATFORMS = [
-    { value: 'instagram', label: 'Instagram' },
-    { value: 'youtube', label: 'YouTube' },
-    { value: 'twitter', label: 'Twitter / X' },
-    { value: 'tiktok', label: 'TikTok' },
-    { value: 'spotify', label: 'Spotify' },
-    { value: 'soundcloud', label: 'SoundCloud' },
-    { value: 'apple', label: 'Apple Music' },
-    { value: 'website', label: 'Website' },
-    { value: 'other', label: 'Other' }
-];
+// Helper: Detect Platform from URL
+const detectPlatform = (url: string): string => {
+    const lowerUrl = url.toLowerCase();
+    if (lowerUrl.includes('youtube.com') || lowerUrl.includes('youtu.be')) return 'youtube';
+    if (lowerUrl.includes('instagram.com')) return 'instagram';
+    if (lowerUrl.includes('twitter.com') || lowerUrl.includes('x.com')) return 'twitter';
+    if (lowerUrl.includes('tiktok.com')) return 'tiktok';
+    if (lowerUrl.includes('spotify.com')) return 'spotify';
+    if (lowerUrl.includes('soundcloud.com')) return 'soundcloud';
+    if (lowerUrl.includes('music.apple.com')) return 'apple';
+    if (lowerUrl.includes('facebook.com')) return 'facebook';
+    if (lowerUrl.includes('linkedin.com')) return 'linkedin';
+    return 'website';
+};
+
+// Helper: Get Icon
+const getIconForPlatform = (platform: string, className = "w-4 h-4") => {
+    switch (platform.toLowerCase()) {
+        case 'instagram': return <Instagram className={className} />;
+        case 'youtube': return <Youtube className={className} />;
+        case 'twitter': return <Twitter className={className} />;
+        case 'tiktok': return <Music2 className={className} />;
+        case 'spotify': return <Disc3 className={className} />;
+        case 'soundcloud': return <Music2 className={className} />;
+        case 'apple': return <Music2 className={className} />;
+        case 'facebook': return <Facebook className={className} />;
+        case 'linkedin': return <Linkedin className={className} />;
+        case 'website': return <Globe className={className} />;
+        default: return <LinkIcon className={className} />;
+    }
+};
 
 interface LinkItem {
     id: string;
@@ -50,7 +74,7 @@ const ProfilePage: React.FC = () => {
 
     // Links State
     const [links, setLinks] = useState<LinkItem[]>([]);
-    const [newLink, setNewLink] = useState({ platform: 'instagram', title: '', url: '' });
+    const [newLink, setNewLink] = useState({ platform: 'website', title: '', url: '' });
 
     // Constants
     const COLLAB_OPTIONS = ['Featuring', 'Beat Making', 'Topline', 'Remix', 'Mixing', 'Mastering', 'Lyrics'];
@@ -199,7 +223,7 @@ const ProfilePage: React.FC = () => {
             if (error) throw error;
 
             setLinks([...links, data]);
-            setNewLink({ platform: 'instagram', title: '', url: '' });
+            setNewLink({ platform: 'website', title: '', url: '' });
             setMsg({ type: 'success', text: 'Link added successfully!' });
         } catch (error: any) {
             console.error('Error adding link:', error);
@@ -461,53 +485,54 @@ const ProfilePage: React.FC = () => {
                                     <Plus className="w-4 h-4" /> Add New Link
                                 </h3>
 
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    {/* Platform Dropdown */}
+                                <div className="space-y-4">
+                                    {/* URL Input with Auto-Detect Icon */}
                                     <div>
-                                        <select
-                                            value={newLink.platform}
-                                            onChange={(e) => {
-                                                const selected = PLATFORMS.find(p => p.value === e.target.value);
-                                                setNewLink({ ...newLink, platform: e.target.value, title: selected?.label || '' });
-                                            }}
-                                            className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                                        >
-                                            {PLATFORMS.map(p => (
-                                                <option key={p.value} value={p.value}>{p.label}</option>
-                                            ))}
-                                        </select>
+                                        <label className="block text-xs font-medium text-slate-400 mb-1.5 ml-1">Link URL</label>
+                                        <div className="relative flex items-center">
+                                            <div className="absolute left-3 text-slate-400 pointer-events-none">
+                                                {getIconForPlatform(newLink.platform, "w-4 h-4")}
+                                            </div>
+                                            <input
+                                                type="url"
+                                                placeholder="Paste any link (YouTube, Instagram, Spotify...)"
+                                                value={newLink.url}
+                                                onChange={(e) => {
+                                                    const url = e.target.value;
+                                                    const detected = detectPlatform(url);
+                                                    setNewLink({ ...newLink, url, platform: detected });
+                                                }}
+                                                className="w-full bg-slate-900 border border-slate-700 rounded-lg pl-10 pr-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all placeholder:text-slate-600"
+                                                required
+                                            />
+                                            {newLink.url && (
+                                                <div className="absolute right-3 text-xs text-indigo-400 font-medium animate-in fade-in slide-in-from-left-1">
+                                                    {newLink.platform}
+                                                </div>
+                                            )}
+                                        </div>
                                     </div>
 
                                     {/* Title Input */}
                                     <div>
+                                        <label className="block text-xs font-medium text-slate-400 mb-1.5 ml-1">Button Title</label>
                                         <input
                                             type="text"
-                                            placeholder="Button Title (e.g. Official IG)"
+                                            placeholder="e.g. Listen on Spotify"
                                             value={newLink.title}
                                             onChange={(e) => setNewLink({ ...newLink, title: e.target.value })}
                                             className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
                                             required
                                         />
                                     </div>
-
-                                    {/* URL Input */}
-                                    <div className="md:col-span-2">
-                                        <input
-                                            type="url"
-                                            placeholder="https://"
-                                            value={newLink.url}
-                                            onChange={(e) => setNewLink({ ...newLink, url: e.target.value })}
-                                            className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                                            required
-                                        />
-                                    </div>
                                 </div>
+
                                 <button
                                     type="submit"
                                     disabled={saving}
-                                    className="w-full py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-bold rounded-lg transition-colors disabled:opacity-50"
+                                    className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-bold rounded-lg transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
                                 >
-                                    {saving ? 'Adding...' : 'Add Link'}
+                                    {saving ? 'Adding...' : 'Add to Profile'}
                                 </button>
                             </form>
 
@@ -519,11 +544,13 @@ const ProfilePage: React.FC = () => {
                                             <GripVertical className="w-5 h-5" />
                                         </div>
                                         <div className="flex-1 min-w-0">
-                                            <div className="flex items-center gap-2">
-                                                <span className="text-xs font-bold px-2 py-0.5 rounded bg-slate-700 text-slate-300 uppercase">{link.platform}</span>
+                                            <div className="flex items-center gap-2 mb-0.5">
+                                                <div className="text-slate-400">
+                                                    {getIconForPlatform(link.platform, "w-3.5 h-3.5")}
+                                                </div>
                                                 <h4 className="text-sm font-medium text-white truncate">{link.title}</h4>
                                             </div>
-                                            <a href={link.url} target="_blank" rel="noreferrer" className="text-xs text-slate-400 truncate hover:text-indigo-400 flex items-center gap-1 mt-0.5">
+                                            <a href={link.url} target="_blank" rel="noreferrer" className="text-xs text-slate-500 truncate hover:text-indigo-400 flex items-center gap-1">
                                                 {link.url} <ExternalLink className="w-3 h-3" />
                                             </a>
                                         </div>
@@ -537,8 +564,9 @@ const ProfilePage: React.FC = () => {
                                 ))}
 
                                 {links.length === 0 && (
-                                    <div className="text-center py-8 text-slate-500 text-sm">
-                                        No links added yet.
+                                    <div className="text-center py-10 bg-slate-900/50 rounded-xl border border-dashed border-slate-800">
+                                        <p className="text-slate-400 text-sm">No links yet.</p>
+                                        <p className="text-slate-600 text-xs mt-1">Add your social media to fill up your generic link hub.</p>
                                     </div>
                                 )}
                             </div>
