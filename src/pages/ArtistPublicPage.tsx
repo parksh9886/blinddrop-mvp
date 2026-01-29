@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
-import { Play, Music2, Loader2, Pause } from 'lucide-react';
+import { Play, Loader2, Pause } from 'lucide-react';
 import Navbar from '../components/Navbar';
 
 interface UserProfile {
@@ -31,11 +31,9 @@ const ArtistPublicPage: React.FC = () => {
     const [isPlaying, setIsPlaying] = useState(false);
     const [bgmTrack, setBgmTrack] = useState<Track | null>(null);
 
-    // Scroll Blur State
-    const [scrollBlur, setScrollBlur] = useState(0);
-
-    // Track List State
-    const [trackList, setTrackList] = useState<Track[]>([]);
+    // State for Tracks List and Scroll Effect
+    const [tracks, setTracks] = useState<Track[]>([]);
+    const [scrollProgress, setScrollProgress] = useState(0);
 
     useEffect(() => {
         const fetchData = async () => {
@@ -67,7 +65,7 @@ const ArtistPublicPage: React.FC = () => {
                 if (tracksError) throw tracksError;
 
                 const loadedTracks = tracksData || [];
-                setTrackList(loadedTracks);
+                setTracks(loadedTracks);
 
                 // Determine BGM Track
                 if (loadedTracks.length > 0) {
@@ -90,18 +88,26 @@ const ArtistPublicPage: React.FC = () => {
         fetchData();
     }, [handle]);
 
-    const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
-        const scrollTop = e.currentTarget.scrollTop;
-        const windowHeight = window.innerHeight;
-        // Map 0 -> 0 blur, 60vh -> Max Blur/Darkness
-        const maxScroll = windowHeight * 0.6;
-        const progress = Math.min(scrollTop / maxScroll, 1);
-        setScrollBlur(progress);
-    };
-
     const handlePlayClick = () => {
         if (!bgmTrack) return;
         setIsPlaying(!isPlaying);
+    };
+
+    const handleTrackSelect = (track: Track) => {
+        setBgmTrack(track);
+        setIsPlaying(true);
+    };
+
+    // Scroll Handler for Blur Effect
+    const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
+        const scrollTop = e.currentTarget.scrollTop;
+        const windowHeight = window.innerHeight;
+        // Calculate progress based on spacer height (approx 60vh)
+        const spacerHeight = windowHeight * 0.6;
+
+        let progress = scrollTop / spacerHeight;
+        if (progress > 1) progress = 1;
+        setScrollProgress(progress);
     };
 
     // Helper to generate embed URL for BGM
@@ -147,15 +153,36 @@ const ArtistPublicPage: React.FC = () => {
     const mainTrackTitle = bgmTrack?.title || "No tracks released yet";
     const displayNameText = profile.display_name || profile.handle;
 
-    // Dynamic Style for Blur
-    const blurStyle = {
-        filter: `blur(${scrollBlur * 20}px) brightness(${100 - (scrollBlur * 40)}%)`,
-    };
+    // Dynamic Styles based on scroll
+    // Blur: 0 -> 24px (xl is 24px)
+    // Brightness: 100% -> 40%
+    const blurAmount = scrollProgress * 20;
+    const brightnessAmount = 100 - (scrollProgress * 60); // Down to 40%
 
     return (
         <div className="relative w-full h-screen overflow-hidden bg-black text-white">
-            <div className="absolute z-50 w-full top-0 left-0">
-                <Navbar />
+            {/* Navbar - Fixed at top z-50 */}
+            <div className="absolute z-50 w-full top-0 left-0 pointer-events-none">
+                {/* Wrap Navbar in pointer-events-auto if it has interactive elements, 
+                     but standard pointer-events-none lets clicks pass through to background/scroll 
+                     if navbar is transparent. Assuming Navbar handles its own pointer events. */}
+                <div className="pointer-events-auto">
+                    <Navbar />
+                </div>
+            </div>
+
+            {/* 1. Fixed Background */}
+            <div className="fixed inset-0 z-0">
+                <img
+                    src={displayImage}
+                    alt="Background"
+                    className="w-full h-full object-cover transition-all duration-100 ease-out"
+                    style={{
+                        filter: `blur(${blurAmount}px) brightness(${brightnessAmount}%)`,
+                        transform: 'scale(1.1)' // Slight scale to avoid blur edge artifacts
+                    }}
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-60" />
             </div>
 
             {/* Hidden BGM Player */}
@@ -169,111 +196,103 @@ const ArtistPublicPage: React.FC = () => {
                 )}
             </div>
 
-            {/* 1. Fixed Background */}
-            <div className="fixed inset-0 z-0">
-                <img
-                    src={displayImage}
-                    alt="Background"
-                    style={blurStyle}
-                    className="w-full h-full object-cover transition-all duration-75 ease-out will-change-transform"
-                />
-                {/* Dark Gradient Overlay */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black via-black/10 to-transparent opacity-80" />
-            </div>
-
             {/* 2. Scroll Container (Snap Wrapper) */}
             <div
-                className="relative z-10 h-full w-full overflow-y-auto snap-y snap-mandatory scroll-smooth"
+                className="relative z-10 h-full overflow-y-auto snap-y snap-mandatory scroll-smooth"
                 onScroll={handleScroll}
             >
-                {/* Snap Item 1: Spacer (Hero Mode) */}
+                {/* Snap Item 1: Invisible Spacer (To push content to bottom effectively) */}
                 <div className="w-full h-[60vh] snap-start bg-transparent pointer-events-none" />
 
                 {/* Snap Item 2: Main Content Area */}
-                <div className="w-full h-screen snap-start flex flex-col bg-black/60 backdrop-blur-sm">
+                <div className="h-screen w-full snap-start flex flex-col bg-black/40 backdrop-blur-sm">
 
-                    {/* Header Wrapper (Artist Info) */}
-                    {/* Sticky logic is implicit because Snap Item 2 is h-screen, so top of this div IS top of viewport when snapped */}
-                    <div className="w-full px-8 pt-8 pb-6 flex-shrink-0 animate-fade-in shadow-2xl">
-                        {/* Constraint Container */}
-                        <div className="space-y-6 max-w-[240px]">
-                            {/* Main Title & Bio */}
-                            <div className="space-y-2">
-                                <h1 className="text-white text-5xl font-black tracking-tighter drop-shadow-2xl leading-none break-words">
-                                    {displayNameText}
-                                </h1>
+                    {/* Sticky Header: Artist Info */}
+                    <div className="sticky top-0 z-20 pt-20 pb-6 px-8 bg-gradient-to-b from-black/90 via-black/80 to-transparent backdrop-blur-md border-b border-white/5">
+                        <div className="max-w-2xl mx-auto space-y-6">
 
-                                {/* Roles */}
-                                <p className="text-white/90 text-sm font-medium tracking-wide drop-shadow-lg leading-relaxed">
-                                    {profile.bio || "Artist"}
-                                </p>
-                            </div>
-
-                            {/* Divider line */}
-                            <div className="w-8 h-1 bg-white/30 rounded-full" />
-
-                            {/* Music Player Section */}
-                            <div className="space-y-4 pt-1">
-                                <div>
-                                    <p className="text-white/60 text-[10px] font-bold uppercase tracking-widest mb-1">
-                                        Latest Release
-                                    </p>
-                                    <p className="text-white text-base font-medium drop-shadow-lg truncate">
-                                        {mainTrackTitle}
+                            {/* Header Content Wrapper */}
+                            <div className="flex flex-col gap-4">
+                                {/* Text Info */}
+                                <div className="space-y-2">
+                                    <h1 className="text-4xl md:text-5xl font-black tracking-tighter text-white drop-shadow-md">
+                                        {displayNameText}
+                                    </h1>
+                                    <p className="text-white/80 text-sm md:text-base font-medium">
+                                        {profile.bio || "Artist"}
                                     </p>
                                 </div>
 
-                                {/* Play Button */}
-                                <button
-                                    onClick={handlePlayClick}
-                                    disabled={!bgmTrack}
-                                    className="group flex items-center gap-3 bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/20 rounded-full pl-2 pr-6 py-2 transition-all duration-300 hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed w-fit"
-                                >
-                                    <div
-                                        className={`flex items-center justify-center w-10 h-10 rounded-full bg-white text-black transition-transform duration-300 ${isPlaying ? "scale-95" : "group-hover:scale-110"}`}
+                                {/* Controls Row */}
+                                <div className="flex items-center justify-between gap-4">
+                                    <div className="flex flex-col">
+                                        <span className="text-white/50 text-[10px] font-bold uppercase tracking-wider">
+                                            Latest Release
+                                        </span>
+                                        <span className="text-white text-base font-medium truncate max-w-[200px]">
+                                            {mainTrackTitle}
+                                        </span>
+                                    </div>
+
+                                    {/* Play Button */}
+                                    <button
+                                        onClick={handlePlayClick}
+                                        disabled={!bgmTrack}
+                                        className="flex items-center gap-3 bg-white text-black px-5 py-2.5 rounded-full hover:scale-105 active:scale-95 transition-all shadow-lg shadow-white/10"
                                     >
                                         {isPlaying ? (
-                                            <Pause className="w-4 h-4" fill="currentColor" />
+                                            <Pause className="w-4 h-4 fill-current" />
                                         ) : (
-                                            <Play className="w-4 h-4 ml-0.5" fill="currentColor" />
+                                            <Play className="w-4 h-4 fill-current ml-0.5" />
                                         )}
-                                    </div>
-                                    <span className="text-white text-sm font-bold tracking-tight text-left">
-                                        {isPlaying ? "Pause" : "Play Now"}
-                                    </span>
-                                </button>
+                                        <span className="text-sm font-bold">
+                                            {isPlaying ? "Pause" : "Play"}
+                                        </span>
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>
 
                     {/* Scrollable Track List */}
-                    <div className="flex-1 w-full overflow-y-auto px-6 pb-32">
-                        {trackList.length > 0 ? (
-                            <div className="space-y-3 max-w-xl">
-                                <h3 className="text-white/50 text-xs font-bold uppercase tracking-widest mb-4 mt-2">All Tracks</h3>
-                                {trackList.map((track) => (
-                                    <div
-                                        key={track.id}
-                                        className="group relative flex items-center gap-4 bg-white/5 hover:bg-white/10 border border-white/5 hover:border-white/10 rounded-xl p-4 transition-all"
-                                    >
-                                        <div className="w-10 h-10 rounded-lg bg-indigo-500/20 flex items-center justify-center text-indigo-400 group-hover:text-white transition-colors">
-                                            <Music2 className="w-5 h-5" />
-                                        </div>
-                                        <div className="flex-1 min-w-0">
-                                            <p className="text-white text-base font-medium truncate">{track.title}</p>
-                                            <p className="text-white/40 text-xs truncate capitalize">{track.platform}</p>
-                                        </div>
-                                        <a href={track.url} target="_blank" rel="noopener noreferrer" className="opacity-0 group-hover:opacity-100 transition-opacity p-2 hover:bg-white/10 rounded-full">
-                                            <Play className="w-4 h-4 text-white" fill="currentColor" />
-                                        </a>
+                    <div className="flex-1 overflow-y-auto p-4 md:p-6 pb-24">
+                        <div className="max-w-2xl mx-auto space-y-2">
+                            {tracks.map((track, idx) => (
+                                <div
+                                    key={track.id}
+                                    onClick={() => handleTrackSelect(track)}
+                                    className={`group flex items-center gap-4 p-4 rounded-xl cursor-pointer transition-all border ${bgmTrack?.id === track.id && isPlaying
+                                        ? 'bg-white/20 border-white/30 shadow-inner' // Active style
+                                        : 'bg-white/5 border-white/5 hover:bg-white/10 hover:border-white/20'
+                                        }`}
+                                >
+                                    <div className="text-white/40 text-sm font-mono w-6 text-center">
+                                        {idx + 1}
                                     </div>
-                                ))}
-                            </div>
-                        ) : (
-                            <div className="text-white/30 text-center py-10 text-sm">
-                                No tracks found.
-                            </div>
-                        )}
+                                    <div className="flex-1 min-w-0">
+                                        <h3 className={`text-sm md:text-base font-medium truncate transition-colors ${bgmTrack?.id === track.id && isPlaying ? 'text-indigo-400' : 'text-white'
+                                            }`}>
+                                            {track.title}
+                                        </h3>
+                                        <p className="text-xs text-white/40 capitalize">
+                                            {track.platform}
+                                        </p>
+                                    </div>
+                                    <div className="opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <Play className="w-4 h-4 text-white" />
+                                    </div>
+                                    {bgmTrack?.id === track.id && isPlaying && (
+                                        <div className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse" />
+                                    )}
+                                </div>
+                            ))}
+
+                            {tracks.length === 0 && (
+                                <div className="text-center text-white/30 py-10">
+                                    No tracks available.
+                                </div>
+                            )}
+                        </div>
                     </div>
                 </div>
             </div>
