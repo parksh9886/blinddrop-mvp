@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
-import ReactPlayer from 'react-player';
 import { Play, Instagram, Youtube, Music2, Loader2, Pause } from 'lucide-react';
 import Navbar from '../components/Navbar';
 
@@ -89,6 +88,31 @@ const ArtistPublicPage: React.FC = () => {
         setIsPlaying(!isPlaying);
     };
 
+    // Helper to generate embed URL for BGM
+    const getBgmEmbedUrl = (track: Track): string | null => {
+        if (!track.url) return null;
+
+        if (track.platform === 'youtube') {
+            const regExp = /^.*((youtu.be\/)|(v\/)|(\/u\/\w\/)|(embed\/)|(watch\?))\??v?=?([^#&?]*).*/;
+            const match = track.url.match(regExp);
+            const videoId = (match && match[7].length === 11) ? match[7] : null;
+
+            if (videoId) {
+                // autoplay=1 is key. modestbranding/controls=0 to keep it lightweight/clean if visible (though hidden).
+                return `https://www.youtube.com/embed/${videoId}?autoplay=1&controls=0&disablekb=1&fs=0&modestbranding=1`;
+            }
+            return null;
+        }
+
+        if (track.platform === 'soundcloud') {
+            const encodedUrl = encodeURIComponent(track.url);
+            // auto_play=true
+            return `https://w.soundcloud.com/player/?url=${encodedUrl}&color=%234f46e5&auto_play=true&hide_related=true&show_comments=false&show_user=false&show_reposts=false&show_teaser=false`;
+        }
+
+        return null;
+    };
+
 
     if (loading) return (
         <div className="min-h-screen bg-black flex items-center justify-center text-white">
@@ -115,24 +139,13 @@ const ArtistPublicPage: React.FC = () => {
                 <Navbar />
             </div>
 
-            {/* Hidden BGM Player (ReactPlayer for Pause/Resume support) */}
-            <div className="absolute w-0 h-0 overflow-hidden opacity-0 pointer-events-none">
-                {bgmTrack && (
-                    <ReactPlayer
-                        url={bgmTrack.url}
-                        playing={isPlaying}
-                        width="0"
-                        height="0"
-                        volume={0.5} // Optional: default volume
-                        playsinline={true}
-                        config={{
-                            youtube: {
-                                playerVars: { showinfo: 0, controls: 0 }
-                            },
-                            soundcloud: {
-                                options: { auto_play: false, show_artwork: false }
-                            }
-                        }}
+            {/* Hidden BGM Player */}
+            <div className="absolute w-1 h-1 overflow-hidden opacity-0 pointer-events-none">
+                {isPlaying && bgmTrack && getBgmEmbedUrl(bgmTrack) && (
+                    <iframe
+                        src={getBgmEmbedUrl(bgmTrack)!}
+                        allow="autoplay; encrypted-media"
+                        title="BGM Player"
                     />
                 )}
             </div>
