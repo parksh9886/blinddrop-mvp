@@ -6,16 +6,16 @@ src/pages
 Actual files present in the directory:
 
 LandingPage.tsx: Public landing page for unauthenticated users.
-LoginPage.tsx: Authentication page (Supabase Auth).
-DashboardPage.tsx: Main artist dashboard. Manages tracks, views feedback, and handles replies/unlocking.
+LoginPage.tsx: Authentication page (Supabase Auth). Supports `returnUrl` query parameter for smart redirects.
+DashboardPage.tsx: Main artist dashboard. Manages tracks, views feedback. Merges `tracks` with `feedbacks_secure_view`.
 ProfilePage.tsx: User settings page. Updates handle, bio, and avatar.
 ArtistPublicPage.tsx: Public profile page (/u/:handle). Lists artist's tracks.
-PublicFeedbackPage.tsx: Public track page (/track/:trackId). Listeners play music and leave anonymous feedback.
+PublicFeedbackPage.tsx: Public track page (/track/:trackId). Fetches masked comments from `feedbacks_secure_view`.
 src/components
 Layout.tsx: Wrapper component providing consistent structure (Navbar + Main Content Area).
 Navbar.tsx: Responsive navigation bar.
 Logic:
-Guest: Shows [Login] button.
+Guest: Shows [Login] button with `returnUrl` parameter.
 User: Shows "Avatar + Hamburger" menu (Dashboard, My Artist Page, Settings, Sign Out).
 My Artist Page Link: Uses client-side <Link> to /u/{handle} (no new tab).
 2. Database Schema (Inferred from Code)
@@ -33,19 +33,22 @@ title (text)
 url (text) - YouTube or SoundCloud URL.
 platform (text) - 'youtube' | 'soundcloud'.
 created_at (timestamptz)
-feedbacks
+feedbacks (Table)
 id (uuid, PK)
 track_id (uuid, FK -> tracks.id)
 content (text) - The anonymous feedback text.
 reply (text | null) - Artist's reply.
 created_at (timestamptz)
-is_unlocked (boolean) - Verified in DashboardPage.tsx. Used to manually unlock feedback if the artist chooses to (feature implementation exists).
+is_unlocked (boolean)
+feedbacks_secure_view (View)
+Used for SELECT operations in public pages.
+Returns masked content (e.g., "****") if the feedback is locked/unreplied to protect data at the network level.
 3. Routing Map
 These are the actual routes defined in App.tsx.
 
 Path	Component	Auth Required?	Notes
 /	LandingPage	No	
-/login	LoginPage	No	
+/login	LoginPage	No	Handles `?returnUrl=...`
 /dashboard	DashboardPage	Yes	Protected Route
 /profile	ProfilePage	Yes	Protected Route
 /u/:handle	ArtistPublicPage	No	Definitive Public Profile URL
@@ -56,30 +59,28 @@ Note: The experimental /@:handle route has been removed and cleaned up.
 4. Key Business Logic
 Dashboard Logic (DashboardPage.tsx)
 Data Fetching:
-Fetches the current user's handle from users.
-Fetches all tracks for the user, including joined feedbacks.
+Fetches `tracks` for the user.
+Fetches `feedbacks` separately from `feedbacks_secure_view` using `trackIds`, then merges them.
 Feedback Sorting:
-Feedbacks are essentially displayed as a list under each track (Accordion style).
+Feedbacks are displayed under each track.
 Interaction:
-Reply: Artist can reply to feedback. This updates the reply column in feedbacks.
-Unlock: Explicit logic exists to update is_unlocked = true in feedbacks table.
+Reply: Artist can reply. Updates `feedbacks` table directly.
+Unlock: Updates `is_unlocked` in `feedbacks` table.
 Copy Links:
 Track Link: Copies origin/track/:trackId
 Profile Link: Copies origin/u/:handle
 Public Page Logic (PublicFeedbackPage.tsx)
-Player:
-Uses a native <iframe> approach.
-Regex Logic: detect YouTube vs SoundCloud and construct embed URLs manually (no react-player dependency for playback).
+Data Loading:
+Queries `feedbacks_secure_view` to ensure locked content is masked (`****`) by the DB.
+Visually blurs content if it is locked OR matches masked pattern (`****`).
 Feedback Submission:
-Inserts new row into feedbacks with track_id and content.
-Anonymous submission (no user ID attached).
-Visuals:
-Displays "Locked" feedback if reply is null (Reveal-on-reply mechanic).
-Displays "Artist Reply" if exists.
+Inserts directly into `feedbacks` table (Write permission allowed).
+Player:
+Native <iframe> with regex parsing for YouTube/SoundCloud.
 5. Current UI/UX Status
-Navigation: Unified "Header" across all pages (Dashboard, Public Profile, Feedback Page).
-Styling: Dark Mode (Slate-950 base) with Indigo/Violet accents. Glassmorphism on dropdowns and cards.
-Responsiveness: Fully responsive. Mobile users see the same Hamburger menu logic.
+Navigation: Unified Header. Login redirects user back to the page they came from.
+Styling: Dark Mode. Blurred text for locked feedback.
+Responsiveness: Fully responsive.
 6. Environment & Infrastructure
 **Required Environment Variables (.env):**
 - `VITE_SUPABASE_URL`: Supabase Project URL
