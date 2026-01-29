@@ -183,8 +183,9 @@ const ArtistPublicPage: React.FC = () => {
 
                 {/* Content Area - Bottom Aligned */}
                 <div className="relative z-10 w-full min-h-screen flex flex-col justify-end">
-                    <div className="w-full px-8 pb-24"> {/* Adjusted bottom padding */}
-                        <div className="space-y-6"> {/* Reduced spacing */}
+                    <div className="w-full px-8 pb-24">
+                        {/* Constrained Width Container to match user request (Red Box) */}
+                        <div className="space-y-6 max-w-[240px]">
                             {/* Main Title & Bio */}
                             <div className="space-y-2">
                                 <h1 className="text-white text-5xl font-black tracking-tighter drop-shadow-2xl leading-none break-words">
@@ -192,13 +193,13 @@ const ArtistPublicPage: React.FC = () => {
                                 </h1>
 
                                 {/* Roles (formerly Bio) */}
-                                <p className="text-white/90 text-base font-medium tracking-wide drop-shadow-lg max-w-[90%] leading-relaxed">
+                                <p className="text-white/90 text-sm font-medium tracking-wide drop-shadow-lg leading-relaxed">
                                     {profile.bio || "Artist"}
                                 </p>
                             </div>
 
                             {/* Divider line */}
-                            <div className="w-10 h-1 bg-white/30 rounded-full" />
+                            <div className="w-8 h-1 bg-white/30 rounded-full" />
 
                             {/* Music Player Section */}
                             <div className="space-y-4 pt-1">
@@ -206,16 +207,16 @@ const ArtistPublicPage: React.FC = () => {
                                     <p className="text-white/60 text-[10px] font-bold uppercase tracking-widest mb-1">
                                         Latest Release
                                     </p>
-                                    <p className="text-white text-lg font-medium drop-shadow-lg truncate">
+                                    <p className="text-white text-base font-medium drop-shadow-lg truncate">
                                         {mainTrackTitle}
                                     </p>
                                 </div>
 
-                                {/* Play Button */}
+                                {/* Play Button - Compact Width */}
                                 <button
                                     onClick={handlePlayClick}
                                     disabled={!bgmTrack}
-                                    className="group flex items-center gap-4 bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/20 rounded-full px-6 py-3 transition-all duration-300 hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed w-full max-w-xs"
+                                    className="group flex items-center gap-3 bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/20 rounded-full pl-2 pr-6 py-2 transition-all duration-300 hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed w-fit"
                                 >
                                     <div
                                         className={`flex items-center justify-center w-10 h-10 rounded-full bg-white text-black transition-transform duration-300 ${isPlaying ? "scale-95" : "group-hover:scale-110"}`}
@@ -226,34 +227,34 @@ const ArtistPublicPage: React.FC = () => {
                                             <Play className="w-4 h-4 ml-0.5" fill="currentColor" />
                                         )}
                                     </div>
-                                    <span className="text-white text-base font-bold tracking-tight text-left flex-1">
+                                    <span className="text-white text-sm font-bold tracking-tight text-left">
                                         {isPlaying ? "Pause" : "Play Now"}
                                     </span>
                                 </button>
                             </div>
 
                             {/* Social Media Icons */}
-                            <div className="flex gap-3 pt-2">
+                            <div className="flex gap-3 pt-1">
                                 <a
                                     href="#"
-                                    className="flex items-center justify-center w-10 h-10 rounded-full bg-white/5 hover:bg-white/20 backdrop-blur-md border border-white/10 text-white transition-all duration-300 hover:scale-110"
+                                    className="flex items-center justify-center w-8 h-8 rounded-full bg-white/5 hover:bg-white/20 backdrop-blur-md border border-white/10 text-white transition-all duration-300 hover:scale-110"
                                     aria-label="Instagram"
                                 >
-                                    <Instagram className="w-4 h-4" />
+                                    <Instagram className="w-3.5 h-3.5" />
                                 </a>
                                 <a
                                     href="#"
-                                    className="flex items-center justify-center w-10 h-10 rounded-full bg-white/5 hover:bg-white/20 backdrop-blur-md border border-white/10 text-white transition-all duration-300 hover:scale-110"
+                                    className="flex items-center justify-center w-8 h-8 rounded-full bg-white/5 hover:bg-white/20 backdrop-blur-md border border-white/10 text-white transition-all duration-300 hover:scale-110"
                                     aria-label="YouTube"
                                 >
-                                    <Youtube className="w-4 h-4" />
+                                    <Youtube className="w-3.5 h-3.5" />
                                 </a>
                                 <a
                                     href="#"
-                                    className="flex items-center justify-center w-10 h-10 rounded-full bg-white/5 hover:bg-white/20 backdrop-blur-md border border-white/10 text-white transition-all duration-300 hover:scale-110"
+                                    className="flex items-center justify-center w-8 h-8 rounded-full bg-white/5 hover:bg-white/20 backdrop-blur-md border border-white/10 text-white transition-all duration-300 hover:scale-110"
                                     aria-label="Spotify"
                                 >
-                                    <Music2 className="w-4 h-4" />
+                                    <Music2 className="w-3.5 h-3.5" />
                                 </a>
                             </div>
                         </div>
