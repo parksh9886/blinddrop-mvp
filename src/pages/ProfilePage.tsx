@@ -2,12 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
 import Layout from '../components/Layout';
-import { Save, Loader2, User as UserIcon, Camera, AlertTriangle, Music, Check } from 'lucide-react';
-
-interface Track {
-    id: string;
-    title: string;
-}
+import { Save, Loader2, User as UserIcon, Camera, AlertTriangle, Check } from 'lucide-react';
 
 const ROLES = [
     { value: 'Singer', label: 'Singer' },
@@ -27,15 +22,15 @@ const ProfilePage: React.FC = () => {
     const [displayName, setDisplayName] = useState(''); // New Activity Name
     const [selectedRoles, setSelectedRoles] = useState<string[]>([]); // Roles replaces Bio for UI
     const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
-    const [mainTrackId, setMainTrackId] = useState<string>('');
     const [originalHandle, setOriginalHandle] = useState('');
-
     const [msg, setMsg] = useState<{ type: 'success' | 'error' | 'warning', text: string } | null>(null);
+    const [collabStatus, setCollabStatus] = useState<'OPEN' | 'CLOSED'>('OPEN');
+    const [collabTypes, setCollabTypes] = useState<string[]>([]);
 
-    // User Tracks for BGM Selection
-    const [tracks, setTracks] = useState<Track[]>([]);
+    // Constants
+    const COLLAB_OPTIONS = ['Featuring', 'Beat Making', 'Topline', 'Remix', 'Mixing', 'Mastering', 'Lyrics'];
 
-    // Fetch Profile & Tracks
+    // Fetch Profile
     useEffect(() => {
         if (!user) return;
 
@@ -44,7 +39,7 @@ const ProfilePage: React.FC = () => {
                 // 1. Fetch Profile
                 const { data: userData, error: userError } = await supabase
                     .from('users')
-                    .select('handle, bio, avatar_url, main_track_id, display_name')
+                    .select('handle, bio, avatar_url, display_name, collab_status, collab_types')
                     .eq('id', user.id)
                     .single();
 
@@ -57,36 +52,24 @@ const ProfilePage: React.FC = () => {
                     setOriginalHandle(userData.handle || '');
                     setDisplayName(userData.display_name || '');
 
+                    // Collab Settings
+                    setCollabStatus(userData.collab_status || 'OPEN');
+                    setCollabTypes(isArray(userData.collab_types) ? userData.collab_types : []);
+
                     // Parse Roles from Bio
-                    // If bio contains " · ", split it. If not, just put it in or leave empty if it was legacy text?
-                    // Let's try to match existing roles.
                     if (userData.bio) {
                         const roles = userData.bio.split(' · ').filter((r: string) => ROLES.some(opt => opt.value === r || opt.label === r));
-                        // If no roles matched but there is text, maybe just ignore or try to keep? 
-                        // User requested Bio to BECOME roles selector. So we assume bio is now roles.
                         if (roles.length > 0) {
                             setSelectedRoles(roles);
                         } else if (userData.bio.includes(' · ')) {
-                            // Fallback for custom roles if any?
                             setSelectedRoles(userData.bio.split(' · '));
                         }
                     }
 
                     setAvatarUrl(userData.avatar_url || user.user_metadata.avatar_url);
-                    setMainTrackId(userData.main_track_id || '');
                 } else {
                     setAvatarUrl(user.user_metadata.avatar_url);
                 }
-
-                // 2. Fetch Tracks
-                const { data: tracksData, error: tracksError } = await supabase
-                    .from('tracks')
-                    .select('id, title')
-                    .eq('user_id', user.id)
-                    .order('created_at', { ascending: false });
-
-                if (tracksError) throw tracksError;
-                setTracks(tracksData || []);
 
             } catch (err) {
                 console.error('Unexpected error:', err);
@@ -97,6 +80,9 @@ const ProfilePage: React.FC = () => {
 
         fetchData();
     }, [user]);
+
+    // Helper check for array
+    const isArray = (arr: any): arr is string[] => Array.isArray(arr);
 
     // Avatar Upload Handler
     const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -147,6 +133,14 @@ const ProfilePage: React.FC = () => {
         );
     };
 
+    const toggleCollabType = (type: string) => {
+        setCollabTypes(prev =>
+            prev.includes(type)
+                ? prev.filter(t => t !== type)
+                : [...prev, type]
+        );
+    };
+
     const handleSave = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!user) return;
@@ -175,10 +169,11 @@ const ProfilePage: React.FC = () => {
             const updates = {
                 id: user.id,
                 handle,
-                display_name: displayName, // Save Display Name
-                bio: bio, // Save Roles as Bio
+                display_name: displayName,
+                bio: bio,
                 avatar_url: avatarUrl,
-                main_track_id: mainTrackId || null,
+                collab_status: collabStatus,
+                collab_types: collabTypes,
                 updated_at: new Date().toISOString(),
             };
 
@@ -249,7 +244,6 @@ const ProfilePage: React.FC = () => {
                                 placeholder="e.g. The Weeknd"
                                 className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
                             />
-                            <p className="mt-2 text-xs text-slate-500">This is the name displayed on your profile.</p>
                         </div>
 
                         {/* Handle Input */}
@@ -266,12 +260,11 @@ const ProfilePage: React.FC = () => {
                                     required
                                 />
                             </div>
-                            <p className="mt-2 text-xs text-slate-500">Only lowercase letters, numbers, underscores, and dots.</p>
                         </div>
 
-                        {/* Roles Selection (Replaces Bio) */}
+                        {/* Roles Selection */}
                         <div>
-                            <label className="block text-sm font-medium text-slate-300 mb-3">Roles (Select all that apply)</label>
+                            <label className="block text-sm font-medium text-slate-300 mb-3">Roles</label>
                             <div className="flex flex-wrap gap-2">
                                 {ROLES.map((role) => {
                                     const isSelected = selectedRoles.includes(role.value);
@@ -291,33 +284,49 @@ const ProfilePage: React.FC = () => {
                                     );
                                 })}
                             </div>
-                            <p className="mt-2 text-xs text-slate-500">Displayed as: {selectedRoles.join(' · ') || "(No roles selected)"}</p>
                         </div>
 
-                        {/* BGM Selection */}
-                        <div>
-                            <label className="block text-sm font-medium text-slate-300 mb-2 flex items-center gap-2">
-                                <Music className="w-4 h-4 text-indigo-400" />
-                                Representative Track (BGM)
-                            </label>
-                            <div className="relative">
-                                <select
-                                    value={mainTrackId}
-                                    onChange={(e) => setMainTrackId(e.target.value)}
-                                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent appearance-none"
+                        {/* Collaboration Settings (New) */}
+                        <div className="pt-6 border-t border-slate-800">
+                            <h3 className="text-lg font-bold text-white mb-4">Collaboration Preferences</h3>
+
+                            {/* Status Toggle */}
+                            <div className="flex items-center justify-between mb-6 bg-slate-950 p-4 rounded-xl border border-slate-800">
+                                <div>
+                                    <div className="text-sm font-medium text-white mb-1">Accepting Collaborations?</div>
+                                    <div className="text-xs text-slate-500">Turn this off if you are fully booked.</div>
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={() => setCollabStatus(prev => prev === 'OPEN' ? 'CLOSED' : 'OPEN')}
+                                    className={`relative w-14 h-8 rounded-full transition-colors flex items-center px-1 ${collabStatus === 'OPEN' ? 'bg-green-500' : 'bg-slate-700'}`}
                                 >
-                                    <option value="">-- No Specific BGM (Use Latest) --</option>
-                                    {tracks.map(track => (
-                                        <option key={track.id} value={track.id}>
-                                            {track.title}
-                                        </option>
-                                    ))}
-                                </select>
-                                <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-500">
-                                    ▼
+                                    <div className={`w-6 h-6 rounded-full bg-white shadow-md transform transition-transform ${collabStatus === 'OPEN' ? 'translate-x-6' : 'translate-x-0'}`} />
+                                </button>
+                            </div>
+
+                            {/* Collab Types */}
+                            <div className={`transition-opacity duration-300 ${collabStatus === 'CLOSED' ? 'opacity-50 pointer-events-none' : 'opacity-100'}`}>
+                                <label className="block text-sm font-medium text-slate-300 mb-3">Interests (What are you looking for?)</label>
+                                <div className="flex flex-wrap gap-2">
+                                    {COLLAB_OPTIONS.map((type) => {
+                                        const isSelected = collabTypes.includes(type);
+                                        return (
+                                            <button
+                                                key={type}
+                                                type="button"
+                                                onClick={() => toggleCollabType(type)}
+                                                className={`px-4 py-2 rounded-full text-sm font-medium transition-all border ${isSelected
+                                                    ? 'bg-white text-black border-white'
+                                                    : 'bg-slate-950 border-slate-800 text-slate-400 hover:border-slate-600'
+                                                    }`}
+                                            >
+                                                {type}
+                                            </button>
+                                        );
+                                    })}
                                 </div>
                             </div>
-                            <p className='mt-2 text-xs text-slate-500'>This track will be played when a user clicks "Play" on your profile.</p>
                         </div>
 
                         {/* Status Message */}
