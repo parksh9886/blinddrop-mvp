@@ -2,7 +2,12 @@ import React, { useEffect, useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
 import Layout from '../components/Layout';
-import { Save, Loader2, User as UserIcon, Camera, AlertTriangle } from 'lucide-react';
+import { Save, Loader2, User as UserIcon, Camera, AlertTriangle, Music } from 'lucide-react';
+
+interface Track {
+    id: string;
+    title: string;
+}
 
 const ProfilePage: React.FC = () => {
     const { user } = useAuth();
@@ -13,36 +18,52 @@ const ProfilePage: React.FC = () => {
     const [handle, setHandle] = useState('');
     const [bio, setBio] = useState('');
     const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+    const [mainTrackId, setMainTrackId] = useState<string>(''); // For BGM
     const [originalHandle, setOriginalHandle] = useState('');
+
 
     const [msg, setMsg] = useState<{ type: 'success' | 'error' | 'warning', text: string } | null>(null);
 
-    // Fetch Profile
+    // User Tracks for BGM Selection
+    const [tracks, setTracks] = useState<Track[]>([]);
+
+    // Fetch Profile & Tracks
     useEffect(() => {
         if (!user) return;
 
-        const fetchProfile = async () => {
+        const fetchData = async () => {
             try {
-                // Try fetching from 'users' table as requested
-                const { data, error } = await supabase
+                // 1. Fetch Profile
+                const { data: userData, error: userError } = await supabase
                     .from('users')
-                    .select('handle, bio, avatar_url')
+                    .select('handle, bio, avatar_url, main_track_id')
                     .eq('id', user.id)
                     .single();
 
-                if (error && error.code !== 'PGRST116') { // PGRST116 is "Row not found"
-                    console.error('Error fetching profile:', error);
+                if (userError && userError.code !== 'PGRST116') {
+                    console.error('Error fetching profile:', userError);
                 }
 
-                if (data) {
-                    setHandle(data.handle || '');
-                    setOriginalHandle(data.handle || '');
-                    setBio(data.bio || '');
-                    setAvatarUrl(data.avatar_url || user.user_metadata.avatar_url);
+                if (userData) {
+                    setHandle(userData.handle || '');
+                    setOriginalHandle(userData.handle || '');
+                    setBio(userData.bio || '');
+                    setAvatarUrl(userData.avatar_url || user.user_metadata.avatar_url);
+                    setMainTrackId(userData.main_track_id || '');
                 } else {
-                    // Fallback to auth metadata if no profile row exists
                     setAvatarUrl(user.user_metadata.avatar_url);
                 }
+
+                // 2. Fetch Tracks
+                const { data: tracksData, error: tracksError } = await supabase
+                    .from('tracks')
+                    .select('id, title')
+                    .eq('user_id', user.id)
+                    .order('created_at', { ascending: false });
+
+                if (tracksError) throw tracksError;
+                setTracks(tracksData || []);
+
             } catch (err) {
                 console.error('Unexpected error:', err);
             } finally {
@@ -50,7 +71,7 @@ const ProfilePage: React.FC = () => {
             }
         };
 
-        fetchProfile();
+        fetchData();
     }, [user]);
 
     // Avatar Upload Handler
@@ -77,7 +98,7 @@ const ProfilePage: React.FC = () => {
                 .getPublicUrl(filePath);
 
             setAvatarUrl(publicUrl);
-            setMsg({ type: 'success', text: 'Image uploaded! Remember to click Save to persist changes.' });
+            setMsg({ type: 'success', text: 'Image uploaded! Click Save to persist changes.' });
         } catch (error: any) {
             console.error('Upload error:', error);
             setMsg({ type: 'error', text: 'Failed to upload image.' });
@@ -122,6 +143,7 @@ const ProfilePage: React.FC = () => {
                 handle,
                 bio,
                 avatar_url: avatarUrl,
+                main_track_id: mainTrackId || null, // Save BGM choice
                 updated_at: new Date().toISOString(),
             };
 
@@ -198,16 +220,6 @@ const ProfilePage: React.FC = () => {
                                 />
                             </div>
                             <p className="mt-2 text-xs text-slate-500">Only lowercase letters, numbers, underscores, and dots.</p>
-
-                            {/* Handle Change Warning */}
-                            {originalHandle && handle !== originalHandle && (
-                                <div className="mt-3 flex items-start gap-2 text-amber-400 bg-amber-500/10 p-3 rounded-lg text-xs leading-relaxed border border-amber-500/20">
-                                    <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
-                                    <span>
-                                        <strong>Warning:</strong> Changing your handle will break your existing profile links. You will need to share the new link again.
-                                    </span>
-                                </div>
-                            )}
                         </div>
 
                         {/* Bio Input */}
@@ -222,6 +234,32 @@ const ProfilePage: React.FC = () => {
                             <div className="mt-1 text-right text-xs text-slate-500">
                                 {bio.length}/160
                             </div>
+                        </div>
+
+                        {/* BGM Selection */}
+                        <div>
+                            <label className="block text-sm font-medium text-slate-300 mb-2 flex items-center gap-2">
+                                <Music className="w-4 h-4 text-indigo-400" />
+                                Representative Track (BGM)
+                            </label>
+                            <div className="relative">
+                                <select
+                                    value={mainTrackId}
+                                    onChange={(e) => setMainTrackId(e.target.value)}
+                                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent appearance-none"
+                                >
+                                    <option value="">-- No Specific BGM (Use Latest) --</option>
+                                    {tracks.map(track => (
+                                        <option key={track.id} value={track.id}>
+                                            {track.title}
+                                        </option>
+                                    ))}
+                                </select>
+                                <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-500">
+                                    ▼
+                                </div>
+                            </div>
+                            <p className='mt-2 text-xs text-slate-500'>This track will be played when a user clicks "Play" on your profile.</p>
                         </div>
 
                         {/* Status Message */}
