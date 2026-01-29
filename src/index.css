@@ -4,4 +4,14 @@
   body {
     @apply bg-slate-950 text-slate-50;
   }
+
+  /* Hide scrollbar globally */
+  ::-webkit-scrollbar {
+    display: none;
+  }
+
+  html {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
 }

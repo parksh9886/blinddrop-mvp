@@ -12,6 +12,7 @@ interface Feedback {
     created_at: string;
     reply: string | null;
     is_unlocked: boolean;
+    track_id: string;
 }
 
 interface Track {

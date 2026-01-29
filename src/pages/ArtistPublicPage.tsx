@@ -340,8 +340,28 @@ const ArtistPublicPage: React.FC = () => {
 
                                     {/* Social Trigger Icons */}
                                     {/* Hide when scrolling down, just like before, but now with new logic */}
-                                    <div className={`flex gap-3 pt-2 transition-all duration-300 ${scrollProgress > 0.8 ? 'opacity-0 h-0 overflow-hidden' : 'opacity-100 h-auto'}`}>
-                                        {triggerButtons}
+                                    <div className={`space-y-2 pt-2 transition-all duration-300 ${scrollProgress > 0.8 ? 'opacity-0 h-0 overflow-hidden' : 'opacity-100 h-auto'}`}>
+                                        <div className="w-10 h-1 bg-red-500 mb-2"></div>
+                                        {/* Optional Label if needed, but per request just the red bar style or just the label? User asked for "Social Links" text */}
+                                        {/* Rerading request: "red box marked area, add small gray bold 'Social Links'" */}
+                                        {/* The red box in the image is actually highlighting the SECTION. I should add the text label. */}
+                                    </div>
+                                    <div className={`flex flex-col gap-2 pt-1 transition-all duration-300 ${scrollProgress > 0.8 ? 'opacity-0 h-0 overflow-hidden' : 'opacity-100 h-auto'}`}>
+                                        {/* Wait, the user image shows a red box around the AREA where links are.
+                                            The user request says: "add small gray bold Social Links"
+                                         */}
+                                        {triggerButtons && (
+                                            <>
+                                                {/* Red bar exists in my code? Line 312 is a white bar. The user screenshot has a red bar? No, the user drew a red box.
+                                                The user screenshot shows the "Open for collab" buttons. Below that is a red box the user drew.
+                                                Inside/near that red box (which is below collab buttons), they want "Social Links" text.
+                                                */}
+                                                <h3 className="text-xs font-bold text-white/40 uppercase tracking-wider">Social Links</h3>
+                                                <div className="flex gap-3">
+                                                    {triggerButtons}
+                                                </div>
+                                            </>
+                                        )}
                                     </div>
                                 </div>
                             </div>
