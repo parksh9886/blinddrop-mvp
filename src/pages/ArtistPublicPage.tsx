@@ -189,7 +189,7 @@ const ArtistPublicPage: React.FC = () => {
                 {isPlaying && bgmTrack && getBgmEmbedUrl(bgmTrack) && (
                     <iframe
                         src={getBgmEmbedUrl(bgmTrack)!}
-                        allow="autoplay; encrypted-media"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                         title="BGM Player"
                     />
                 )}
