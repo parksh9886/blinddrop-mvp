@@ -287,64 +287,55 @@ const ArtistPublicPage: React.FC = () => {
                 {/* Main Content */}
                 <div className="min-h-screen w-full snap-start flex flex-col">
 
-                    {/* Sticky Header */}
-                    <div
-                        className="sticky top-0 z-20 pt-20 pb-6 px-8 border-b border-transparent transition-colors duration-300"
-                        style={{
-                            backgroundColor: `rgba(0, 0, 0, ${headerBgOpacity})`,
-                            borderColor: scrollProgress > 0.8 ? 'rgba(255, 255, 255, 0.1)' : 'transparent',
-                            backdropFilter: scrollProgress > 0.5 ? 'blur(12px)' : 'none'
-                        }}
-                    >
-                        <div className="max-w-[300px] space-y-6">
+                    {/* Hero Section with Bottom-Left Content */}
+                    <div className="relative h-[85vh] w-full snap-start flex flex-col justify-end">
+                        {/* Gradient Overlay for Readability */}
+                        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent pointer-events-none" />
 
-                            {/* Header Content Wrapper */}
-                            <div className="flex flex-col items-center text-center">
-                                <div className="space-y-1">
-                                    <h1 className="text-5xl md:text-6xl font-black tracking-tighter text-white drop-shadow-2xl leading-none">
+                        <div className="relative z-20 p-8 pb-12 w-full max-w-4xl">
+                            <div className="flex flex-col items-start text-left space-y-6">
+                                {/* Name & Bio */}
+                                <div className="space-y-2">
+                                    <h1 className="text-6xl md:text-8xl font-black tracking-tighter text-white drop-shadow-2xl leading-none">
                                         {displayNameText}
                                     </h1>
-                                    <p className="text-white/60 text-lg font-medium tracking-wide drop-shadow-md">
+                                    <p className="text-white/70 text-xl font-medium tracking-wide drop-shadow-md max-w-2xl">
                                         {profile.bio || "Artist"}
                                     </p>
                                 </div>
 
                                 {/* Status Badge */}
-                                <div className="mt-4">
-                                    <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full backdrop-blur-md transition-all duration-300 ${isCollabOpen
-                                        ? 'bg-green-500/10'
-                                        : 'bg-red-500/10'
+                                <div className={`inline-flex items-center gap-3 px-4 py-2 rounded-full backdrop-blur-md transition-all duration-300 ${isCollabOpen
+                                    ? 'bg-green-500/10'
+                                    : 'bg-red-500/10'
+                                    }`}>
+                                    <div className={`w-2.5 h-2.5 rounded-full shadow-[0_0_8px] ${isCollabOpen
+                                        ? 'bg-green-400 shadow-green-400'
+                                        : 'bg-red-400 shadow-red-400'
+                                        }`} />
+                                    <span className={`text-sm font-bold tracking-wide ${isCollabOpen ? 'text-green-300' : 'text-red-300'
                                         }`}>
-                                        <div className={`w-2 h-2 rounded-full shadow-[0_0_8px] ${isCollabOpen
-                                            ? 'bg-green-400 shadow-green-400'
-                                            : 'bg-red-400 shadow-red-400'
-                                            }`} />
-                                        <span className={`text-xs font-bold tracking-wide ${isCollabOpen ? 'text-green-300' : 'text-red-300'
-                                            }`}>
-                                            {isCollabOpen ? 'OPEN FOR COLLAB' : 'NOT TAKING REQUESTS'}
-                                        </span>
-                                    </div>
+                                        {isCollabOpen ? 'OPEN FOR COLLAB' : 'NOT TAKING REQUESTS'}
+                                    </span>
                                 </div>
 
                                 {/* Collab Types */}
                                 {isCollabOpen && profile.collab_types && profile.collab_types.length > 0 && (
-                                    <div className="mt-6 flex flex-wrap justify-center gap-2">
+                                    <div className="flex flex-wrap gap-2">
                                         {profile.collab_types.map((type, i) => (
-                                            <span key={i} className="px-3 py-1 rounded-full bg-white/10 hover:bg-white/20 text-white/90 text-sm backdrop-blur-sm transition-colors cursor-default">
+                                            <span key={i} className="px-4 py-1.5 rounded-full bg-white/10 hover:bg-white/20 text-white/90 text-sm backdrop-blur-sm transition-colors cursor-default border border-white/5">
                                                 {type}
                                             </span>
                                         ))}
                                     </div>
                                 )}
 
-                                {/* Social Trigger Icons */}
-                                <div className={`mt-8 transition-all duration-500 ${scrollProgress > 0.8 ? 'opacity-0 translate-y-4 pointer-events-none' : 'opacity-100 translate-y-0'}`}>
-                                    {triggerButtons && (
-                                        <div className="flex gap-4">
-                                            {triggerButtons}
-                                        </div>
-                                    )}
-                                </div>
+                                {/* Social Icons */}
+                                {triggerButtons && (
+                                    <div className="pt-2 flex gap-4">
+                                        {triggerButtons}
+                                    </div>
+                                )}
                             </div>
                         </div>
                     </div>
