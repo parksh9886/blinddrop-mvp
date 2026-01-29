@@ -1,7 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
-import { Play, Loader2, Instagram, Youtube, Music2 } from 'lucide-react';
+import { useAuth } from '../contexts/AuthContext';
+import {
+    Play, Loader2, Instagram, Youtube, Music2, Globe, Twitter,
+    Facebook, Linkedin, MoreHorizontal, X, ArrowUpRight, Plus, Disc3, Link as LinkIcon
+} from 'lucide-react';
 import Navbar from '../components/Navbar';
 
 interface UserProfile {
@@ -22,14 +26,28 @@ interface Track {
     created_at: string;
 }
 
+interface ArtistLink {
+    id: string;
+    platform: string;
+    title: string;
+    url: string;
+    order_index: number;
+}
+
 const ArtistPublicPage: React.FC = () => {
     const { handle } = useParams<{ handle: string }>();
+    const { user } = useAuth();
     const [profile, setProfile] = useState<UserProfile | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
 
-    // Tracks List State (Still visible as portfolio)
+    // Tracks List State
     const [tracks, setTracks] = useState<Track[]>([]);
+
+    // Links State
+    const [artistLinks, setArtistLinks] = useState<ArtistLink[]>([]);
+    const [showLinkHub, setShowLinkHub] = useState(false);
+
     const [scrollProgress, setScrollProgress] = useState(0);
 
     useEffect(() => {
@@ -40,7 +58,7 @@ const ArtistPublicPage: React.FC = () => {
                 return;
             }
             try {
-                // 1. Fetch User by Handle (Include collab fields)
+                // 1. Fetch User by Handle
                 const { data: userData, error: userError } = await supabase
                     .from('users')
                     .select('id, handle, display_name, avatar_url, bio, collab_status, collab_types')
@@ -52,7 +70,7 @@ const ArtistPublicPage: React.FC = () => {
                 }
                 setProfile(userData);
 
-                // 2. Fetch Tracks for this user
+                // 2. Fetch Tracks
                 const { data: tracksData, error: tracksError } = await supabase
                     .from('tracks')
                     .select('id, title, url, platform, created_at')
@@ -61,6 +79,16 @@ const ArtistPublicPage: React.FC = () => {
 
                 if (tracksError) throw tracksError;
                 setTracks(tracksData || []);
+
+                // 3. Fetch Artist Links
+                const { data: linksData, error: linksError } = await supabase
+                    .from('artist_links')
+                    .select('*')
+                    .eq('user_id', userData.id)
+                    .order('order_index', { ascending: true });
+
+                if (linksError) throw linksError;
+                setArtistLinks(linksData || []);
 
             } catch (err: any) {
                 console.error('Error fetching artist data:', err);
@@ -77,12 +105,28 @@ const ArtistPublicPage: React.FC = () => {
     const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
         const scrollTop = e.currentTarget.scrollTop;
         const windowHeight = window.innerHeight;
-        // Calculate progress based on spacer height (approx 60vh)
         const spacerHeight = windowHeight * 0.6;
 
         let progress = scrollTop / spacerHeight;
         if (progress > 1) progress = 1;
         setScrollProgress(progress);
+    };
+
+    // Helper: Get Icon for Platform
+    const getIconForPlatform = (platform: string, className = "w-4 h-4") => {
+        switch (platform.toLowerCase()) {
+            case 'instagram': return <Instagram className={className} />;
+            case 'youtube': return <Youtube className={className} />;
+            case 'twitter': return <Twitter className={className} />; // Or X icon
+            case 'tiktok': return <Music2 className={className} />;
+            case 'spotify': return <Disc3 className={className} />;
+            case 'soundcloud': return <Music2 className={className} />; // Overlap with Music2
+            case 'apple': return <Music2 className={className} />;
+            case 'facebook': return <Facebook className={className} />;
+            case 'linkedin': return <Linkedin className={className} />;
+            case 'website': return <Globe className={className} />;
+            default: return <LinkIcon className={className} />;
+        }
     };
 
     if (loading) return (
@@ -98,29 +142,124 @@ const ArtistPublicPage: React.FC = () => {
         </div>
     );
 
-    // Default Images
+    const isOwner = user?.id === profile.id;
     const placeholderImage = "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&q=80&w=1080";
     const displayImage = profile.avatar_url || placeholderImage;
     const displayNameText = profile.display_name || profile.handle;
-
-    // Collab Logic
     const isCollabOpen = profile.collab_status === 'OPEN';
 
-    // Dynamic Styles based on scroll
-    // Blur: 0 -> 24px (xl is 24px)
-    // Brightness: 100% -> 40%
+    // Styles
     const blurAmount = scrollProgress * 20;
-    const brightnessAmount = 100 - (scrollProgress * 60); // Down to 40%
-    const headerBgOpacity = scrollProgress * 0.9; // 0 -> 0.9
+    const brightnessAmount = 100 - (scrollProgress * 60);
+    const headerBgOpacity = scrollProgress * 0.9;
+
+    // --- Link Trigger Logic ---
+    const linkCount = artistLinks.length;
+    let triggerButtons = null;
+
+    if (linkCount === 0) {
+        if (isOwner) {
+            triggerButtons = (
+                <Link to="/profile" className="flex items-center justify-center w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 text-white transition-all transform hover:scale-110">
+                    <Plus className="w-4 h-4" />
+                </Link>
+            );
+        }
+    } else if (linkCount <= 3) {
+        // Show 1-3 Icons, all open modal
+        triggerButtons = artistLinks.map((link) => (
+            <button
+                key={link.id}
+                onClick={() => setShowLinkHub(true)}
+                className="flex items-center justify-center w-8 h-8 rounded-full bg-white/5 hover:bg-white/20 backdrop-blur-md border border-white/10 text-white transition-all transform hover:scale-110"
+            >
+                {getIconForPlatform(link.platform, "w-3.5 h-3.5")}
+            </button>
+        ));
+    } else {
+        // Show Top 3 Icons + More Button
+        triggerButtons = (
+            <>
+                {artistLinks.slice(0, 3).map((link) => (
+                    <button
+                        key={link.id}
+                        onClick={() => setShowLinkHub(true)}
+                        className="flex items-center justify-center w-8 h-8 rounded-full bg-white/5 hover:bg-white/20 backdrop-blur-md border border-white/10 text-white transition-all transform hover:scale-110"
+                    >
+                        {getIconForPlatform(link.platform, "w-3.5 h-3.5")}
+                    </button>
+                ))}
+                <button
+                    onClick={() => setShowLinkHub(true)}
+                    className="flex items-center justify-center w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/20 text-white transition-all transform hover:scale-110"
+                >
+                    <MoreHorizontal className="w-4 h-4" />
+                </button>
+            </>
+        );
+    }
+
 
     return (
         <div className="fixed inset-0 w-full h-[100dvh] overflow-hidden bg-black text-white">
-            {/* Navbar - Fixed at top z-50 */}
+            {/* Navbar */}
             <div className="absolute z-50 w-full top-0 left-0 pointer-events-none">
                 <div className="pointer-events-auto">
                     <Navbar />
                 </div>
             </div>
+
+            {/* Link Hub Modal Overlay */}
+            {showLinkHub && (
+                <div className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-xl flex flex-col items-center justify-center p-6 animate-in fade-in duration-200">
+                    <button
+                        onClick={() => setShowLinkHub(false)}
+                        className="absolute top-6 right-6 p-2 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors"
+                    >
+                        <X className="w-6 h-6" />
+                    </button>
+
+                    <div className="max-w-sm w-full space-y-8 text-center">
+                        {/* Hub Header */}
+                        <div className="space-y-4 flex flex-col items-center">
+                            <div className="w-24 h-24 rounded-full overflow-hidden border-2 border-white/10 shadow-2xl">
+                                <img src={displayImage} alt={displayNameText} className="w-full h-full object-cover" />
+                            </div>
+                            <div>
+                                <h2 className="text-2xl font-bold text-white">{displayNameText}</h2>
+                                <p className="text-white/50 text-sm">@{profile.handle}</p>
+                            </div>
+                        </div>
+
+                        {/* Hub Links */}
+                        <div className="space-y-3 w-full">
+                            {artistLinks.map((link) => (
+                                <a
+                                    key={link.id}
+                                    href={link.url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="group flex items-center justify-between w-full p-4 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/20 transition-all hover:scale-[1.02] active:scale-95"
+                                >
+                                    <div className="flex items-center gap-3">
+                                        <div className="text-white/70 group-hover:text-white transition-colors">
+                                            {getIconForPlatform(link.platform, "w-5 h-5")}
+                                        </div>
+                                        <span className="font-medium text-white">{link.title}</span>
+                                    </div>
+                                    <ArrowUpRight className="w-4 h-4 text-white/30 group-hover:text-white group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all" />
+                                </a>
+                            ))}
+
+                            {linkCount === 0 && isOwner && (
+                                <Link to="/profile" className="flex items-center justify-center p-4 rounded-xl border border-dashed border-white/20 text-white/50 hover:text-white hover:border-white/40 transition-colors">
+                                    + Add your first link
+                                </Link>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* 1. Fixed Background */}
             <div className="fixed inset-0 z-0">
@@ -133,23 +272,21 @@ const ArtistPublicPage: React.FC = () => {
                         transform: 'scale(1.1)'
                     }}
                 />
-                {/* Global Gradient Overlay - Always present for text readability in Hero Mode */}
                 <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-90" />
             </div>
 
-            {/* 2. Scroll Container (Snap Wrapper) */}
+            {/* 2. Scroll Container */}
             <div
                 className="relative z-10 h-full overflow-y-auto snap-y snap-mandatory scroll-smooth overscroll-y-none"
                 onScroll={handleScroll}
             >
-                {/* Snap Item 1: Spacer to push content to bottom */}
+                {/* Spacer */}
                 <div className="w-full h-[45vh] md:h-[60vh] snap-start bg-transparent pointer-events-none" />
 
-                {/* Snap Item 2: Main Content Area */}
+                {/* Main Content */}
                 <div className="min-h-screen w-full snap-start flex flex-col">
 
-                    {/* Sticky Header: Artist Info */}
-                    {/* Background turns black only as we scroll (sticky) */}
+                    {/* Sticky Header */}
                     <div
                         className="sticky top-0 z-20 pt-20 pb-6 px-8 border-b border-transparent transition-colors duration-300"
                         style={{
@@ -162,7 +299,6 @@ const ArtistPublicPage: React.FC = () => {
 
                             {/* Header Content Wrapper */}
                             <div className="flex flex-col gap-4">
-                                {/* Text Info */}
                                 <div className="space-y-2">
                                     <h1 className="text-5xl font-black tracking-tighter text-white drop-shadow-2xl leading-none">
                                         {displayNameText}
@@ -172,13 +308,10 @@ const ArtistPublicPage: React.FC = () => {
                                     </p>
                                 </div>
 
-                                {/* Divider */}
                                 <div className="w-8 h-1 bg-white/30 rounded-full" />
 
-                                {/* Collab Status Section (Replaces Play Button) */}
                                 <div className="space-y-4">
-
-                                    {/* Traffic Light Badge */}
+                                    {/* Collab Badge */}
                                     <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full backdrop-blur-md border shadow-lg ${isCollabOpen
                                         ? 'bg-green-500/10 border-green-400/30'
                                         : 'bg-red-500/10 border-red-400/30'
@@ -193,7 +326,7 @@ const ArtistPublicPage: React.FC = () => {
                                         </span>
                                     </div>
 
-                                    {/* Collab Pills (Only if OPEN) */}
+                                    {/* Collab Types */}
                                     {isCollabOpen && profile.collab_types && profile.collab_types.length > 0 && (
                                         <div className="flex flex-wrap gap-2">
                                             {profile.collab_types.map((type, i) => (
@@ -204,31 +337,28 @@ const ArtistPublicPage: React.FC = () => {
                                         </div>
                                     )}
 
-                                    {/* Social Icons */}
+                                    {/* Social Trigger Icons */}
+                                    {/* Hide when scrolling down, just like before, but now with new logic */}
                                     <div className={`flex gap-3 pt-2 transition-all duration-300 ${scrollProgress > 0.8 ? 'opacity-0 h-0 overflow-hidden' : 'opacity-100 h-auto'}`}>
-                                        <a href="#" className="flex items-center justify-center w-8 h-8 rounded-full bg-white/5 hover:bg-white/20 backdrop-blur-md border border-white/10 text-white transition-all transform hover:scale-110"><Instagram className="w-3.5 h-3.5" /></a>
-                                        <a href="#" className="flex items-center justify-center w-8 h-8 rounded-full bg-white/5 hover:bg-white/20 backdrop-blur-md border border-white/10 text-white transition-all transform hover:scale-110"><Youtube className="w-3.5 h-3.5" /></a>
-                                        <a href="#" className="flex items-center justify-center w-8 h-8 rounded-full bg-white/5 hover:bg-white/20 backdrop-blur-md border border-white/10 text-white transition-all transform hover:scale-110"><Music2 className="w-3.5 h-3.5" /></a>
+                                        {triggerButtons}
                                     </div>
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    {/* Scrollable Track List (Portfolio View) */}
-                    {/* Simplified list, no play interaction */}
+                    {/* Track List */}
                     <div className="flex-1 overflow-y-auto p-4 md:p-6 pb-24 bg-black/40 backdrop-blur-md min-h-screen">
                         <div className="max-w-2xl mx-auto space-y-2">
                             <h3 className="text-white/50 text-xs font-bold uppercase tracking-widest pl-2 mb-4">Released Tracks</h3>
 
                             {tracks.map((track, idx) => {
-                                // Thumbnail Logic
-                                let thumbnailUrl = '/placeholder-track.png'; // Fallback
+                                let thumbnailUrl = '/placeholder-track.png';
                                 if (track.platform === 'youtube') {
                                     const videoId = track.url.split('v=')[1]?.split('&')[0] || track.url.split('/').pop();
                                     if (videoId) thumbnailUrl = `https://img.youtube.com/vi/${videoId}/mqdefault.jpg`;
                                 } else if (track.platform === 'soundcloud') {
-                                    thumbnailUrl = 'https://a-v2.sndcdn.com/assets/images/default-track-cover-0c30953.png'; // Generic SC
+                                    thumbnailUrl = 'https://a-v2.sndcdn.com/assets/images/default-track-cover-0c30953.png';
                                 }
 
                                 return (
