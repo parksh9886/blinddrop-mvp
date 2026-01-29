@@ -29,10 +29,12 @@ const Dashboard: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [handle, setHandle] = useState<string | null>(null);
     const [newTrackUrl, setNewTrackUrl] = useState('');
+    const [newTrackTitle, setNewTrackTitle] = useState('');
     const [submitting, setSubmitting] = useState(false);
     const [errorMsg, setErrorMsg] = useState('');
 
     const [expandedTrackId, setExpandedTrackId] = useState<string | null>(null);
+    const [editingTrack, setEditingTrack] = useState<Track | null>(null);
 
     const fetchData = async () => {
         if (!user) return;
@@ -124,7 +126,7 @@ const Dashboard: React.FC = () => {
                     user_id: user.id,
                     url: newTrackUrl,
                     platform: platform,
-                    title: 'Untitled Track', // We can fetch title later or ask user input
+                    title: newTrackTitle || 'Untitled Track',
                 })
                 .select()
                 .single();
@@ -133,6 +135,7 @@ const Dashboard: React.FC = () => {
 
             setTracks([data, ...tracks]);
             setNewTrackUrl('');
+            setNewTrackTitle('');
             setToast({ message: 'Track added successfully!', type: 'success' });
         } catch (error: any) {
             console.error('Error adding track:', error);
@@ -161,6 +164,30 @@ const Dashboard: React.FC = () => {
         } catch (err: any) {
             console.error('Error deleting track:', err);
             setToast({ message: 'An unexpect error occurred.', type: 'error' });
+        }
+    };
+
+    const handleUpdateTrack = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!editingTrack) return;
+
+        try {
+            const { error } = await supabase
+                .from('tracks')
+                .update({
+                    title: editingTrack.title,
+                    url: editingTrack.url
+                })
+                .eq('id', editingTrack.id);
+
+            if (error) throw error;
+
+            setTracks(tracks.map(t => t.id === editingTrack.id ? { ...t, title: editingTrack.title, url: editingTrack.url } : t));
+            setEditingTrack(null);
+            setToast({ message: 'Track updated successfully!', type: 'success' });
+        } catch (error: any) {
+            console.error('Error updating track:', error);
+            setToast({ message: 'Failed to update track', type: 'error' });
         }
     };
 
@@ -238,6 +265,18 @@ const Dashboard: React.FC = () => {
         });
     };
 
+    // Thumbnail Helper
+    const getThumbnailUrl = (url: string) => {
+        const regExp = /^.*((youtu.be\/)|(v\/)|(\/u\/\w\/)|(embed\/)|(watch\?))\??v?=?([^#&?]*).*/;
+        const match = url.match(regExp);
+        const videoId = (match && match[7].length === 11) ? match[7] : null;
+
+        if (videoId) {
+            return `https://img.youtube.com/vi/${videoId}/0.jpg`;
+        }
+        return null; // Fallback for SC or others
+    }
+
     if (loading) return (
         <Layout>
             <div className="flex justify-center pt-20">
@@ -288,6 +327,18 @@ const Dashboard: React.FC = () => {
                             <Plus className="w-5 h-5 text-indigo-400" /> Add New Track
                         </h3>
                         <form onSubmit={handleAddTrack} className="flex flex-col gap-4">
+                            {/* NEW: Manual Title Input */}
+                            <div className="relative">
+                                <Music className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500" />
+                                <input
+                                    type="text"
+                                    placeholder="Track Title (e.g. 'New Demo 2024')"
+                                    value={newTrackTitle}
+                                    onChange={(e) => setNewTrackTitle(e.target.value)}
+                                    className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-12 pr-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-white placeholder-slate-600 transition-all mb-2"
+                                />
+                            </div>
+
                             <div className="relative">
                                 <LinkIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500" />
                                 <input
@@ -326,24 +377,79 @@ const Dashboard: React.FC = () => {
                             tracks.map(track => (
                                 <div key={track.id} className="group bg-slate-900/50 border border-slate-800 hover:border-indigo-500/30 rounded-2xl p-4 transition-all hover:bg-slate-900 relative">
                                     <div className="flex items-start justify-between">
-                                        <div className="flex gap-4">
-                                            <div className="w-12 h-12 bg-slate-800 rounded-lg flex items-center justify-center">
-                                                <Music className="w-6 h-6 text-slate-500" />
+                                        <div className="flex gap-4 w-full">
+                                            {/* Thumbnail Logic */}
+                                            <div className="w-16 h-16 bg-slate-800 rounded-lg flex-shrink-0 overflow-hidden relative">
+                                                {getThumbnailUrl(track.url) ? (
+                                                    <img
+                                                        src={getThumbnailUrl(track.url)!}
+                                                        alt="Thumbnail"
+                                                        className="w-full h-full object-cover"
+                                                    />
+                                                ) : (
+                                                    <div className="w-full h-full flex items-center justify-center">
+                                                        <Music className="w-6 h-6 text-slate-500" />
+                                                    </div>
+                                                )}
                                             </div>
-                                            <div>
-                                                <h4 className="font-medium text-white line-clamp-1">{track.title || track.url}</h4>
-                                                <div className="flex items-center gap-2 mt-1">
-                                                    <span className={`text-[10px] px-2 py-0.5 rounded-full uppercase font-bold tracking-wider ${track.platform === 'youtube' ? 'bg-red-500/10 text-red-500' : 'bg-orange-500/10 text-orange-500'}`}>
-                                                        {track.platform}
-                                                    </span>
-                                                    <span className="text-xs text-slate-600">
-                                                        {new Date(track.created_at).toLocaleDateString()}
-                                                    </span>
+
+                                            {/* Content: Edit Mode vs View Mode */}
+                                            {editingTrack?.id === track.id ? (
+                                                <div className="flex-1 space-y-2 mr-4">
+                                                    <input
+                                                        type="text"
+                                                        value={editingTrack.title}
+                                                        onChange={(e) => setEditingTrack({ ...editingTrack, title: e.target.value })}
+                                                        className="w-full bg-slate-950 border border-slate-700 rounded px-2 py-1 text-sm text-white"
+                                                    />
+                                                    <input
+                                                        type="text"
+                                                        value={editingTrack.url}
+                                                        onChange={(e) => setEditingTrack({ ...editingTrack, url: e.target.value })}
+                                                        className="w-full bg-slate-950 border border-slate-700 rounded px-2 py-1 text-xs text-slate-400"
+                                                    />
+                                                    <div className="flex gap-2">
+                                                        <button
+                                                            onClick={handleUpdateTrack}
+                                                            className="text-xs bg-indigo-600 text-white px-3 py-1 rounded hover:bg-indigo-500"
+                                                        >
+                                                            Save
+                                                        </button>
+                                                        <button
+                                                            onClick={() => setEditingTrack(null)}
+                                                            className="text-xs bg-slate-700 text-white px-3 py-1 rounded hover:bg-slate-600"
+                                                        >
+                                                            Cancel
+                                                        </button>
+                                                    </div>
                                                 </div>
-                                            </div>
+                                            ) : (
+                                                <div className="flex-1">
+                                                    <h4 className="font-medium text-white line-clamp-1 text-lg">{track.title || "Untitled Track"}</h4>
+                                                    <a href={track.url} target="_blank" rel="noopener noreferrer" className="text-xs text-slate-500 hover:text-indigo-400 line-clamp-1 block mt-1 leading-relaxed">
+                                                        {track.url}
+                                                    </a>
+                                                    <div className="flex items-center gap-2 mt-2">
+                                                        <span className={`text-[10px] px-2 py-0.5 rounded-full uppercase font-bold tracking-wider ${track.platform === 'youtube' ? 'bg-red-500/10 text-red-500' : 'bg-orange-500/10 text-orange-500'}`}>
+                                                            {track.platform}
+                                                        </span>
+                                                        <span className="text-xs text-slate-600">
+                                                            {new Date(track.created_at).toLocaleDateString()}
+                                                        </span>
+
+                                                        {/* Edit Button */}
+                                                        <button
+                                                            onClick={() => setEditingTrack(track)}
+                                                            className="text-xs text-slate-500 hover:text-white underline ml-2"
+                                                        >
+                                                            Edit
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            )}
                                         </div>
 
-                                        <div className="flex items-center gap-2">
+                                        <div className="flex items-center gap-2 flex-shrink-0 ml-4">
                                             <Link
                                                 to={`/u/${track.id}`}
                                                 className="p-2 text-slate-400 hover:text-indigo-400 transition-colors"

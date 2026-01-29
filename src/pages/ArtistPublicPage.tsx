@@ -209,7 +209,7 @@ const ArtistPublicPage: React.FC = () => {
                     {/* Sticky Header: Artist Info */}
                     {/* Background turns black only as we scroll (sticky) */}
                     <div
-                        className="sticky top-0 z-20 pt-10 pb-6 px-8 border-b border-transparent transition-colors duration-300"
+                        className="sticky top-0 z-20 pt-20 pb-6 px-8 border-b border-transparent transition-colors duration-300"
                         style={{
                             backgroundColor: `rgba(0, 0, 0, ${headerBgOpacity})`,
                             borderColor: scrollProgress > 0.8 ? 'rgba(255, 255, 255, 0.1)' : 'transparent',
@@ -237,7 +237,7 @@ const ArtistPublicPage: React.FC = () => {
                                 <div className="space-y-4">
                                     <div>
                                         <p className="text-white/60 text-[10px] font-bold uppercase tracking-widest mb-1">
-                                            Latest Release
+                                            Now Playing
                                         </p>
                                         <p className="text-white text-base font-medium drop-shadow-lg truncate">
                                             {mainTrackTitle}
@@ -286,8 +286,8 @@ const ArtistPublicPage: React.FC = () => {
                                     key={track.id}
                                     onClick={() => handleTrackSelect(track)}
                                     className={`group flex items-center gap-4 p-4 rounded-xl cursor-pointer transition-all border ${bgmTrack?.id === track.id && isPlaying
-                                            ? 'bg-white/20 border-white/30 shadow-inner' // Active style
-                                            : 'bg-white/5 border-white/5 hover:bg-white/10 hover:border-white/20'
+                                        ? 'bg-white/20 border-white/30 shadow-inner' // Active style
+                                        : 'bg-white/5 border-white/5 hover:bg-white/10 hover:border-white/20'
                                         }`}
                                 >
                                     <div className="text-white/40 text-sm font-mono w-6 text-center">
