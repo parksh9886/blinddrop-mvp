@@ -1,10 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
-import { Loader2, Music, User, Play, Share2 } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { Play, Instagram, Youtube, Music2, Loader2 } from 'lucide-react';
 import Navbar from '../components/Navbar';
-import { useBackground } from '../contexts/BackgroundContext';
 
 interface UserProfile {
     id: string;
@@ -23,16 +21,16 @@ interface Track {
 
 const ArtistPublicPage: React.FC = () => {
     const { handle } = useParams<{ handle: string }>();
-    const { setBackground } = useBackground();
-
     const [profile, setProfile] = useState<UserProfile | null>(null);
     const [tracks, setTracks] = useState<Track[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
+    const [isPlaying, setIsPlaying] = useState(false);
 
     useEffect(() => {
         const fetchData = async () => {
             if (!handle) {
+                console.error('No handle found in URL params');
                 setError('No handle specified');
                 return;
             }
@@ -49,14 +47,7 @@ const ArtistPublicPage: React.FC = () => {
                 }
                 setProfile(userData);
 
-                // Set Global Background
-                if (userData.avatar_url) {
-                    setBackground(userData.avatar_url);
-                } else {
-                    setBackground(null);
-                }
-
-                // 2. Fetch Tracks
+                // 2. Fetch Tracks for this user
                 const { data: tracksData, error: tracksError } = await supabase
                     .from('tracks')
                     .select('id, title, url, platform, created_at')
@@ -75,150 +66,148 @@ const ArtistPublicPage: React.FC = () => {
         };
 
         fetchData();
+    }, [handle]);
 
-        // Cleanup background on unmount
-        return () => setBackground(null);
-    }, [handle, setBackground]);
-
-    // Helper to extract thumbnail from YouTube URL
-    const getThumbnail = (url: string, platform: string) => {
-        if (platform === 'youtube') {
-            const regExp = /^.*((youtu.be\/)|(v\/)|(\/u\/\w\/)|(embed\/)|(watch\?))\??v?=?([^#&?]*).*/;
-            const match = url.match(regExp);
-            const videoId = (match && match[7].length === 11) ? match[7] : null;
-            if (videoId) return `https://img.youtube.com/vi/${videoId}/mqdefault.jpg`;
+    const handlePlayClick = () => {
+        setIsPlaying(!isPlaying);
+        // Play first track or specific track logic here
+        // For now, if there is a track, we can navigate to it or just toggle state
+        if (tracks.length > 0) {
+            window.location.href = `/track/${tracks[0].id}`;
         }
-        return null;
     };
 
     if (loading) return (
-        <div className="h-full flex items-center justify-center text-white">
-            <Loader2 className="w-8 h-8 animate-spin text-indigo-500" />
+        <div className="min-h-screen bg-black flex items-center justify-center text-white">
+            <Loader2 className="w-8 h-8 animate-spin text-white/50" />
         </div>
     );
 
     if (error || !profile) return (
-        <div className="h-full flex flex-col items-center justify-center text-slate-400 gap-4">
-            <User className="w-16 h-16 opacity-20" />
+        <div className="min-h-screen bg-black flex flex-col items-center justify-center text-white/50 gap-4">
             <p className="text-lg">{error || 'Artist not found'}</p>
-            <Link to="/" className="text-indigo-400 hover:text-indigo-300 text-sm">Go Home</Link>
+            <Link to="/" className="text-white hover:text-white/80 text-sm underline">Go Home</Link>
         </div>
     );
 
+    // Default Images
+    const placeholderImage = "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&q=80&w=1080";
+    const displayImage = profile.avatar_url || placeholderImage;
+    const mainTrackTitle = tracks.length > 0 ? tracks[0].title : "No tracks released yet";
+
     return (
-        <div className="relative h-full w-full bg-slate-900 text-white overflow-hidden">
-            <div className="absolute top-0 left-0 right-0 z-50">
+        <div className="relative w-full min-h-screen overflow-hidden bg-black text-white">
+            <div className="absolute z-50 w-full top-0 left-0">
                 <Navbar />
             </div>
 
-            {/* Immersive Background Image */}
-            <div className="absolute inset-0 z-0">
-                {profile.avatar_url ? (
+            {/* PC: Background Blur */}
+            <div className="absolute inset-0 flex items-center justify-center">
+                <div className="absolute inset-0">
                     <img
-                        src={profile.avatar_url}
-                        alt="Background"
-                        className="w-full h-full object-cover opacity-80"
+                        src={displayImage}
+                        alt="Background blur"
+                        className="w-full h-full object-cover blur-3xl scale-110 opacity-60"
                     />
-                ) : (
-                    <div className="w-full h-full bg-slate-900" />
-                )}
-                {/* Gradient Overlay - STRONG at bottom for text readability */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black via-black/60 to-transparent" />
+                </div>
             </div>
 
-            {/* Bottom Content Area */}
-            <div className="absolute inset-x-0 bottom-0 z-10 p-6 pb-12 flex flex-col justify-end min-h-[50%]">
-                <motion.div
-                    initial={{ opacity: 0, y: 50 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.6 }}
-                >
-                    {/* Artist Info */}
-                    <div className="mb-8">
-                        <h1 className="text-5xl font-black tracking-tighter mb-2 shadow-black drop-shadow-lg">{profile.handle}</h1>
-                        {profile.bio && (
-                            <p className="text-slate-300 text-sm font-medium leading-relaxed line-clamp-3 drop-shadow-md max-w-[90%]">
-                                {profile.bio}
-                            </p>
-                        )}
-                    </div>
+            {/* Mobile Fixed Container */}
+            <div className="relative mx-auto w-full max-w-md min-h-screen bg-black md:bg-transparent shadow-2xl">
+                {/* Main Background Image - Visible on Mobile/Container */}
+                <div className="absolute inset-0">
+                    <img
+                        src={displayImage}
+                        alt="Musician background"
+                        className="w-full h-full object-cover"
+                    />
+                </div>
 
-                    {/* Featured Track (Latest) */}
-                    {tracks.length > 0 ? (
-                        <div className="space-y-4">
-                            <div className="flex items-center justify-between text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">
-                                <span>Latest Release</span>
-                                <span>{tracks.length} Tracks</span>
+                {/* Left Gradient Overlay */}
+                <div
+                    className="absolute inset-0"
+                    style={{
+                        background:
+                            "linear-gradient(to right, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.6) 45%, rgba(0,0,0,0.3) 70%, transparent 100%)",
+                    }}
+                />
+
+                {/* Content Area */}
+                <div className="relative z-10 w-full min-h-screen flex items-center pt-20">
+                    <div className="w-full px-8 pb-10">
+                        <div className="space-y-8">
+                            {/* Main Title & Bio */}
+                            <div className="space-y-4">
+                                <h1 className="text-white text-6xl font-black tracking-tighter drop-shadow-2xl leading-none">
+                                    {profile.handle}
+                                </h1>
+
+                                <p className="text-white/90 text-lg font-light tracking-wide drop-shadow-lg max-w-[80%] leading-relaxed">
+                                    {profile.bio || "No bio available."}
+                                </p>
                             </div>
 
-                            {/* Primary Play Button / Card */}
-                            <Link
-                                to={`/track/${tracks[0].id}`}
-                                className="block group relative w-full aspect-[4/3] rounded-3xl overflow-hidden shadow-2xl border border-white/10"
-                            >
-                                {getThumbnail(tracks[0].url, tracks[0].platform) ? (
-                                    <img
-                                        src={getThumbnail(tracks[0].url, tracks[0].platform)!}
-                                        alt={tracks[0].title}
-                                        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-                                    />
-                                ) : (
-                                    <div className="w-full h-full bg-slate-800 flex items-center justify-center">
-                                        <Music className="w-12 h-12 text-slate-600" />
-                                    </div>
-                                )}
+                            {/* Divider line */}
+                            <div className="w-12 h-1 bg-white/30 rounded-full" />
 
-                                {/* Play Overlay */}
-                                <div className="absolute inset-0 bg-black/30 flex flex-col items-center justify-center p-6 text-center">
-                                    <div className="w-16 h-16 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                                        <Play className="w-6 h-6 text-white fill-white" />
-                                    </div>
-                                    <h3 className="text-xl font-bold text-white drop-shadow-lg line-clamp-1 w-full px-4">
-                                        {tracks[0].title}
-                                    </h3>
+                            {/* Music Player Section */}
+                            <div className="space-y-5 pt-2">
+                                <div>
+                                    <p className="text-white/60 text-xs font-bold uppercase tracking-widest mb-1">
+                                        Latest Release
+                                    </p>
+                                    <p className="text-white text-xl font-medium drop-shadow-lg truncate">
+                                        {mainTrackTitle}
+                                    </p>
                                 </div>
-                            </Link>
 
-                            {/* More Tracks Horizontal Scroll (If any) */}
-                            {tracks.length > 1 && (
-                                <div className="flex gap-3 overflow-x-auto pb-4 pt-2 no-scrollbar snap-x">
-                                    {tracks.slice(1).map(track => (
-                                        <Link
-                                            key={track.id}
-                                            to={`/track/${track.id}`}
-                                            className="snap-start flex-shrink-0 w-20 h-20 rounded-xl bg-slate-800 overflow-hidden relative border border-white/10"
-                                        >
-                                            {getThumbnail(track.url, track.platform) ? (
-                                                <img
-                                                    src={getThumbnail(track.url, track.platform)!}
-                                                    className="w-full h-full object-cover opacity-70 hover:opacity-100 transition-opacity"
-                                                />
-                                            ) : (
-                                                <div className="w-full h-full flex items-center justify-center">
-                                                    <Music className="w-4 h-4 text-slate-500" />
-                                                </div>
-                                            )}
-                                        </Link>
-                                    ))}
-                                </div>
-                            )}
-                        </div>
-                    ) : (
-                        <div className="p-6 rounded-2xl bg-white/5 backdrop-blur-sm border border-white/10 text-center">
-                            <p className="text-slate-400">No tracks yet.</p>
-                        </div>
-                    )}
+                                {/* Play Button */}
+                                <button
+                                    onClick={handlePlayClick}
+                                    disabled={tracks.length === 0}
+                                    className="group flex items-center gap-5 bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/20 rounded-full px-8 py-5 transition-all duration-300 hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                                >
+                                    <div
+                                        className={`flex items-center justify-center w-14 h-14 rounded-full bg-white text-black transition-transform duration-300 ${isPlaying ? "scale-95" : "group-hover:scale-110"}`}
+                                    >
+                                        <Play
+                                            className="w-6 h-6 ml-1"
+                                            fill="currentColor"
+                                        />
+                                    </div>
+                                    <span className="text-white text-lg font-bold tracking-tight">
+                                        {isPlaying ? "Now Playing" : "Play Now"}
+                                    </span>
+                                </button>
+                            </div>
 
-                    {/* Footer Actions */}
-                    <div className="mt-8 flex items-center justify-between">
-                        <Link to="/" className="text-xs font-bold text-white/50 hover:text-white transition-colors">
-                            BLINDDROP
-                        </Link>
-                        <button className="p-2 rounded-full bg-white/10 hover:bg-white/20 transition-colors">
-                            <Share2 className="w-5 h-5 text-white" />
-                        </button>
+                            {/* Social Media Icons (Dummy for now, could generally be added to DB later) */}
+                            <div className="flex gap-4 pt-8">
+                                <a
+                                    href="#"
+                                    className="flex items-center justify-center w-12 h-12 rounded-full bg-white/5 hover:bg-white/20 backdrop-blur-md border border-white/10 text-white transition-all duration-300 hover:scale-110"
+                                    aria-label="Instagram"
+                                >
+                                    <Instagram className="w-5 h-5" />
+                                </a>
+                                <a
+                                    href="#"
+                                    className="flex items-center justify-center w-12 h-12 rounded-full bg-white/5 hover:bg-white/20 backdrop-blur-md border border-white/10 text-white transition-all duration-300 hover:scale-110"
+                                    aria-label="YouTube"
+                                >
+                                    <Youtube className="w-5 h-5" />
+                                </a>
+                                <a
+                                    href="#"
+                                    className="flex items-center justify-center w-12 h-12 rounded-full bg-white/5 hover:bg-white/20 backdrop-blur-md border border-white/10 text-white transition-all duration-300 hover:scale-110"
+                                    aria-label="Spotify"
+                                >
+                                    <Music2 className="w-5 h-5" />
+                                </a>
+                            </div>
+                        </div>
                     </div>
-                </motion.div>
+                </div>
             </div>
         </div>
     );
