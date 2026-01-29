@@ -182,7 +182,7 @@ const Dashboard: React.FC = () => {
 
             if (error) throw error;
 
-            setTracks(tracks.map(t => t.id === editingTrack.id ? { ...t, title: editingTrack.title, url: editingTrack.url } : t));
+            setTracks(prev => prev.map(t => t.id === editingTrack.id ? { ...t, title: editingTrack.title, url: editingTrack.url } : t));
             setEditingTrack(null);
             setToast({ message: 'Track updated successfully!', type: 'success' });
         } catch (error: any) {
@@ -377,7 +377,7 @@ const Dashboard: React.FC = () => {
                             tracks.map(track => (
                                 <div key={track.id} className="group bg-slate-900/50 border border-slate-800 hover:border-indigo-500/30 rounded-2xl p-4 transition-all hover:bg-slate-900 relative">
                                     <div className="flex items-start justify-between">
-                                        <div className="flex gap-4 w-full">
+                                        <div className="flex-1 min-w-0 flex gap-4">
                                             {/* Thumbnail Logic */}
                                             <div className="w-16 h-16 bg-slate-800 rounded-lg flex-shrink-0 overflow-hidden relative">
                                                 {getThumbnailUrl(track.url) ? (
