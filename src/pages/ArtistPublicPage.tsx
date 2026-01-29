@@ -7,8 +7,9 @@ import Navbar from '../components/Navbar';
 interface UserProfile {
     id: string;
     handle: string;
+    display_name: string | null;
     avatar_url: string | null;
-    bio: string | null;
+    bio: string | null; // This now holds the Roles (e.g. "Singer · Producer")
     main_track_id: string | null;
 }
 
@@ -23,7 +24,6 @@ interface Track {
 const ArtistPublicPage: React.FC = () => {
     const { handle } = useParams<{ handle: string }>();
     const [profile, setProfile] = useState<UserProfile | null>(null);
-
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
 
@@ -39,10 +39,10 @@ const ArtistPublicPage: React.FC = () => {
                 return;
             }
             try {
-                // 1. Fetch User by Handle (Include main_track_id)
+                // 1. Fetch User by Handle (Include main_track_id and display_name)
                 const { data: userData, error: userError } = await supabase
                     .from('users')
-                    .select('id, handle, avatar_url, bio, main_track_id')
+                    .select('id, handle, display_name, avatar_url, bio, main_track_id')
                     .eq('handle', handle)
                     .single();
 
@@ -61,7 +61,6 @@ const ArtistPublicPage: React.FC = () => {
                 if (tracksError) throw tracksError;
 
                 const loadedTracks = tracksData || [];
-
 
                 // Determine BGM Track
                 if (loadedTracks.length > 0) {
@@ -100,7 +99,6 @@ const ArtistPublicPage: React.FC = () => {
 
             if (videoId) {
                 // autoplay=1 is key. modestbranding/controls=0 to keep it lightweight/clean if visible (though hidden).
-                // loop=1 & playlist=videoId might be good for BGM? Let's stick to simple play first.
                 return `https://www.youtube.com/embed/${videoId}?autoplay=1&controls=0&disablekb=1&fs=0&modestbranding=1`;
             }
             return null;
@@ -133,6 +131,7 @@ const ArtistPublicPage: React.FC = () => {
     const placeholderImage = "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&q=80&w=1080";
     const displayImage = profile.avatar_url || placeholderImage;
     const mainTrackTitle = bgmTrack?.title || "No tracks released yet";
+    const displayNameText = profile.display_name || profile.handle; // Fallback to handle
 
     return (
         <div className="relative w-full min-h-screen overflow-hidden bg-black text-white">
@@ -173,27 +172,28 @@ const ArtistPublicPage: React.FC = () => {
                     />
                 </div>
 
-                {/* Left Gradient Overlay */}
+                {/* Left Gradient Overlay - Stronger at bottom for text visibility */}
                 <div
                     className="absolute inset-0"
                     style={{
                         background:
-                            "linear-gradient(to right, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.6) 45%, rgba(0,0,0,0.3) 70%, transparent 100%)",
+                            "linear-gradient(to bottom, rgba(0,0,0,0) 0%, rgba(0,0,0,0.2) 50%, rgba(0,0,0,0.9) 90%, black 100%)",
                     }}
                 />
 
-                {/* Content Area */}
-                <div className="relative z-10 w-full min-h-screen flex items-center pt-20">
-                    <div className="w-full px-8 pb-10">
-                        <div className="space-y-8">
+                {/* Content Area - Bottom Aligned */}
+                <div className="relative z-10 w-full min-h-screen flex flex-col justify-end">
+                    <div className="w-full px-8 pb-32"> {/* Increased bottom padding for bottom alignment */}
+                        <div className="space-y-6">
                             {/* Main Title & Bio */}
                             <div className="space-y-4">
-                                <h1 className="text-white text-6xl font-black tracking-tighter drop-shadow-2xl leading-none break-words">
-                                    {profile.handle}
+                                <h1 className="text-white text-6xl font-black tracking-tighter drop-shadow-2xl leading-none">
+                                    {displayNameText}
                                 </h1>
 
-                                <p className="text-white/90 text-lg font-light tracking-wide drop-shadow-lg max-w-[90%] leading-relaxed line-clamp-4">
-                                    {profile.bio || "No bio available."}
+                                {/* Roles (formerly Bio) */}
+                                <p className="text-white/90 text-xl font-light tracking-wide drop-shadow-lg max-w-[90%] leading-relaxed">
+                                    {profile.bio || "Artist"}
                                 </p>
                             </div>
 
@@ -215,7 +215,7 @@ const ArtistPublicPage: React.FC = () => {
                                 <button
                                     onClick={handlePlayClick}
                                     disabled={!bgmTrack}
-                                    className="group flex items-center gap-5 bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/20 rounded-full px-8 py-5 transition-all duration-300 hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                                    className="group flex items-center gap-5 bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/20 rounded-full px-8 py-5 transition-all duration-300 hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed w-full max-w-sm"
                                 >
                                     <div
                                         className={`flex items-center justify-center w-14 h-14 rounded-full bg-white text-black transition-transform duration-300 ${isPlaying ? "scale-95" : "group-hover:scale-110"}`}
@@ -226,14 +226,14 @@ const ArtistPublicPage: React.FC = () => {
                                             <Play className="w-6 h-6 ml-1" fill="currentColor" />
                                         )}
                                     </div>
-                                    <span className="text-white text-lg font-bold tracking-tight w-24 text-left">
+                                    <span className="text-white text-lg font-bold tracking-tight text-left flex-1">
                                         {isPlaying ? "Pause" : "Play Now"}
                                     </span>
                                 </button>
                             </div>
 
-                            {/* Social Media Icons (Dummy for now, could generally be added to DB later) */}
-                            <div className="flex gap-4 pt-8">
+                            {/* Social Media Icons */}
+                            <div className="flex gap-4 pt-4">
                                 <a
                                     href="#"
                                     className="flex items-center justify-center w-12 h-12 rounded-full bg-white/5 hover:bg-white/20 backdrop-blur-md border border-white/10 text-white transition-all duration-300 hover:scale-110"

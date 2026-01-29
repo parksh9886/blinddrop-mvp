@@ -2,12 +2,20 @@ import React, { useEffect, useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
 import Layout from '../components/Layout';
-import { Save, Loader2, User as UserIcon, Camera, AlertTriangle, Music } from 'lucide-react';
+import { Save, Loader2, User as UserIcon, Camera, AlertTriangle, Music, Check } from 'lucide-react';
 
 interface Track {
     id: string;
     title: string;
 }
+
+const ROLES = [
+    { value: 'Singer', label: 'Singer' },
+    { value: 'Rapper', label: 'Rapper' },
+    { value: 'Songwriter', label: 'Songwriter' },
+    { value: 'Producer', label: 'Producer' },
+    { value: 'Beatmaker', label: 'Beatmaker' }
+];
 
 const ProfilePage: React.FC = () => {
     const { user } = useAuth();
@@ -16,11 +24,11 @@ const ProfilePage: React.FC = () => {
 
     // Form State
     const [handle, setHandle] = useState('');
-    const [bio, setBio] = useState('');
+    const [displayName, setDisplayName] = useState(''); // New Activity Name
+    const [selectedRoles, setSelectedRoles] = useState<string[]>([]); // Roles replaces Bio for UI
     const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
-    const [mainTrackId, setMainTrackId] = useState<string>(''); // For BGM
+    const [mainTrackId, setMainTrackId] = useState<string>('');
     const [originalHandle, setOriginalHandle] = useState('');
-
 
     const [msg, setMsg] = useState<{ type: 'success' | 'error' | 'warning', text: string } | null>(null);
 
@@ -36,7 +44,7 @@ const ProfilePage: React.FC = () => {
                 // 1. Fetch Profile
                 const { data: userData, error: userError } = await supabase
                     .from('users')
-                    .select('handle, bio, avatar_url, main_track_id')
+                    .select('handle, bio, avatar_url, main_track_id, display_name')
                     .eq('id', user.id)
                     .single();
 
@@ -47,7 +55,23 @@ const ProfilePage: React.FC = () => {
                 if (userData) {
                     setHandle(userData.handle || '');
                     setOriginalHandle(userData.handle || '');
-                    setBio(userData.bio || '');
+                    setDisplayName(userData.display_name || '');
+
+                    // Parse Roles from Bio
+                    // If bio contains " · ", split it. If not, just put it in or leave empty if it was legacy text?
+                    // Let's try to match existing roles.
+                    if (userData.bio) {
+                        const roles = userData.bio.split(' · ').filter((r: string) => ROLES.some(opt => opt.value === r || opt.label === r));
+                        // If no roles matched but there is text, maybe just ignore or try to keep? 
+                        // User requested Bio to BECOME roles selector. So we assume bio is now roles.
+                        if (roles.length > 0) {
+                            setSelectedRoles(roles);
+                        } else if (userData.bio.includes(' · ')) {
+                            // Fallback for custom roles if any?
+                            setSelectedRoles(userData.bio.split(' · '));
+                        }
+                    }
+
                     setAvatarUrl(userData.avatar_url || user.user_metadata.avatar_url);
                     setMainTrackId(userData.main_track_id || '');
                 } else {
@@ -110,10 +134,17 @@ const ProfilePage: React.FC = () => {
     // Handle Validation
     const handleHandleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const val = e.target.value.toLowerCase();
-        // Allow only lowercase, numbers, underscores, dots
         if (/^[a-z0-9_.]*$/.test(val)) {
             setHandle(val);
         }
+    };
+
+    const toggleRole = (role: string) => {
+        setSelectedRoles(prev =>
+            prev.includes(role)
+                ? prev.filter(r => r !== role)
+                : [...prev, role]
+        );
     };
 
     const handleSave = async (e: React.FormEvent) => {
@@ -137,13 +168,17 @@ const ProfilePage: React.FC = () => {
                 }
             }
 
+            // Construct Bio from Roles
+            const bio = selectedRoles.join(' · ');
+
             // Upsert Profile
             const updates = {
                 id: user.id,
                 handle,
-                bio,
+                display_name: displayName, // Save Display Name
+                bio: bio, // Save Roles as Bio
                 avatar_url: avatarUrl,
-                main_track_id: mainTrackId || null, // Save BGM choice
+                main_track_id: mainTrackId || null,
                 updated_at: new Date().toISOString(),
             };
 
@@ -153,7 +188,6 @@ const ProfilePage: React.FC = () => {
 
             if (error) throw error;
 
-            // Sync with Auth Metadata (for Navbar)
             if (avatarUrl !== user.user_metadata.avatar_url) {
                 await supabase.auth.updateUser({
                     data: { avatar_url: avatarUrl }
@@ -205,9 +239,22 @@ const ProfilePage: React.FC = () => {
 
                     <form onSubmit={handleSave} className="space-y-6">
 
+                        {/* Display Name Input (Activity Name) */}
+                        <div>
+                            <label className="block text-sm font-medium text-slate-300 mb-2">Activity Name (Display Name)</label>
+                            <input
+                                type="text"
+                                value={displayName}
+                                onChange={(e) => setDisplayName(e.target.value)}
+                                placeholder="e.g. The Weeknd"
+                                className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+                            />
+                            <p className="mt-2 text-xs text-slate-500">This is the name displayed on your profile.</p>
+                        </div>
+
                         {/* Handle Input */}
                         <div>
-                            <label className="block text-sm font-medium text-slate-300 mb-2">Handle</label>
+                            <label className="block text-sm font-medium text-slate-300 mb-2">Unique Handle</label>
                             <div className="relative">
                                 <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 text-sm">blinddrop.com/u/</span>
                                 <input
@@ -222,18 +269,29 @@ const ProfilePage: React.FC = () => {
                             <p className="mt-2 text-xs text-slate-500">Only lowercase letters, numbers, underscores, and dots.</p>
                         </div>
 
-                        {/* Bio Input */}
+                        {/* Roles Selection (Replaces Bio) */}
                         <div>
-                            <label className="block text-sm font-medium text-slate-300 mb-2">Bio</label>
-                            <textarea
-                                value={bio}
-                                onChange={(e) => setBio(e.target.value.slice(0, 160))}
-                                placeholder="Tell us about yourself..."
-                                className="w-full h-24 bg-slate-950 border border-slate-800 rounded-xl p-4 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all resize-none"
-                            />
-                            <div className="mt-1 text-right text-xs text-slate-500">
-                                {bio.length}/160
+                            <label className="block text-sm font-medium text-slate-300 mb-3">Roles (Select all that apply)</label>
+                            <div className="flex flex-wrap gap-2">
+                                {ROLES.map((role) => {
+                                    const isSelected = selectedRoles.includes(role.value);
+                                    return (
+                                        <button
+                                            key={role.value}
+                                            type="button"
+                                            onClick={() => toggleRole(role.value)}
+                                            className={`px-4 py-2 rounded-full text-sm font-medium transition-all flex items-center gap-2 border ${isSelected
+                                                ? 'bg-indigo-600 border-indigo-500 text-white'
+                                                : 'bg-slate-950 border-slate-800 text-slate-400 hover:border-slate-600'
+                                                }`}
+                                        >
+                                            {role.label}
+                                            {isSelected && <Check className="w-3.5 h-3.5" />}
+                                        </button>
+                                    );
+                                })}
                             </div>
+                            <p className="mt-2 text-xs text-slate-500">Displayed as: {selectedRoles.join(' · ') || "(No roles selected)"}</p>
                         </div>
 
                         {/* BGM Selection */}
