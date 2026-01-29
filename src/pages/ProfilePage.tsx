@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
 import Layout from '../components/Layout';
@@ -59,7 +59,7 @@ interface LinkItem {
 
 const ProfilePage: React.FC = () => {
     const { user } = useAuth();
-    const location = useLocation();
+    const [searchParams] = useSearchParams();
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [activeTab, setActiveTab] = useState<'profile' | 'links'>('profile');
@@ -86,8 +86,8 @@ const ProfilePage: React.FC = () => {
         if (!user) return;
 
         // Check for tab param
-        const params = new URLSearchParams(location.search);
-        if (params.get('tab') === 'links') {
+        const tabParam = searchParams.get('tab');
+        if (tabParam === 'links') {
             setActiveTab('links');
         }
 
@@ -146,7 +146,7 @@ const ProfilePage: React.FC = () => {
         };
 
         fetchData();
-    }, [user]);
+    }, [user, searchParams]);
 
     // Helper check for array
     const isArray = (arr: any): arr is string[] => Array.isArray(arr);
