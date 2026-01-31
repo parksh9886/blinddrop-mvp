@@ -270,10 +270,10 @@ const ArtistPublicPage: React.FC = () => {
                         </div>
                     </div>
 
-                    {/* Links Container Wrapper - fades in as user scrolls */}
+                    {/* Links Container Wrapper - appears after 50% scroll with smooth transition */}
                     <div
-                        className="flex-1 relative overflow-hidden transition-opacity duration-300"
-                        style={{ opacity: scrollProgress }}
+                        className="flex-1 relative overflow-hidden transition-opacity duration-500 ease-out"
+                        style={{ opacity: scrollProgress > 0.5 ? 1 : 0 }}
                     >
                         {/* Inner Scroll Container - uses safe-area-inset-bottom for iOS */}
                         <div
