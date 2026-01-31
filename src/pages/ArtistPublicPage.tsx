@@ -63,6 +63,7 @@ const ArtistPublicPage: React.FC = () => {
     const [isOverlayOpen, setIsOverlayOpen] = useState(false);
     const [overlayView, setOverlayView] = useState<'list' | 'detail'>('list');
     const [selectedTrack, setSelectedTrack] = useState<Track | null>(null);
+    const [isDeepLinkEntry, setIsDeepLinkEntry] = useState(false); // Track if user entered via deep link
 
     // Toast State for Copy Feedback
     const [showCopyToast, setShowCopyToast] = useState(false);
@@ -143,6 +144,7 @@ const ArtistPublicPage: React.FC = () => {
                 setSelectedTrack(track);
                 setOverlayView('detail');
                 setIsOverlayOpen(true);
+                setIsDeepLinkEntry(true); // Mark as deep link entry
                 // Push initial state for deep link
                 history.replaceState({ overlay: 'detail', trackId: track.id }, '');
             }
@@ -203,15 +205,30 @@ const ArtistPublicPage: React.FC = () => {
     const handleBackToList = () => {
         setOverlayView('list');
         setSelectedTrack(null);
-        history.back(); // Use browser back instead of pushState
+
+        // If entered via deep link, use replaceState to clear track param
+        if (isDeepLinkEntry) {
+            const cleanUrl = `${window.location.origin}${window.location.pathname}`;
+            history.replaceState(null, '', cleanUrl);
+            setIsDeepLinkEntry(false);
+        } else {
+            history.back();
+        }
     };
 
     const handleCloseOverlay = () => {
         setIsOverlayOpen(false);
         setSelectedTrack(null);
         setOverlayView('list');
-        // Go back to the state before overlay was opened
-        history.back();
+
+        // If entered via deep link, just clear the overlay and URL param without history.back()
+        if (isDeepLinkEntry) {
+            const cleanUrl = `${window.location.origin}${window.location.pathname}`;
+            history.replaceState(null, '', cleanUrl);
+            setIsDeepLinkEntry(false);
+        } else {
+            history.back();
+        }
     };
 
     // Copy Track Deep Link to Clipboard
