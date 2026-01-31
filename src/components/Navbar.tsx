@@ -71,7 +71,7 @@ const Navbar: React.FC = () => {
 
                     {/* Logo Logic: Guest -> Home, User -> Dashboard */}
                     <Link to={user ? "/dashboard" : "/"} className="flex items-center gap-2 font-bold text-xl tracking-tighter text-white hover:opacity-80 transition-opacity">
-                        <img src="/img/linkdrop_logo_img.png" alt="LinkDrop" className="w-6 h-6" />
+                        <img src="/img/linkdrop_logo_img.png" alt="LinkDrop" className="w-8 h-8 object-contain" />
                         <span>LinkDrop</span>
                     </Link>
 
