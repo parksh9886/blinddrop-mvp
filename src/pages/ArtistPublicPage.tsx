@@ -5,7 +5,7 @@ import { useAuth } from '../contexts/AuthContext';
 import {
     Play, Loader2, Instagram, Youtube, Music2, Globe, Twitter,
     Facebook, Linkedin, X, ArrowUpRight, Plus, Disc3, Link as LinkIcon,
-    ChevronLeft, User, MessageSquare
+    ChevronLeft, ChevronDown, User, MessageSquare
 } from 'lucide-react';
 import Navbar from '../components/Navbar';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -228,9 +228,17 @@ const ArtistPublicPage: React.FC = () => {
             >
                 {/* Spacer - uses svh for consistent height across browsers */}
                 <div
-                    className="w-full snap-start bg-transparent pointer-events-none h-[55vh]"
+                    className="w-full snap-start bg-transparent relative h-[55vh]"
                     style={{ height: 'calc(55svh + env(safe-area-inset-bottom, 0px))' }}
-                />
+                >
+                    {/* Scroll Indicator - bounces and fades out on scroll */}
+                    <div
+                        className="absolute bottom-4 left-1/2 -translate-x-1/2 transition-opacity duration-500"
+                        style={{ opacity: scrollProgress < 0.1 ? 1 : 0 }}
+                    >
+                        <ChevronDown className="w-8 h-8 text-white/80 animate-bounce" />
+                    </div>
+                </div>
 
                 {/* Section 2: Profile + Links - uses svh for consistent sizing */}
                 <div
