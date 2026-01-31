@@ -221,7 +221,7 @@ const ArtistPublicPage: React.FC = () => {
                 <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-90" />
             </div>
 
-            {/* Scroll Indicator - fixed at bottom of viewport, fades out on scroll */}
+            {/* Scroll Indicator - elegant minimal design, fixed at bottom */}
             <div
                 className="fixed z-20 left-1/2 -translate-x-1/2 transition-opacity duration-500 pointer-events-none"
                 style={{
@@ -229,7 +229,9 @@ const ArtistPublicPage: React.FC = () => {
                     opacity: scrollProgress < 0.1 ? 1 : 0
                 }}
             >
-                <ChevronDown className="w-8 h-8 text-white/80 animate-bounce" />
+                <div className="animate-pulse">
+                    <ChevronDown className="w-6 h-6 text-white/70" strokeWidth={1.5} />
+                </div>
             </div>
 
             {/* Scroll Container (Original) */}
