@@ -267,10 +267,16 @@ const ArtistPublicPage: React.FC = () => {
                         </div>
                     </div>
 
-                    {/* Links Container Wrapper (Clips content at boundary, black background) */}
-                    <div className="flex-1 relative overflow-hidden bg-black">
+                    {/* Links Container Wrapper (same dynamic background as profile) */}
+                    <div
+                        className="flex-1 relative overflow-hidden transition-colors duration-300"
+                        style={{ backgroundColor: `rgba(0, 0, 0, ${scrollProgress})` }}
+                    >
                         {/* Inner Scroll Container */}
-                        <div className="absolute inset-0 overflow-y-auto overflow-x-hidden p-4 md:p-6 pb-24 bg-black">
+                        <div
+                            className="absolute inset-0 overflow-y-auto overflow-x-hidden p-4 md:p-6 pb-24"
+                            style={{ backgroundColor: `rgba(0, 0, 0, ${scrollProgress})` }}
+                        >
                             <div className="max-w-2xl mx-auto space-y-4">
 
                                 {/* 1. Discography Button */}
