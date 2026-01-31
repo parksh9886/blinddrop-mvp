@@ -228,8 +228,8 @@ const ArtistPublicPage: React.FC = () => {
             >
                 {/* Spacer - uses svh for consistent height across browsers */}
                 <div
-                    className="w-full snap-start bg-transparent pointer-events-none h-[70vh]"
-                    style={{ height: 'calc(70svh + env(safe-area-inset-bottom, 0px))' }}
+                    className="w-full snap-start bg-transparent pointer-events-none h-[55vh]"
+                    style={{ height: 'calc(55svh + env(safe-area-inset-bottom, 0px))' }}
                 />
 
                 {/* Section 2: Profile + Links - uses svh for consistent sizing */}
