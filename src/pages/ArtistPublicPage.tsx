@@ -232,11 +232,25 @@ const ArtistPublicPage: React.FC = () => {
                 {/* Main Content Body (Original Layout) */}
                 <div className="min-h-screen w-full snap-start flex flex-col">
 
-                    {/* Sticky Header (Original Style) */}
+                    {/* Sticky Header - with opaque background + blurred image overlay */}
                     <div
-                        className="sticky top-0 z-20 pt-32 pb-10 px-8 transition-all duration-300 bg-gradient-to-t from-black via-black/60 to-transparent"
+                        className="sticky top-0 z-20 pt-32 pb-10 px-8 transition-all duration-300 overflow-hidden"
                         style={{ pointerEvents: 'none' }}
                     >
+                        {/* Opaque background with blurred image - blocks link list from showing through */}
+                        <div className="absolute inset-0 -z-10">
+                            <img
+                                src={displayImage}
+                                alt=""
+                                className="w-full h-full object-cover"
+                                style={{
+                                    filter: `blur(20px) brightness(40%)`,
+                                    transform: 'scale(1.2)'
+                                }}
+                            />
+                            <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent" />
+                        </div>
+
                         <div className="max-w-[300px] space-y-6 pointer-events-auto">
                             <div className="flex flex-col gap-3">
                                 <div className="space-y-1">
@@ -248,13 +262,13 @@ const ArtistPublicPage: React.FC = () => {
                                     </p>
                                 </div>
                                 <div className="space-y-4">
-                                    {/* Collab Badge (Original) */}
+                                    {/* Collab Badge */}
                                     <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full backdrop-blur-md transition-colors ${isCollabOpen ? 'bg-green-500/20 text-green-200' : 'bg-red-500/20 text-red-200'}`}>
                                         <div className={`w-2 h-2 rounded-full ${isCollabOpen ? 'bg-green-400 shadow-[0_0_8px_rgba(74,222,128,0.5)]' : 'bg-red-400 shadow-[0_0_8px_rgba(248,113,113,0.5)]'}`} />
                                         <span className="text-xs font-bold tracking-wide">{isCollabOpen ? 'OPEN FOR COLLAB' : 'NOT TAKING REQUESTS'}</span>
                                     </div>
 
-                                    {/* Collab Types (Original) */}
+                                    {/* Collab Types */}
                                     {isCollabOpen && profile.collab_types && profile.collab_types.length > 0 && (
                                         <div className="flex flex-wrap gap-2">
                                             {profile.collab_types.map((type, i) => (
