@@ -453,12 +453,16 @@ const ProfilePage: React.FC = () => {
                         const promises = updates.map(update =>
                             supabase.from('artist_links').update({ order_index: update.order_index }).eq('id', update.id)
                         );
-                        await Promise.all(promises);
+                        const results = await Promise.all(promises);
+                        const dbError = results.find(r => r.error)?.error;
+                        if (dbError) throw dbError;
+
                         setSaveStatus('saved');
                         setTimeout(() => setSaveStatus('idle'), 2000);
-                    } catch (err) {
+                    } catch (err: any) {
                         console.error('Failed to save link order:', err);
                         setSaveStatus('error');
+                        alert(`Failed to save order: ${err.message || JSON.stringify(err)}`);
                     }
                 };
                 saveOrder();
