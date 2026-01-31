@@ -450,19 +450,30 @@ const ProfilePage: React.FC = () => {
                 const saveOrder = async () => {
                     try {
                         setSaveStatus('saving');
+                        // Use .select() to verify row was actually updated (RLS check)
                         const promises = updates.map(update =>
-                            supabase.from('artist_links').update({ order_index: update.order_index }).eq('id', update.id)
+                            supabase.from('artist_links')
+                                .update({ order_index: update.order_index })
+                                .eq('id', update.id)
+                                .select()
                         );
+
                         const results = await Promise.all(promises);
+
+                        // Check for hard errors
                         const dbError = results.find(r => r.error)?.error;
                         if (dbError) throw dbError;
+
+                        // Check for silent RLS failures (no rows returned)
+                        const silentFail = results.find(r => r.data === null || r.data.length === 0);
+                        if (silentFail) throw new Error("Permission Denied: No rows updated. Check RLS policies.");
 
                         setSaveStatus('saved');
                         setTimeout(() => setSaveStatus('idle'), 2000);
                     } catch (err: any) {
                         console.error('Failed to save link order:', err);
                         setSaveStatus('error');
-                        alert(`Failed to save order: ${err.message || JSON.stringify(err)}`);
+                        alert(`Save Failed: ${err.message || JSON.stringify(err)}`);
                     }
                 };
                 saveOrder();
