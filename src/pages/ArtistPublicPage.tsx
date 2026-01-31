@@ -229,14 +229,14 @@ const ArtistPublicPage: React.FC = () => {
                 {/* Spacer (Original) */}
                 <div className="w-full h-[45vh] md:h-[60vh] snap-start bg-transparent pointer-events-none" />
 
-                {/* Section 2: Profile + Links (snap-start, fills screen) */}
-                <div className="h-screen w-full snap-start flex flex-col overflow-hidden">
+                {/* Section 2: Profile + Links (single dynamic background) */}
+                <div
+                    className="h-screen w-full snap-start flex flex-col overflow-hidden transition-colors duration-300"
+                    style={{ backgroundColor: `rgba(0, 0, 0, ${scrollProgress})` }}
+                >
 
-                    {/* Profile Section (transparent before scroll, black after scroll) */}
-                    <div
-                        className="flex-shrink-0 pt-20 pb-6 px-8 relative z-10 transition-colors duration-300"
-                        style={{ backgroundColor: `rgba(0, 0, 0, ${scrollProgress})` }}
-                    >
+                    {/* Profile Section */}
+                    <div className="flex-shrink-0 pt-20 pb-6 px-8 relative z-10">
                         <div className="max-w-[300px] space-y-4">
                             <div className="space-y-1">
                                 <h1 className="text-5xl font-bold tracking-tighter text-white drop-shadow-2xl leading-none">
@@ -267,16 +267,10 @@ const ArtistPublicPage: React.FC = () => {
                         </div>
                     </div>
 
-                    {/* Links Container Wrapper (same dynamic background as profile) */}
-                    <div
-                        className="flex-1 relative overflow-hidden transition-colors duration-300"
-                        style={{ backgroundColor: `rgba(0, 0, 0, ${scrollProgress})` }}
-                    >
+                    {/* Links Container Wrapper */}
+                    <div className="flex-1 relative overflow-hidden">
                         {/* Inner Scroll Container */}
-                        <div
-                            className="absolute inset-0 overflow-y-auto overflow-x-hidden p-4 md:p-6 pb-24"
-                            style={{ backgroundColor: `rgba(0, 0, 0, ${scrollProgress})` }}
-                        >
+                        <div className="absolute inset-0 overflow-y-auto overflow-x-hidden p-4 md:p-6 pb-24">
                             <div className="max-w-2xl mx-auto space-y-4">
 
                                 {/* 1. Discography Button */}
