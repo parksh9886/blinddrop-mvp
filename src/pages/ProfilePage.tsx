@@ -10,6 +10,25 @@ import {
 } from 'lucide-react';
 import ImageCropModal from '../components/ImageCropModal';
 
+// DnD Kit imports
+import {
+    DndContext,
+    closestCenter,
+    KeyboardSensor,
+    PointerSensor,
+    useSensor,
+    useSensors,
+} from '@dnd-kit/core';
+import type { DragEndEvent } from '@dnd-kit/core';
+import {
+    arrayMove,
+    SortableContext,
+    sortableKeyboardCoordinates,
+    verticalListSortingStrategy,
+    useSortable
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+
 const ROLES = [
     { value: 'Singer', label: 'Singer' },
     { value: 'Rapper', label: 'Rapper' },
@@ -58,6 +77,61 @@ interface LinkItem {
     order_index: number;
 }
 
+// --- Sortable Link Item Component ---
+interface SortableLinkItemProps {
+    link: LinkItem;
+    handleDeleteLink: (id: string) => void;
+}
+
+const SortableLinkItem = ({ link, handleDeleteLink }: SortableLinkItemProps) => {
+    const {
+        attributes,
+        listeners,
+        setNodeRef,
+        transform,
+        transition,
+        isDragging
+    } = useSortable({ id: link.id });
+
+    const style = {
+        transform: CSS.Transform.toString(transform),
+        transition,
+        zIndex: isDragging ? 50 : 'auto',
+        opacity: isDragging ? 0.5 : 1,
+    };
+
+    return (
+        <div
+            ref={setNodeRef}
+            style={style}
+            className="group flex items-center gap-3 bg-slate-800/50 p-3 rounded-xl border border-slate-700 hover:border-slate-500 transition-colors relative"
+        >
+            <div {...attributes} {...listeners} className="text-slate-500 cursor-move touch-none">
+                <GripVertical className="w-5 h-5" />
+            </div>
+            <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 mb-0.5">
+                    <div className="text-slate-400">
+                        {getIconForPlatform(link.platform, "w-3.5 h-3.5")}
+                    </div>
+                    <h4 className="text-sm font-medium text-white truncate">{link.title}</h4>
+                </div>
+                <a href={link.url} target="_blank" rel="noreferrer" className="text-xs text-slate-500 truncate hover:text-indigo-400 flex items-center gap-1">
+                    {link.url} <ExternalLink className="w-3 h-3" />
+                </a>
+            </div>
+            <button
+                onClick={() => handleDeleteLink(link.id)}
+                className="p-2 text-slate-400 hover:text-red-400 hover:bg-slate-700 rounded-lg transition-colors"
+                title="Delete Link"
+            >
+                <Trash2 className="w-4 h-4" />
+            </button>
+        </div>
+    );
+};
+
+
 const ProfilePage: React.FC = () => {
     const { user } = useAuth();
     const [searchParams] = useSearchParams();
@@ -90,6 +164,12 @@ const ProfilePage: React.FC = () => {
     const [links, setLinks] = useState<LinkItem[]>([]);
     const [newLink, setNewLink] = useState({ platform: 'website', title: '', url: '' });
     const [isLinkAdding, setIsLinkAdding] = useState(false);
+
+    // DnD Sensors
+    const sensors = useSensors(
+        useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+        useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+    );
 
     // Constants
     const COLLAB_OPTIONS = ['Featuring', 'Beat Making', 'Topline', 'Remix', 'Mixing', 'Mastering', 'Lyrics'];
@@ -307,7 +387,7 @@ const ProfilePage: React.FC = () => {
     };
 
 
-    // --- 5. Link Management (Instant) ---
+    // --- 5. Link Management ---
     const handleAddLink = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!user || !newLink.url || !newLink.title) return;
@@ -349,6 +429,33 @@ const ProfilePage: React.FC = () => {
             setLinks(links.filter(l => l.id !== id));
         } catch (error) {
             console.error('Error deleting link:', error);
+        }
+    };
+
+    const handleDragEnd = (event: DragEndEvent) => {
+        const { active, over } = event;
+        if (active.id !== over?.id) {
+            setLinks((items) => {
+                const oldIndex = items.findIndex((l) => l.id === active.id);
+                const newIndex = items.findIndex((l) => l.id === over?.id);
+                const newLinks = arrayMove(items, oldIndex, newIndex);
+
+                // Persist new order
+                const updates = newLinks.map((link, index) => ({
+                    id: link.id,
+                    order_index: index,
+                    title: link.title, // required for update? likely not if just patching, but safe
+                    url: link.url,
+                    updated_at: new Date().toISOString()
+                }));
+
+                // Update in background
+                updates.forEach(async (update) => {
+                    await supabase.from('artist_links').update({ order_index: update.order_index }).eq('id', update.id);
+                });
+
+                return newLinks;
+            });
         }
     };
 
@@ -559,8 +666,8 @@ const ProfilePage: React.FC = () => {
                                 {/* Handle Check Message */}
                                 {handleStatus !== 'idle' && (
                                     <div className={`mt-3 text-sm flex items-center gap-2 ${handleStatus === 'available' ? 'text-green-400' :
-                                        handleStatus === 'taken' ? 'text-red-400' :
-                                            handleStatus === 'same' ? 'text-slate-400' : 'text-indigo-400'
+                                            handleStatus === 'taken' ? 'text-red-400' :
+                                                handleStatus === 'same' ? 'text-slate-400' : 'text-indigo-400'
                                         }`}>
                                         {handleStatus === 'checking' && <Loader2 className="w-4 h-4 animate-spin" />}
                                         {handleStatus === 'available' && <Check className="w-4 h-4" />}
@@ -640,30 +747,13 @@ const ProfilePage: React.FC = () => {
 
                         {/* Links List */}
                         <div className="space-y-3">
-                            {links.map((link) => (
-                                <div key={link.id} className="group flex items-center gap-3 bg-slate-800/50 p-3 rounded-xl border border-slate-700 hover:border-slate-500 transition-colors">
-                                    <div className="text-slate-500 cursor-move">
-                                        <GripVertical className="w-5 h-5" />
-                                    </div>
-                                    <div className="flex-1 min-w-0">
-                                        <div className="flex items-center gap-2 mb-0.5">
-                                            <div className="text-slate-400">
-                                                {getIconForPlatform(link.platform, "w-3.5 h-3.5")}
-                                            </div>
-                                            <h4 className="text-sm font-medium text-white truncate">{link.title}</h4>
-                                        </div>
-                                        <a href={link.url} target="_blank" rel="noreferrer" className="text-xs text-slate-500 truncate hover:text-indigo-400 flex items-center gap-1">
-                                            {link.url} <ExternalLink className="w-3 h-3" />
-                                        </a>
-                                    </div>
-                                    <button
-                                        onClick={() => handleDeleteLink(link.id)}
-                                        className="p-2 text-slate-400 hover:text-red-400 hover:bg-slate-700 rounded-lg transition-colors"
-                                    >
-                                        <Trash2 className="w-4 h-4" />
-                                    </button>
-                                </div>
-                            ))}
+                            <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+                                <SortableContext items={links} strategy={verticalListSortingStrategy}>
+                                    {links.map((link) => (
+                                        <SortableLinkItem key={link.id} link={link} handleDeleteLink={handleDeleteLink} />
+                                    ))}
+                                </SortableContext>
+                            </DndContext>
 
                             {links.length === 0 && (
                                 <div className="text-center py-10 bg-slate-900/50 rounded-xl border border-dashed border-slate-800">
