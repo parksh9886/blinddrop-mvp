@@ -221,89 +221,99 @@ const ArtistPublicPage: React.FC = () => {
                 <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-90" />
             </div>
 
-            {/* Flex Container (New Layout) */}
-            <div className="relative z-10 h-full flex flex-col">
+            {/* Scroll Container (Original) */}
+            <div
+                className="relative z-10 h-full overflow-y-auto snap-y snap-mandatory scroll-smooth overscroll-y-none"
+                onScroll={handleScroll}
+            >
+                {/* Spacer (Original) */}
+                <div className="w-full h-[45vh] md:h-[60vh] snap-start bg-transparent pointer-events-none" />
 
-                {/* Zone A: Fixed Header */}
-                <div className="w-full shrink-0 relative z-20 pt-32 pb-10 px-8 flex flex-col justify-end bg-gradient-to-t from-black/80 via-black/40 to-transparent">
-                    <div className="max-w-[300px] space-y-6">
-                        <div className="flex flex-col gap-3">
-                            <div className="space-y-1">
-                                <h1 className="text-5xl font-bold tracking-tighter text-white drop-shadow-2xl leading-none">
-                                    {displayName}
-                                </h1>
-                                <p className="text-lg text-white/60 font-medium tracking-wide drop-shadow-lg leading-relaxed">
-                                    {profile.bio || "Artist"}
-                                </p>
-                            </div>
-                            <div className="space-y-4">
-                                {/* Collab Badge */}
-                                <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full backdrop-blur-md transition-colors ${isCollabOpen ? 'bg-green-500/20 text-green-200' : 'bg-red-500/20 text-red-200'}`}>
-                                    <div className={`w-2 h-2 rounded-full ${isCollabOpen ? 'bg-green-400 shadow-[0_0_8px_rgba(74,222,128,0.5)]' : 'bg-red-400 shadow-[0_0_8px_rgba(248,113,113,0.5)]'}`} />
-                                    <span className="text-xs font-bold tracking-wide">{isCollabOpen ? 'OPEN FOR COLLAB' : 'NOT TAKING REQUESTS'}</span>
+                {/* Main Content Body (Original Layout) */}
+                <div className="min-h-screen w-full snap-start flex flex-col">
+
+                    {/* Sticky Header (Original Style) */}
+                    <div
+                        className="sticky top-0 z-20 pt-32 pb-10 px-8 transition-all duration-300 bg-gradient-to-t from-black via-black/60 to-transparent"
+                        style={{ pointerEvents: 'none' }}
+                    >
+                        <div className="max-w-[300px] space-y-6 pointer-events-auto">
+                            <div className="flex flex-col gap-3">
+                                <div className="space-y-1">
+                                    <h1 className="text-5xl font-bold tracking-tighter text-white drop-shadow-2xl leading-none">
+                                        {displayName}
+                                    </h1>
+                                    <p className="text-lg text-white/60 font-medium tracking-wide drop-shadow-lg leading-relaxed">
+                                        {profile.bio || "Artist"}
+                                    </p>
                                 </div>
-
-                                {/* Collab Types */}
-                                {isCollabOpen && profile.collab_types && profile.collab_types.length > 0 && (
-                                    <div className="flex flex-wrap gap-2">
-                                        {profile.collab_types.map((type, i) => (
-                                            <span key={i} className="px-3 py-1 rounded-full bg-white/10 hover:bg-white/20 text-white/90 text-sm font-medium backdrop-blur-sm transition-colors cursor-default">
-                                                {type}
-                                            </span>
-                                        ))}
+                                <div className="space-y-4">
+                                    {/* Collab Badge (Original) */}
+                                    <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full backdrop-blur-md transition-colors ${isCollabOpen ? 'bg-green-500/20 text-green-200' : 'bg-red-500/20 text-red-200'}`}>
+                                        <div className={`w-2 h-2 rounded-full ${isCollabOpen ? 'bg-green-400 shadow-[0_0_8px_rgba(74,222,128,0.5)]' : 'bg-red-400 shadow-[0_0_8px_rgba(248,113,113,0.5)]'}`} />
+                                        <span className="text-xs font-bold tracking-wide">{isCollabOpen ? 'OPEN FOR COLLAB' : 'NOT TAKING REQUESTS'}</span>
                                     </div>
-                                )}
+
+                                    {/* Collab Types (Original) */}
+                                    {isCollabOpen && profile.collab_types && profile.collab_types.length > 0 && (
+                                        <div className="flex flex-wrap gap-2">
+                                            {profile.collab_types.map((type, i) => (
+                                                <span key={i} className="px-3 py-1 rounded-full bg-white/10 hover:bg-white/20 text-white/90 text-sm font-medium backdrop-blur-sm transition-colors cursor-default">
+                                                    {type}
+                                                </span>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
 
-                {/* Zone B: Scrollable List */}
-                <div
-                    className="flex-1 overflow-y-auto relative z-10 bg-black/40 backdrop-blur-md"
-                    onScroll={handleScroll}
-                >
-                    <div className="p-4 md:p-6 pb-24 max-w-2xl mx-auto space-y-4">
+                    {/* Main Content List Area (Original Container) */}
+                    {/* Replaced 'track list' content with 'link list' content */}
+                    <div className="flex-1 overflow-y-auto p-4 md:p-6 pb-24 bg-black/40 backdrop-blur-md min-h-screen">
+                        <div className="max-w-2xl mx-auto space-y-4">
 
-                        {/* 1. Discography Button */}
-                        <button
-                            onClick={openDiscography}
-                            className="group relative w-full p-4 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-500/20 transition-all flex items-center justify-between overflow-hidden"
-                        >
-                            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000" />
-                            <div className="flex items-center gap-3">
-                                <div className="p-2 bg-white/20 rounded-lg backdrop-blur-sm">
-                                    <Disc3 className="w-5 h-5 text-white" />
-                                </div>
-                                <span className="font-bold text-lg tracking-wide">Discography</span>
-                            </div>
-                            <ArrowUpRight className="w-5 h-5 opacity-50 group-hover:opacity-100 transition-opacity" />
-                        </button>
-
-                        {/* 2. Artist Links */}
-                        {artistLinks.map((link) => (
-                            <a
-                                key={link.id}
-                                href={link.url}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="group w-full p-4 rounded-xl bg-white/5 hover:bg-white/10 border border-white/5 hover:border-white/20 backdrop-blur-md transition-all flex items-center justify-between hover:scale-[1.02]"
+                            {/* 1. Discography Button (Special) */}
+                            <button
+                                onClick={openDiscography}
+                                className="group relative w-full p-4 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-500/20 transition-all flex items-center justify-between overflow-hidden"
                             >
+                                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000" />
                                 <div className="flex items-center gap-3">
-                                    <div className="text-white/70 group-hover:text-white transition-colors">
-                                        {getIconForPlatform(link.platform)}
+                                    <div className="p-2 bg-white/20 rounded-lg backdrop-blur-sm">
+                                        <Disc3 className="w-5 h-5 text-white" />
                                     </div>
-                                    <span className="font-medium text-white/90">{link.title}</span>
+                                    <span className="font-bold text-lg tracking-wide">Discography</span>
                                 </div>
-                                <ArrowUpRight className="w-4 h-4 text-white/30 group-hover:text-white transition-colors" />
-                            </a>
-                        ))}
+                                <ArrowUpRight className="w-5 h-5 opacity-50 group-hover:opacity-100 transition-opacity" />
+                            </button>
 
-                        {isOwner && (
-                            <Link to="/profile?tab=links" className="flex items-center justify-center p-3 rounded-xl border border-dashed border-white/20 text-white/50 hover:text-white hover:border-white/40 transition-colors text-sm">
-                                <Plus className="w-4 h-4 mr-2" /> Manage Links
-                            </Link>
-                        )}
+                            {/* 2. Artist Links */}
+                            {artistLinks.map((link) => (
+                                <a
+                                    key={link.id}
+                                    href={link.url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="group w-full p-4 rounded-xl bg-white/5 hover:bg-white/10 border border-white/5 hover:border-white/20 backdrop-blur-md transition-all flex items-center justify-between hover:scale-[1.02]"
+                                >
+                                    <div className="flex items-center gap-3">
+                                        <div className="text-white/70 group-hover:text-white transition-colors">
+                                            {getIconForPlatform(link.platform)}
+                                        </div>
+                                        <span className="font-medium text-white/90">{link.title}</span>
+                                    </div>
+                                    <ArrowUpRight className="w-4 h-4 text-white/30 group-hover:text-white transition-colors" />
+                                </a>
+                            ))}
+
+                            {isOwner && (
+                                <Link to="/profile?tab=links" className="flex items-center justify-center p-3 rounded-xl border border-dashed border-white/20 text-white/50 hover:text-white hover:border-white/40 transition-colors text-sm">
+                                    <Plus className="w-4 h-4 mr-2" /> Manage Links
+                                </Link>
+                            )}
+                        </div>
                     </div>
                 </div>
             </div>
