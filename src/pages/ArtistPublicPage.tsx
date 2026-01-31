@@ -479,12 +479,21 @@ const ArtistPublicPage: React.FC = () => {
             <AnimatePresence>
                 {showCopyToast && (
                     <motion.div
-                        initial={{ opacity: 0, y: 50 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: 50 }}
-                        className="fixed bottom-24 left-1/2 -translate-x-1/2 z-[200] px-6 py-3 bg-white text-slate-900 rounded-full shadow-xl font-medium text-sm"
+                        initial={{ opacity: 0, y: 50, scale: 0.9 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: 20, scale: 0.95 }}
+                        transition={{ type: 'spring', damping: 20, stiffness: 300 }}
+                        className="fixed bottom-24 left-1/2 -translate-x-1/2 z-[200] flex items-center gap-3 px-5 py-3 bg-slate-900/90 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl"
                     >
-                        Link copied! Share this track.
+                        <div className="w-8 h-8 rounded-full bg-green-500/20 flex items-center justify-center">
+                            <svg className="w-4 h-4 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                            </svg>
+                        </div>
+                        <div>
+                            <p className="text-white font-semibold text-sm">Link copied!</p>
+                            <p className="text-white/50 text-xs">Share this track with others</p>
+                        </div>
                     </motion.div>
                 )}
             </AnimatePresence>
