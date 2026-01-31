@@ -1,13 +1,16 @@
 import React, { useEffect, useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useSearchParams } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import {
     Play, Loader2, Instagram, Youtube, Music2, Globe, Twitter,
-    Facebook, Linkedin, MoreHorizontal, X, ArrowUpRight, Plus, Disc3, Link as LinkIcon
+    Facebook, Linkedin, MoreHorizontal, X, ArrowUpRight, Plus, Disc3, Link as LinkIcon,
+    ChevronLeft, Lock, CheckCircle2, User, MessageSquare, ChevronDown, ChevronUp
 } from 'lucide-react';
 import Navbar from '../components/Navbar';
+import { motion, AnimatePresence } from 'framer-motion';
 
+// --- Interfaces ---
 interface UserProfile {
     id: string;
     handle: string;
@@ -18,12 +21,22 @@ interface UserProfile {
     collab_types: string[] | null;
 }
 
+interface Feedback {
+    id: string;
+    content: string;
+    created_at: string;
+    reply: string | null;
+    is_unlocked: boolean;
+    track_id: string;
+}
+
 interface Track {
     id: string;
     title: string;
     url: string;
     platform: 'youtube' | 'soundcloud';
     created_at: string;
+    feedbacks?: Feedback[];
 }
 
 interface ArtistLink {
@@ -36,51 +49,69 @@ interface ArtistLink {
 
 const ArtistPublicPage: React.FC = () => {
     const { handle } = useParams<{ handle: string }>();
+    const [searchParams] = useSearchParams(); // For deep linking
     const { user } = useAuth();
+
+    // Data State
     const [profile, setProfile] = useState<UserProfile | null>(null);
+    const [tracks, setTracks] = useState<Track[]>([]);
+    const [artistLinks, setArtistLinks] = useState<ArtistLink[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
 
-    // Tracks List State
-    const [tracks, setTracks] = useState<Track[]>([]);
+    // --- Overlay State ---
+    const [isOverlayOpen, setIsOverlayOpen] = useState(false);
+    const [overlayView, setOverlayView] = useState<'list' | 'detail'>('list');
+    const [selectedTrack, setSelectedTrack] = useState<Track | null>(null);
 
-    // Links State
-    const [artistLinks, setArtistLinks] = useState<ArtistLink[]>([]);
-    const [showLinkHub, setShowLinkHub] = useState(false);
-
+    // Scroll Progress for Blur
     const [scrollProgress, setScrollProgress] = useState(0);
 
+    // --- Fetch Data ---
     useEffect(() => {
         const fetchData = async () => {
             if (!handle) {
-                console.error('No handle found in URL params');
                 setError('No handle specified');
                 return;
             }
             try {
-                // 1. Fetch User by Handle
+                // 1. Fetch User
                 const { data: userData, error: userError } = await supabase
                     .from('users')
                     .select('id, handle, display_name, avatar_url, bio, collab_status, collab_types')
                     .eq('handle', handle)
                     .single();
 
-                if (userError || !userData) {
-                    throw new Error('Artist not found');
-                }
+                if (userError || !userData) throw new Error('Artist not found');
                 setProfile(userData);
 
-                // 2. Fetch Tracks
+                // 2. Fetch Tracks (needed for Discography)
                 const { data: tracksData, error: tracksError } = await supabase
                     .from('tracks')
-                    .select('id, title, url, platform, created_at')
+                    .select('*')
                     .eq('user_id', userData.id)
                     .order('created_at', { ascending: false });
 
                 if (tracksError) throw tracksError;
-                setTracks(tracksData || []);
 
-                // 3. Fetch Artist Links
+                // 2.1 Fetch Feedbacks (Public View logic - secure view ideally)
+                // For simplicity, we fetch feedbacks when valid tracks exist
+                let tracksWithFeedbacks = tracksData || [];
+                if (tracksData && tracksData.length > 0) {
+                    const trackIds = tracksData.map(t => t.id);
+                    const { data: feedbacksData } = await supabase
+                        .from('feedbacks_secure_view') // Use secure view
+                        .select('*')
+                        .in('track_id', trackIds);
+
+                    tracksWithFeedbacks = tracksData.map(track => ({
+                        ...track,
+                        feedbacks: feedbacksData?.filter(fb => fb.track_id === track.id) || []
+                    }));
+                }
+                setTracks(tracksWithFeedbacks);
+
+                // 3. Fetch Links
                 const { data: linksData, error: linksError } = await supabase
                     .from('artist_links')
                     .select('*')
@@ -91,7 +122,7 @@ const ArtistPublicPage: React.FC = () => {
                 setArtistLinks(linksData || []);
 
             } catch (err: any) {
-                console.error('Error fetching artist data:', err);
+                console.error('Error:', err);
                 setError('Artist not found.');
             } finally {
                 setLoading(false);
@@ -101,168 +132,92 @@ const ArtistPublicPage: React.FC = () => {
         fetchData();
     }, [handle]);
 
-    // Scroll Handler for Blur Effect
+    // --- Deep Linking Logic ---
+    useEffect(() => {
+        const trackId = searchParams.get('track');
+        if (trackId && tracks.length > 0) {
+            const track = tracks.find(t => t.id === trackId);
+            if (track) {
+                setSelectedTrack(track);
+                setOverlayView('detail');
+                setIsOverlayOpen(true);
+            }
+        }
+    }, [searchParams, tracks]);
+
+
+    // --- Handlers ---
     const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
         const scrollTop = e.currentTarget.scrollTop;
-        const windowHeight = window.innerHeight;
-        const spacerHeight = windowHeight * 0.6;
-
+        const spacerHeight = window.innerHeight * 0.6;
         let progress = scrollTop / spacerHeight;
         if (progress > 1) progress = 1;
         setScrollProgress(progress);
     };
 
-    // Helper: Get Icon for Platform
-    const getIconForPlatform = (platform: string, className = "w-4 h-4") => {
+    const openDiscography = () => {
+        setOverlayView('list');
+        setIsOverlayOpen(true);
+    };
+
+    const handleTrackClick = (track: Track) => {
+        setSelectedTrack(track);
+        setOverlayView('detail');
+    };
+
+    const handleBackToList = () => {
+        setOverlayView('list');
+        setSelectedTrack(null);
+    };
+
+    // Feedback Reply Handler (moved from TrackPage logic essentially)
+    const handleFeedbackSubmit = async (e: React.FormEvent, trackId: string, content: string) => {
+        e.preventDefault();
+        try {
+            const { error } = await supabase.from('feedbacks').insert({
+                track_id: trackId,
+                content: content
+            });
+            if (error) throw error;
+            alert('Feedback sent! Wait for the artist to reply.');
+            // Optimistic update omitted for brevity, or re-fetch
+        } catch (err) {
+            alert('Failed to send feedback.');
+        }
+    };
+
+
+    // Helper: Icon Map
+    const getIconForPlatform = (platform: string, className = "w-5 h-5") => {
         switch (platform.toLowerCase()) {
             case 'instagram': return <Instagram className={className} />;
             case 'youtube': return <Youtube className={className} />;
-            case 'twitter': return <Twitter className={className} />; // Or X icon
-            case 'tiktok': return <Music2 className={className} />;
+            case 'twitter': return <Twitter className={className} />;
             case 'spotify': return <Disc3 className={className} />;
-            case 'soundcloud': return <Music2 className={className} />; // Overlap with Music2
-            case 'apple': return <Music2 className={className} />;
-            case 'facebook': return <Facebook className={className} />;
-            case 'linkedin': return <Linkedin className={className} />;
+            case 'soundcloud': return <Music2 className={className} />;
             case 'website': return <Globe className={className} />;
             default: return <LinkIcon className={className} />;
         }
     };
 
-    if (loading) return (
-        <div className="min-h-screen bg-black flex items-center justify-center text-white">
-            <Loader2 className="w-8 h-8 animate-spin text-white/50" />
-        </div>
-    );
-
-    if (error || !profile) return (
-        <div className="min-h-screen bg-black flex flex-col items-center justify-center text-white/50 gap-4">
-            <p className="text-lg">{error || 'Artist not found'}</p>
-            <Link to="/" className="text-white hover:text-white/80 text-sm underline">Go Home</Link>
-        </div>
-    );
-
-    const isOwner = user?.id === profile.id;
-    const placeholderImage = "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&q=80&w=1080";
-    const displayImage = profile.avatar_url || placeholderImage;
-    const displayNameText = profile.display_name || profile.handle;
-    const isCollabOpen = profile.collab_status === 'OPEN';
-
-    // Styles
+    // --- Styling Vars ---
+    const isOwner = user?.id === profile?.id;
     const blurAmount = scrollProgress * 20;
     const brightnessAmount = 100 - (scrollProgress * 60);
+    const placeholderImage = "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&q=80&w=1080";
 
+    if (loading) return <div className="min-h-screen bg-black flex items-center justify-center text-white"><Loader2 className="w-8 h-8 animate-spin text-white/50" /></div>;
+    if (error || !profile) return <div className="min-h-screen bg-black flex items-center justify-center text-white">{error || 'Error'}</div>;
 
-    // --- Link Trigger Logic ---
-    const linkCount = artistLinks.length;
-    let triggerButtons = null;
-
-    if (linkCount === 0) {
-        if (isOwner) {
-            triggerButtons = (
-                <Link to="/profile?tab=links" className="flex items-center justify-center w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 text-white transition-all transform hover:scale-110">
-                    <Plus className="w-4 h-4" />
-                </Link>
-            );
-        }
-    } else if (linkCount <= 3) {
-        // Show 1-3 Icons, all open modal
-        triggerButtons = artistLinks.map((link) => (
-            <button
-                key={link.id}
-                onClick={() => setShowLinkHub(true)}
-                className="flex items-center justify-center w-8 h-8 rounded-full bg-white/5 hover:bg-white/20 backdrop-blur-md border border-white/10 text-white transition-all transform hover:scale-110"
-            >
-                {getIconForPlatform(link.platform, "w-3.5 h-3.5")}
-            </button>
-        ));
-    } else {
-        // Show Top 3 Icons + More Button
-        triggerButtons = (
-            <>
-                {artistLinks.slice(0, 3).map((link) => (
-                    <button
-                        key={link.id}
-                        onClick={() => setShowLinkHub(true)}
-                        className="flex items-center justify-center w-8 h-8 rounded-full bg-white/5 hover:bg-white/20 backdrop-blur-md border border-white/10 text-white transition-all transform hover:scale-110"
-                    >
-                        {getIconForPlatform(link.platform, "w-3.5 h-3.5")}
-                    </button>
-                ))}
-                <button
-                    onClick={() => setShowLinkHub(true)}
-                    className="flex items-center justify-center w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/20 text-white transition-all transform hover:scale-110"
-                >
-                    <MoreHorizontal className="w-4 h-4" />
-                </button>
-            </>
-        );
-    }
-
+    const displayImage = profile.avatar_url || placeholderImage;
+    const displayName = profile.display_name || profile.handle;
+    const isCollabOpen = profile.collab_status === 'OPEN';
 
     return (
         <div className="fixed inset-0 w-full h-[100dvh] overflow-hidden bg-black text-white">
-            {/* Navbar */}
-            <div className="absolute z-50 w-full top-0 left-0 pointer-events-none">
-                <div className="pointer-events-auto">
-                    <Navbar />
-                </div>
-            </div>
+            <Navbar />
 
-            {/* Link Hub Modal Overlay */}
-            {showLinkHub && (
-                <div className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-xl flex flex-col items-center justify-center p-6 animate-in fade-in duration-200">
-                    <button
-                        onClick={() => setShowLinkHub(false)}
-                        className="absolute top-6 right-6 p-2 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors"
-                    >
-                        <X className="w-6 h-6" />
-                    </button>
-
-                    <div className="max-w-sm w-full space-y-8 text-center">
-                        {/* Hub Header */}
-                        <div className="space-y-4 flex flex-col items-center">
-                            <div className="w-24 h-24 rounded-full overflow-hidden border-2 border-white/10 shadow-2xl">
-                                <img src={displayImage} alt={displayNameText} className="w-full h-full object-cover" />
-                            </div>
-                            <div>
-                                <h2 className="text-2xl font-bold text-white">{displayNameText}</h2>
-                                <p className="text-white/50 text-sm">@{profile.handle}</p>
-                            </div>
-                        </div>
-
-                        {/* Hub Links */}
-                        <div className="space-y-3 w-full">
-                            {artistLinks.map((link) => (
-                                <a
-                                    key={link.id}
-                                    href={link.url}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="group flex items-center justify-between w-full p-4 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/20 transition-all hover:scale-[1.02] active:scale-95"
-                                >
-                                    <div className="flex items-center gap-3">
-                                        <div className="text-white/70 group-hover:text-white transition-colors">
-                                            {getIconForPlatform(link.platform, "w-5 h-5")}
-                                        </div>
-                                        <span className="font-medium text-white">{link.title}</span>
-                                    </div>
-                                    <ArrowUpRight className="w-4 h-4 text-white/30 group-hover:text-white group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all" />
-                                </a>
-                            ))}
-
-                            {isOwner && (
-                                <Link to="/profile?tab=links" className="flex items-center justify-center p-3 rounded-xl border border-dashed border-white/20 text-white/50 hover:text-white hover:border-white/40 transition-colors text-sm mt-2">
-                                    <Plus className="w-4 h-4 mr-2" />
-                                    Add New Link
-                                </Link>
-                            )}
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            {/* 1. Fixed Background */}
+            {/* Background Layer */}
             <div className="fixed inset-0 z-0">
                 <img
                     src={displayImage}
@@ -276,7 +231,7 @@ const ArtistPublicPage: React.FC = () => {
                 <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-90" />
             </div>
 
-            {/* 2. Scroll Container */}
+            {/* Scroll Container */}
             <div
                 className="relative z-10 h-full overflow-y-auto snap-y snap-mandatory scroll-smooth overscroll-y-none"
                 onScroll={handleScroll}
@@ -284,126 +239,245 @@ const ArtistPublicPage: React.FC = () => {
                 {/* Spacer */}
                 <div className="w-full h-[45vh] md:h-[60vh] snap-start bg-transparent pointer-events-none" />
 
-                {/* Main Content */}
-                <div className="min-h-screen w-full snap-start flex flex-col">
+                {/* Main Content Body */}
+                <div className="min-h-screen w-full snap-start flex flex-col bg-gradient-to-t from-black via-black/90 to-transparent pt-32 px-6 pb-20">
 
-                    {/* Sticky Header with Gradient Overlay */}
-                    <div
-                        className="sticky top-0 z-20 pt-32 pb-10 px-8 transition-all duration-300 bg-gradient-to-t from-black via-black/60 to-transparent"
-                        style={{
-                            // We keep the dynamic opacity for the *base* black, but the gradient adds readability.
-                            // However, the gradient 'from-black' might be too opaque if we want the bg to show through initially?
-                            // User said: "bg-gradient-to-t ... so darkness comes up from bottom".
-                            // And "pt-20".
-                            // Let's rely on the class for gradient.
-                            pointerEvents: 'none' // verify if clicks need to pass through, buttons have pointer-events-auto
-                        }}
-                    >
-                        <div className="max-w-[300px] space-y-6 pointer-events-auto">
+                    {/* Profile Header (Simplified) */}
+                    <div className="max-w-md mx-auto w-full text-center space-y-4 mb-10">
+                        <h1 className="text-5xl font-bold tracking-tighter text-white drop-shadow-2xl">{displayName}</h1>
+                        <p className="text-lg text-white/60 font-medium">{profile.bio || "Artist"}</p>
 
-                            {/* Header Content Wrapper */}
-                            <div className="flex flex-col gap-3">
-                                <div className="space-y-1">
-                                    <h1 className="text-5xl font-bold tracking-tighter text-white drop-shadow-2xl leading-none">
-                                        {displayNameText}
-                                    </h1>
-                                    <p className="text-lg text-white/60 font-medium tracking-wide drop-shadow-lg leading-relaxed">
-                                        {profile.bio || "Artist"}
-                                    </p>
-                                </div>
-
-                                <div className="space-y-4">
-                                    {/* Collab Badge - Soft Style */}
-                                    <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full backdrop-blur-md transition-colors ${isCollabOpen
-                                        ? 'bg-green-500/20 text-green-200'
-                                        : 'bg-red-500/20 text-red-200'
-                                        }`}>
-                                        <div className={`w-2 h-2 rounded-full ${isCollabOpen
-                                            ? 'bg-green-400 shadow-[0_0_8px_rgba(74,222,128,0.5)]'
-                                            : 'bg-red-400 shadow-[0_0_8px_rgba(248,113,113,0.5)]'
-                                            }`} />
-                                        <span className="text-xs font-bold tracking-wide">
-                                            {isCollabOpen ? 'OPEN FOR COLLAB' : 'NOT TAKING REQUESTS'}
-                                        </span>
-                                    </div>
-
-                                    {/* Collab Types - Soft Glassmorphism */}
-                                    {isCollabOpen && profile.collab_types && profile.collab_types.length > 0 && (
-                                        <div className="flex flex-wrap gap-2">
-                                            {profile.collab_types.map((type, i) => (
-                                                <span key={i} className="px-3 py-1 rounded-full bg-white/10 hover:bg-white/20 text-white/90 text-sm font-medium backdrop-blur-sm transition-colors cursor-default">
-                                                    {type}
-                                                </span>
-                                            ))}
-                                        </div>
-                                    )}
-
-                                    {/* Social Trigger Icons */}
-                                    <div className={`flex gap-3 pt-2 transition-all duration-300 ${scrollProgress > 0.8 ? 'opacity-0 h-0 overflow-hidden' : 'opacity-100 h-auto'}`}>
-                                        {triggerButtons}
-                                    </div>
-                                </div>
-                            </div>
+                        {/* Collab Badge */}
+                        <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full backdrop-blur-md transition-colors mx-auto ${isCollabOpen ? 'bg-green-500/20 text-green-200' : 'bg-red-500/20 text-red-200'}`}>
+                            <div className={`w-2 h-2 rounded-full ${isCollabOpen ? 'bg-green-400 shadow-[0_0_8px_rgba(74,222,128,0.5)]' : 'bg-red-400 shadow-[0_0_8px_rgba(248,113,113,0.5)]'}`} />
+                            <span className="text-xs font-bold tracking-wide">{isCollabOpen ? 'OPEN FOR COLLAB' : 'NOT TAKING REQUESTS'}</span>
                         </div>
                     </div>
 
-                    {/* Track List */}
-                    <div className="flex-1 overflow-y-auto p-4 md:p-6 pb-24 bg-black/40 backdrop-blur-md min-h-screen">
-                        <div className="max-w-2xl mx-auto space-y-2">
-                            <h3 className="text-white/50 text-xs font-bold uppercase tracking-widest pl-2 mb-4">Released Tracks</h3>
+                    {/* Link Button List */}
+                    <div className="max-w-md mx-auto w-full space-y-4">
 
-                            {tracks.map((track, idx) => {
-                                let thumbnailUrl = '/placeholder-track.png';
-                                if (track.platform === 'youtube') {
-                                    const videoId = track.url.split('v=')[1]?.split('&')[0] || track.url.split('/').pop();
-                                    if (videoId) thumbnailUrl = `https://img.youtube.com/vi/${videoId}/mqdefault.jpg`;
-                                } else if (track.platform === 'soundcloud') {
-                                    thumbnailUrl = 'https://a-v2.sndcdn.com/assets/images/default-track-cover-0c30953.png';
-                                }
+                        {/* 1. Discography Button (Special) */}
+                        <button
+                            onClick={openDiscography}
+                            className="group relative w-full p-4 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-500/20 transition-all flex items-center justify-between overflow-hidden"
+                        >
+                            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000" />
+                            <div className="flex items-center gap-3">
+                                <div className="p-2 bg-white/20 rounded-lg backdrop-blur-sm">
+                                    <Disc3 className="w-5 h-5 text-white" />
+                                </div>
+                                <span className="font-bold text-lg tracking-wide">Discography</span>
+                            </div>
+                            <ArrowUpRight className="w-5 h-5 opacity-50 group-hover:opacity-100 transition-opacity" />
+                        </button>
 
-                                return (
-                                    <Link
-                                        key={track.id}
-                                        to={`/track/${track.id}`}
-                                        className="group flex items-center gap-4 p-3 rounded-xl cursor-pointer transition-all border bg-white/5 border-white/5 hover:bg-white/10 hover:border-white/20"
-                                    >
-                                        <div className="relative w-12 h-12 rounded-md overflow-hidden flex-shrink-0 bg-slate-800">
-                                            <img
-                                                src={thumbnailUrl}
-                                                alt={track.title}
-                                                className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity"
-                                                onError={(e) => {
-                                                    (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=100&h=100&fit=crop';
-                                                }}
-                                            />
+                        {/* 2. Artist Links */}
+                        {artistLinks.map((link) => (
+                            <a
+                                key={link.id}
+                                href={link.url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="group w-full p-4 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/20 backdrop-blur-md transition-all flex items-center justify-between hover:scale-[1.02]"
+                            >
+                                <div className="flex items-center gap-3">
+                                    <div className="text-white/70 group-hover:text-white transition-colors">
+                                        {getIconForPlatform(link.platform)}
+                                    </div>
+                                    <span className="font-medium text-white/90">{link.title}</span>
+                                </div>
+                            </a>
+                        ))}
+
+                        {isOwner && (
+                            <Link to="/profile?tab=links" className="flex items-center justify-center p-3 rounded-xl border border-dashed border-white/20 text-white/50 hover:text-white hover:border-white/40 transition-colors text-sm">
+                                <Plus className="w-4 h-4 mr-2" /> Manage Links
+                            </Link>
+                        )}
+                    </div>
+                </div>
+            </div>
+
+
+            {/* --- Discography Overlay --- */}
+            <AnimatePresence>
+                {isOverlayOpen && (
+                    <motion.div
+                        initial={{ opacity: 0, y: '100%' }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: '100%' }}
+                        transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+                        className="fixed inset-0 z-[100] bg-slate-950 flex flex-col"
+                    >
+                        {/* Header */}
+                        <div className="flex items-center justify-between p-4 border-b border-white/10 bg-slate-900/50 backdrop-blur-md sticky top-0 z-10">
+                            {overlayView === 'detail' ? (
+                                <button onClick={handleBackToList} className="p-2 rounded-full hover:bg-white/10 transition-colors">
+                                    <ChevronLeft className="w-6 h-6 text-white" />
+                                </button>
+                            ) : (
+                                <div className="w-10" /> // Spacer
+                            )}
+
+                            <h2 className="text-lg font-bold text-white">
+                                {overlayView === 'list' ? 'Discography' : 'Now Playing'}
+                            </h2>
+
+                            <button onClick={() => { setIsOverlayOpen(false); setSelectedTrack(null); setOverlayView('list'); }} className="p-2 rounded-full hover:bg-white/10 transition-colors">
+                                <X className="w-6 h-6 text-white" />
+                            </button>
+                        </div>
+
+                        {/* Content */}
+                        <div className="flex-1 overflow-y-auto p-4">
+                            {overlayView === 'list' ? (
+                                // LIST VIEW
+                                <div className="max-w-xl mx-auto space-y-3">
+                                    {tracks.map((track, idx) => {
+                                        let thumbnailUrl = '/placeholder-track.png';
+                                        if (track.platform === 'youtube') {
+                                            const videoId = track.url.split('v=')[1]?.split('&')[0] || track.url.split('/').pop();
+                                            if (videoId) thumbnailUrl = `https://img.youtube.com/vi/${videoId}/mqdefault.jpg`;
+                                        }
+
+                                        return (
+                                            <button
+                                                key={track.id}
+                                                onClick={() => handleTrackClick(track)}
+                                                className="w-full flex items-center gap-4 p-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/5 hover:border-white/20 transition-all text-left group"
+                                            >
+                                                <div className="relative w-16 h-16 rounded-lg overflow-hidden flex-shrink-0 bg-slate-800">
+                                                    <img src={thumbnailUrl} alt={track.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                                                    <div className="absolute inset-0 flex items-center justify-center bg-black/30 group-hover:bg-black/0 transition-colors">
+                                                        <Play className="w-6 h-6 text-white opacity-80 group-hover:opacity-100" />
+                                                    </div>
+                                                </div>
+                                                <div>
+                                                    <h3 className="font-bold text-white group-hover:text-indigo-300 transition-colors line-clamp-1">{track.title}</h3>
+                                                    <p className="text-xs text-white/40 uppercase tracking-wider mt-1">{track.platform}</p>
+                                                </div>
+                                            </button>
+                                        );
+                                    })}
+                                    {tracks.length === 0 && <p className="text-center text-white/30 py-10">No tracks found.</p>}
+                                </div>
+                            ) : (
+                                // DETAIL VIEW
+                                selectedTrack && (
+                                    <div className="max-w-xl mx-auto space-y-6 animate-in slide-in-from-right duration-300">
+                                        {/* Player */}
+                                        <div className="aspect-video w-full rounded-2xl overflow-hidden bg-black shadow-2xl border border-white/10">
+                                            {selectedTrack.platform === 'youtube' ? (
+                                                <iframe
+                                                    src={`https://www.youtube.com/embed/${selectedTrack.url.split('v=')[1]?.split('&')[0]}?autoplay=1&playsinline=1&theme=dark&color=white`}
+                                                    className="w-full h-full"
+                                                    allow="autoplay; encrypted-media"
+                                                    allowFullScreen
+                                                />
+                                            ) : (
+                                                <iframe
+                                                    width="100%"
+                                                    height="100%"
+                                                    scrolling="no"
+                                                    frameBorder="no"
+                                                    allow="autoplay"
+                                                    src={`https://w.soundcloud.com/player/?url=${selectedTrack.url}&color=%23ff5500&auto_play=true&hide_related=false&show_comments=true&show_user=true&show_reposts=false&show_teaser=true&visual=true`}
+                                                />
+                                            )}
                                         </div>
 
-                                        <div className="text-white/40 text-sm font-mono w-6 text-center">
-                                            {idx + 1}
+                                        <div className="space-y-2">
+                                            <h1 className="text-2xl font-bold text-white">{selectedTrack.title}</h1>
+                                            <p className="text-sm text-white/40">{new Date(selectedTrack.created_at).toLocaleDateString()}</p>
                                         </div>
-                                        <div className="flex-1 min-w-0">
-                                            <h3 className="text-sm md:text-base font-medium text-white group-hover:text-indigo-300 transition-colors truncate">
-                                                {track.title}
-                                            </h3>
-                                            <p className="text-xs text-white/40 capitalize">
-                                                {track.platform}
-                                            </p>
-                                        </div>
-                                        <div className="opacity-0 group-hover:opacity-100 transition-opacity -translate-x-2 group-hover:translate-x-0 transform duration-300">
-                                            <Play className="w-4 h-4 text-white" />
-                                        </div>
-                                    </Link>
-                                );
-                            })}
 
-                            {tracks.length === 0 && (
-                                <div className="text-center text-white/30 py-10">
-                                    No tracks released yet.
+                                        <div className="h-px bg-white/10 w-full" />
+
+                                        {/* Feedback Section (Simplified for Overlay) */}
+                                        <FeedbackSection track={selectedTrack} user={user} />
+                                    </div>
+                                )
+                            )}
+                        </div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+        </div>
+    );
+};
+
+// --- Sub-Component: Feedback Section (Simplified) ---
+const FeedbackSection = ({ track, user }: { track: Track, user: any }) => {
+    const [comment, setComment] = useState('');
+    const [isSubmitting, setIsSubmitting] = useState(false);
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!comment.trim()) return;
+        setIsSubmitting(true);
+        try {
+            const { error } = await supabase.from('feedbacks').insert({
+                track_id: track.id,
+                content: comment
+            });
+            if (error) throw error;
+            alert("Feedback sent!");
+            setComment('');
+        } catch (err) {
+            alert("Error sending feedback");
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
+    // Render feedbacks (read-only mostly, relies on parent fetch or real-time)
+    // For this refactor, we just show the submission form and a list of existing details
+    // Re-using logic from TracksPage slightly but simplified
+    return (
+        <div className="space-y-6">
+            <h3 className="text-lg font-bold flex items-center gap-2">
+                <MessageSquare className="w-5 h-5" /> Secret Feedback
+            </h3>
+
+            <form onSubmit={handleSubmit} className="flex gap-2">
+                <input
+                    type="text"
+                    value={comment}
+                    onChange={(e) => setComment(e.target.value)}
+                    placeholder="Send anonymous feedback..."
+                    className="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-white/30 focus:outline-none focus:border-indigo-500 transition-colors"
+                />
+                <button
+                    disabled={isSubmitting}
+                    className="bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded-xl font-bold transition-colors disabled:opacity-50"
+                >
+                    Send
+                </button>
+            </form>
+
+            <div className="space-y-4">
+                {track.feedbacks?.map((fb, idx) => {
+                    // Check readability
+                    const isReadable = idx < 3 || fb.is_unlocked;
+                    return (
+                        <div key={fb.id} className={`p-4 rounded-xl border ${isReadable ? 'bg-white/5 border-white/10' : 'bg-white/5 border-white/5 relative overflow-hidden'}`}>
+                            <div className="flex items-center gap-2 mb-2">
+                                <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold ${isReadable ? 'bg-indigo-500' : 'bg-slate-700'}`}>
+                                    <User className="w-3 h-3 text-white" />
+                                </div>
+                                <span className="text-xs font-bold text-white/50">Anonymous</span>
+                            </div>
+                            <p className={`text-sm ${isReadable ? 'text-white/80' : 'text-white/20 blur-sm'}`}>{fb.content}</p>
+                            {fb.reply && (
+                                <div className="mt-3 pl-3 border-l-2 border-indigo-500">
+                                    <p className="text-xs text-indigo-300 font-bold mb-1">Artist Reply</p>
+                                    <p className="text-sm text-white/70">{fb.reply}</p>
                                 </div>
                             )}
                         </div>
-                    </div>
-                </div>
+                    );
+                })}
             </div>
         </div>
     );
