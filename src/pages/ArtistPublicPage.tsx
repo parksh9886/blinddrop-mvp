@@ -229,14 +229,14 @@ const ArtistPublicPage: React.FC = () => {
                 {/* Spacer (Original) */}
                 <div className="w-full h-[45vh] md:h-[60vh] snap-start bg-transparent pointer-events-none" />
 
-                {/* Section 2: Profile + Links (single dynamic background) */}
+                {/* Section 2: Profile + Links (starts below navbar) */}
                 <div
-                    className="h-screen w-full snap-start flex flex-col overflow-hidden transition-colors duration-300"
+                    className="min-h-[calc(100vh-64px)] w-full snap-start flex flex-col overflow-hidden transition-colors duration-300 mt-16"
                     style={{ backgroundColor: `rgba(0, 0, 0, ${scrollProgress})` }}
                 >
 
                     {/* Profile Section */}
-                    <div className="flex-shrink-0 pt-20 pb-6 px-8 relative z-10">
+                    <div className="flex-shrink-0 pt-8 pb-6 px-8 relative z-10">
                         <div className="max-w-[300px] space-y-4">
                             <div className="space-y-1">
                                 <h1 className="text-5xl font-bold tracking-tighter text-white drop-shadow-2xl leading-none">
