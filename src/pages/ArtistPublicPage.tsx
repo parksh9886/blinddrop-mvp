@@ -47,6 +47,79 @@ interface ArtistLink {
     order_index: number;
 }
 
+// --- Sub-Component: Feedback Section (Simplified) ---
+const FeedbackSection = ({ track }: { track: Track }) => {
+    const [comment, setComment] = useState('');
+    const [isSubmitting, setIsSubmitting] = useState(false);
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!comment.trim()) return;
+        setIsSubmitting(true);
+        try {
+            const { error } = await supabase.from('feedbacks').insert({
+                track_id: track.id,
+                content: comment
+            });
+            if (error) throw error;
+            alert("Feedback sent!");
+            setComment('');
+        } catch (err) {
+            alert("Error sending feedback");
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
+    return (
+        <div className="space-y-6">
+            <h3 className="text-lg font-bold flex items-center gap-2">
+                <MessageSquare className="w-5 h-5" /> Secret Feedback
+            </h3>
+
+            <form onSubmit={handleSubmit} className="flex gap-2">
+                <input
+                    type="text"
+                    value={comment}
+                    onChange={(e) => setComment(e.target.value)}
+                    placeholder="Send anonymous feedback..."
+                    className="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-white/30 focus:outline-none focus:border-indigo-500 transition-colors"
+                />
+                <button
+                    disabled={isSubmitting}
+                    className="bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded-xl font-bold transition-colors disabled:opacity-50"
+                >
+                    Send
+                </button>
+            </form>
+
+            <div className="space-y-4">
+                {track.feedbacks?.map((fb, idx) => {
+                    // Check readability
+                    const isReadable = idx < 3 || fb.is_unlocked;
+                    return (
+                        <div key={fb.id} className={`p-4 rounded-xl border ${isReadable ? 'bg-white/5 border-white/10' : 'bg-white/5 border-white/5 relative overflow-hidden'}`}>
+                            <div className="flex items-center gap-2 mb-2">
+                                <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold ${isReadable ? 'bg-indigo-500' : 'bg-slate-700'}`}>
+                                    <User className="w-3 h-3 text-white" />
+                                </div>
+                                <span className="text-xs font-bold text-white/50">Anonymous</span>
+                            </div>
+                            <p className={`text-sm ${isReadable ? 'text-white/80' : 'text-white/20 blur-sm'}`}>{fb.content}</p>
+                            {fb.reply && (
+                                <div className="mt-3 pl-3 border-l-2 border-indigo-500">
+                                    <p className="text-xs text-indigo-300 font-bold mb-1">Artist Reply</p>
+                                    <p className="text-sm text-white/70">{fb.reply}</p>
+                                </div>
+                            )}
+                        </div>
+                    );
+                })}
+            </div>
+        </div>
+    );
+};
+
 const ArtistPublicPage: React.FC = () => {
     const { handle } = useParams<{ handle: string }>();
     const [searchParams] = useSearchParams();
@@ -278,139 +351,169 @@ const ArtistPublicPage: React.FC = () => {
                 </div>
             </div>
 
-            {/* Background Layer (Original) */}
+            {/* Background Layer (Mobile Only: Original Logic / PC: New Logic) */}
             <div className="fixed inset-0 z-0">
-                <img
-                    src={displayImage}
-                    alt="Background"
-                    className="w-full h-full object-cover transition-all duration-100 ease-out"
+                {/* Mobile: Full Screen Background */}
+                <div className="md:hidden w-full h-full relative">
+                    <img
+                        src={displayImage}
+                        alt="Background"
+                        className="w-full h-full object-cover transition-all duration-100 ease-out"
+                        style={{
+                            filter: `blur(${blurAmount}px) brightness(${brightnessAmount}%)`,
+                            transform: 'scale(1.1)'
+                        }}
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-90" />
+                </div>
+
+                {/* PC: Fixed Blurred Background */}
+                <div className="hidden md:block w-full h-full relative">
+                    <img
+                        src={displayImage}
+                        alt="PC Background"
+                        className="w-full h-full object-cover blur-3xl opacity-30 scale-110"
+                    />
+                    <div className="absolute inset-0 bg-black/40" />
+                </div>
+            </div>
+
+            {/* Main Content Container (PC: Centered Mobile View) */}
+            <div className="relative z-10 w-full h-full md:max-w-[480px] md:mx-auto md:bg-black md:shadow-2xl md:overflow-hidden md:border-x md:border-white/5">
+
+                {/* PC-Only Internal Background (Matches Mobile logic but confined to container) */}
+                <div className="hidden md:block absolute inset-0 z-0">
+                    <img
+                        src={displayImage}
+                        alt="Container Background"
+                        className="w-full h-full object-cover transition-all duration-100 ease-out"
+                        style={{
+                            filter: `blur(${blurAmount}px) brightness(${brightnessAmount}%)`,
+                            transform: 'scale(1.1)'
+                        }}
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-90" />
+                </div>
+
+                {/* Scroll Indicator - elegant minimal design, fixed at bottom */}
+                <div
+                    className="fixed z-20 left-1/2 -translate-x-1/2 transition-opacity duration-500 pointer-events-none"
                     style={{
-                        filter: `blur(${blurAmount}px) brightness(${brightnessAmount}%)`,
-                        transform: 'scale(1.1)'
+                        bottom: 'calc(16px + env(safe-area-inset-bottom, 0px))',
+                        opacity: scrollProgress < 0.1 ? 1 : 0
                     }}
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-90" />
-            </div>
-
-            {/* Scroll Indicator - elegant minimal design, fixed at bottom */}
-            <div
-                className="fixed z-20 left-1/2 -translate-x-1/2 transition-opacity duration-500 pointer-events-none"
-                style={{
-                    bottom: 'calc(16px + env(safe-area-inset-bottom, 0px))',
-                    opacity: scrollProgress < 0.1 ? 1 : 0
-                }}
-            >
-                <div className="animate-bounce" style={{ animationDuration: '1s' }}>
-                    <ChevronDown className="w-6 h-6 text-white/70" strokeWidth={1.5} />
-                </div>
-            </div>
-
-            {/* Scroll Container (Original) */}
-            <div
-                className="relative z-10 h-full overflow-y-auto snap-y snap-mandatory scroll-smooth overscroll-y-none"
-                onScroll={handleScroll}
-            >
-                {/* Spacer - uses svh for consistent height across browsers */}
-                <div
-                    className="w-full snap-start bg-transparent pointer-events-none h-[55vh]"
-                    style={{ height: 'calc(55svh + env(safe-area-inset-bottom, 0px))' }}
-                />
-
-                {/* Section 2: Profile + Links - uses svh for consistent sizing */}
-                <div
-                    className="min-h-screen w-full snap-start flex flex-col overflow-hidden transition-colors duration-300"
-                    style={{ minHeight: '100svh', backgroundColor: `rgba(0, 0, 0, ${scrollProgress})` }}
                 >
+                    <div className="animate-bounce" style={{ animationDuration: '1s' }}>
+                        <ChevronDown className="w-6 h-6 text-white/70" strokeWidth={1.5} />
+                    </div>
+                </div>
 
-                    {/* Profile Section (pt-24 = navbar height 64px + extra padding) */}
-                    <div className="flex-shrink-0 pt-24 pb-6 px-8 relative z-10">
-                        <div className="max-w-[300px] space-y-4">
-                            <div className="space-y-1">
-                                <h1 className="text-5xl font-bold tracking-tighter text-white drop-shadow-2xl leading-none">
-                                    {displayName}
-                                </h1>
-                                <p className="text-lg text-white/60 font-medium tracking-wide drop-shadow-lg leading-relaxed">
-                                    {profile.bio || "Artist"}
-                                </p>
-                            </div>
-                            <div className="space-y-4">
-                                {/* Collab Badge */}
-                                <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full backdrop-blur-md transition-colors ${isCollabOpen ? 'bg-green-500/20 text-green-200' : 'bg-red-500/20 text-red-200'}`}>
-                                    <div className={`w-2 h-2 rounded-full ${isCollabOpen ? 'bg-green-400 shadow-[0_0_8px_rgba(74,222,128,0.5)]' : 'bg-red-400 shadow-[0_0_8px_rgba(248,113,113,0.5)]'}`} />
-                                    <span className="text-xs font-bold tracking-wide">{isCollabOpen ? 'OPEN FOR COLLAB' : 'NOT TAKING REQUESTS'}</span>
+                {/* Scroll Container (Original) */}
+                <div
+                    className="relative z-10 h-full overflow-y-auto snap-y snap-mandatory scroll-smooth overscroll-y-none"
+                    onScroll={handleScroll}
+                >
+                    {/* Spacer - uses svh for consistent height across browsers */}
+                    <div
+                        className="w-full snap-start bg-transparent pointer-events-none h-[55vh]"
+                        style={{ height: 'calc(55svh + env(safe-area-inset-bottom, 0px))' }}
+                    />
+
+                    {/* Section 2: Profile + Links - uses svh for consistent sizing */}
+                    <div
+                        className="min-h-screen w-full snap-start flex flex-col overflow-hidden transition-colors duration-300"
+                        style={{ minHeight: '100svh', backgroundColor: `rgba(0, 0, 0, ${scrollProgress})` }}
+                    >
+
+                        {/* Profile Section (pt-24 = navbar height 64px + extra padding) */}
+                        <div className="flex-shrink-0 pt-24 pb-6 px-8 relative z-10">
+                            <div className="max-w-[300px] space-y-4">
+                                <div className="space-y-1">
+                                    <h1 className="text-5xl font-bold tracking-tighter text-white drop-shadow-2xl leading-none">
+                                        {displayName}
+                                    </h1>
+                                    <p className="text-lg text-white/60 font-medium tracking-wide drop-shadow-lg leading-relaxed">
+                                        {profile.bio || "Artist"}
+                                    </p>
                                 </div>
-
-                                {/* Collab Types */}
-                                {isCollabOpen && profile.collab_types && profile.collab_types.length > 0 && (
-                                    <div className="flex flex-wrap gap-2">
-                                        {profile.collab_types.map((type, i) => (
-                                            <span key={i} className="px-3 py-1 rounded-full bg-white/10 hover:bg-white/20 text-white/90 text-sm font-medium backdrop-blur-sm transition-colors cursor-default">
-                                                {type}
-                                            </span>
-                                        ))}
+                                <div className="space-y-4">
+                                    {/* Collab Badge */}
+                                    <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full backdrop-blur-md transition-colors ${isCollabOpen ? 'bg-green-500/20 text-green-200' : 'bg-red-500/20 text-red-200'}`}>
+                                        <div className={`w-2 h-2 rounded-full ${isCollabOpen ? 'bg-green-400 shadow-[0_0_8px_rgba(74,222,128,0.5)]' : 'bg-red-400 shadow-[0_0_8px_rgba(248,113,113,0.5)]'}`} />
+                                        <span className="text-xs font-bold tracking-wide">{isCollabOpen ? 'OPEN FOR COLLAB' : 'NOT TAKING REQUESTS'}</span>
                                     </div>
-                                )}
+
+                                    {/* Collab Types */}
+                                    {isCollabOpen && profile.collab_types && profile.collab_types.length > 0 && (
+                                        <div className="flex flex-wrap gap-2">
+                                            {profile.collab_types.map((type, i) => (
+                                                <span key={i} className="px-3 py-1 rounded-full bg-white/10 hover:bg-white/20 text-white/90 text-sm font-medium backdrop-blur-sm transition-colors cursor-default">
+                                                    {type}
+                                                </span>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
                             </div>
                         </div>
-                    </div>
 
-                    {/* Links Container Wrapper - appears after 50% scroll with smooth transition */}
-                    <div
-                        className="flex-1 relative overflow-hidden transition-opacity duration-500 ease-out"
-                        style={{ opacity: scrollProgress > 0.5 ? 1 : 0 }}
-                    >
-                        {/* Inner Scroll Container - uses safe-area-inset-bottom for iOS */}
+                        {/* Links Container Wrapper - appears after 50% scroll with smooth transition */}
                         <div
-                            className="absolute inset-0 overflow-y-auto overflow-x-hidden p-4 md:p-6"
-                            style={{ paddingBottom: 'calc(24px + env(safe-area-inset-bottom, 0px))' }}
+                            className="flex-1 relative overflow-hidden transition-opacity duration-500 ease-out"
+                            style={{ opacity: scrollProgress > 0.5 ? 1 : 0 }}
                         >
-                            <div className="max-w-2xl mx-auto space-y-4">
+                            {/* Inner Scroll Container - uses safe-area-inset-bottom for iOS */}
+                            <div
+                                className="absolute inset-0 overflow-y-auto overflow-x-hidden p-4 md:p-6"
+                                style={{ paddingBottom: 'calc(24px + env(safe-area-inset-bottom, 0px))' }}
+                            >
+                                <div className="max-w-2xl mx-auto space-y-4">
 
-                                {/* 1. Discography Button */}
-                                <button
-                                    onClick={openDiscography}
-                                    className="group relative w-full p-4 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-500/20 transition-all flex items-center justify-between overflow-hidden"
-                                >
-                                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000" />
-                                    <div className="flex items-center gap-3">
-                                        <div className="p-2 bg-white/20 rounded-lg backdrop-blur-sm">
-                                            <Disc3 className="w-5 h-5 text-white" />
-                                        </div>
-                                        <span className="font-bold text-lg tracking-wide">Discography</span>
-                                    </div>
-                                    <ArrowUpRight className="w-5 h-5 opacity-50 group-hover:opacity-100 transition-opacity" />
-                                </button>
-
-                                {/* 2. Artist Links */}
-                                {artistLinks.map((link) => (
-                                    <a
-                                        key={link.id}
-                                        href={link.url}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="group w-full p-4 rounded-xl bg-white/5 hover:bg-white/10 border border-white/5 hover:border-white/20 backdrop-blur-md transition-all flex items-center justify-between hover:scale-[1.02]"
+                                    {/* 1. Discography Button */}
+                                    <button
+                                        onClick={openDiscography}
+                                        className="group relative w-full p-4 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-500/20 transition-all flex items-center justify-between overflow-hidden"
                                     >
+                                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000" />
                                         <div className="flex items-center gap-3">
-                                            <div className="text-white/70 group-hover:text-white transition-colors">
-                                                {getIconForPlatform(link.platform)}
+                                            <div className="p-2 bg-white/20 rounded-lg backdrop-blur-sm">
+                                                <Disc3 className="w-5 h-5 text-white" />
                                             </div>
-                                            <span className="font-medium text-white/90">{link.title}</span>
+                                            <span className="font-bold text-lg tracking-wide">Discography</span>
                                         </div>
-                                        <ArrowUpRight className="w-4 h-4 text-white/30 group-hover:text-white transition-colors" />
-                                    </a>
-                                ))}
+                                        <ArrowUpRight className="w-5 h-5 opacity-50 group-hover:opacity-100 transition-opacity" />
+                                    </button>
 
-                                {isOwner && (
-                                    <Link to="/profile?tab=links" className="flex items-center justify-center p-3 rounded-xl border border-dashed border-white/20 text-white/50 hover:text-white hover:border-white/40 transition-colors text-sm">
-                                        <Plus className="w-4 h-4 mr-2" /> Manage Links
-                                    </Link>
-                                )}
+                                    {/* 2. Artist Links */}
+                                    {artistLinks.map((link) => (
+                                        <a
+                                            key={link.id}
+                                            href={link.url}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="group w-full p-4 rounded-xl bg-white/5 hover:bg-white/10 border border-white/5 hover:border-white/20 backdrop-blur-md transition-all flex items-center justify-between hover:scale-[1.02]"
+                                        >
+                                            <div className="flex items-center gap-3">
+                                                <div className="text-white/70 group-hover:text-white transition-colors">
+                                                    {getIconForPlatform(link.platform)}
+                                                </div>
+                                                <span className="font-medium text-white/90">{link.title}</span>
+                                            </div>
+                                            <ArrowUpRight className="w-4 h-4 text-white/30 group-hover:text-white transition-colors" />
+                                        </a>
+                                    ))}
+
+                                    {isOwner && (
+                                        <Link to="/profile?tab=links" className="flex items-center justify-center p-3 rounded-xl border border-dashed border-white/20 text-white/50 hover:text-white hover:border-white/40 transition-colors text-sm">
+                                            <Plus className="w-4 h-4 mr-2" /> Manage Links
+                                        </Link>
+                                    )}
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
-
 
             {/* --- Discography Overlay (New Logic) --- */}
             <AnimatePresence>
@@ -552,79 +655,6 @@ const ArtistPublicPage: React.FC = () => {
                     </motion.div>
                 )}
             </AnimatePresence>
-        </div>
-    );
-};
-
-// --- Sub-Component: Feedback Section (Simplified) ---
-const FeedbackSection = ({ track }: { track: Track }) => {
-    const [comment, setComment] = useState('');
-    const [isSubmitting, setIsSubmitting] = useState(false);
-
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        if (!comment.trim()) return;
-        setIsSubmitting(true);
-        try {
-            const { error } = await supabase.from('feedbacks').insert({
-                track_id: track.id,
-                content: comment
-            });
-            if (error) throw error;
-            alert("Feedback sent!");
-            setComment('');
-        } catch (err) {
-            alert("Error sending feedback");
-        } finally {
-            setIsSubmitting(false);
-        }
-    };
-
-    return (
-        <div className="space-y-6">
-            <h3 className="text-lg font-bold flex items-center gap-2">
-                <MessageSquare className="w-5 h-5" /> Secret Feedback
-            </h3>
-
-            <form onSubmit={handleSubmit} className="flex gap-2">
-                <input
-                    type="text"
-                    value={comment}
-                    onChange={(e) => setComment(e.target.value)}
-                    placeholder="Send anonymous feedback..."
-                    className="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-white/30 focus:outline-none focus:border-indigo-500 transition-colors"
-                />
-                <button
-                    disabled={isSubmitting}
-                    className="bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded-xl font-bold transition-colors disabled:opacity-50"
-                >
-                    Send
-                </button>
-            </form>
-
-            <div className="space-y-4">
-                {track.feedbacks?.map((fb, idx) => {
-                    // Check readability
-                    const isReadable = idx < 3 || fb.is_unlocked;
-                    return (
-                        <div key={fb.id} className={`p-4 rounded-xl border ${isReadable ? 'bg-white/5 border-white/10' : 'bg-white/5 border-white/5 relative overflow-hidden'}`}>
-                            <div className="flex items-center gap-2 mb-2">
-                                <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold ${isReadable ? 'bg-indigo-500' : 'bg-slate-700'}`}>
-                                    <User className="w-3 h-3 text-white" />
-                                </div>
-                                <span className="text-xs font-bold text-white/50">Anonymous</span>
-                            </div>
-                            <p className={`text-sm ${isReadable ? 'text-white/80' : 'text-white/20 blur-sm'}`}>{fb.content}</p>
-                            {fb.reply && (
-                                <div className="mt-3 pl-3 border-l-2 border-indigo-500">
-                                    <p className="text-xs text-indigo-300 font-bold mb-1">Artist Reply</p>
-                                    <p className="text-sm text-white/70">{fb.reply}</p>
-                                </div>
-                            )}
-                        </div>
-                    );
-                })}
-            </div>
         </div>
     );
 };

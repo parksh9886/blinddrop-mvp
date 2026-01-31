@@ -8,6 +8,7 @@ import {
     ExternalLink, GripVertical, Instagram, Youtube, Twitter, Music2, Disc3,
     Facebook, Linkedin, Globe, Link as LinkIcon
 } from 'lucide-react';
+import ImageCropModal from '../components/ImageCropModal';
 
 const ROLES = [
     { value: 'Singer', label: 'Singer' },
@@ -63,6 +64,11 @@ const ProfilePage: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [activeTab, setActiveTab] = useState<'profile' | 'links'>('profile');
+
+    // Crop Modal State
+    const [cropModalOpen, setCropModalOpen] = useState(false);
+    const [cropImageSrc, setCropImageSrc] = useState<string | null>(null);
+    const [selectedFileToCheckExt, setSelectedFileToCheckExt] = useState<File | null>(null);
 
     // Profile Form State
     const [handle, setHandle] = useState('');
@@ -151,22 +157,43 @@ const ProfilePage: React.FC = () => {
     // Helper check for array
     const isArray = (arr: any): arr is string[] => Array.isArray(arr);
 
-    // Avatar Upload Handler
+    // Avatar Upload Handler (Step 1: File Select & Open Crop Modal)
     const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         if (!e.target.files || e.target.files.length === 0) return;
 
         const file = e.target.files[0];
-        const fileExt = file.name.split('.').pop();
-        const fileName = `${user?.id}-${Math.random()}.${fileExt}`;
-        const filePath = `${fileName}`;
+        setSelectedFileToCheckExt(file);
 
+        // Read file to data URL for cropper
+        const reader = new FileReader();
+        reader.addEventListener('load', () => {
+            setCropImageSrc(reader.result?.toString() || null);
+            setCropModalOpen(true);
+        });
+        reader.readAsDataURL(file);
+
+        // Reset input to allow selecting same file again if cancelled
+        e.target.value = '';
+    };
+
+    // Avatar Upload Handler (Step 2: Save Cropped Blob)
+    const handleCropSave = async (croppedBlob: Blob) => {
+        setCropModalOpen(false);
         setSaving(true);
         setMsg(null);
 
         try {
+            // Determine extension
+            const fileExt = selectedFileToCheckExt?.name.split('.').pop() || 'jpg';
+            const fileName = `${user?.id}-${Math.random()}.${fileExt}`;
+            const filePath = `${fileName}`;
+
+            // Upload Blob
             const { error: uploadError } = await supabase.storage
                 .from('avatars')
-                .upload(filePath, file);
+                .upload(filePath, croppedBlob, {
+                    contentType: croppedBlob.type
+                });
 
             if (uploadError) throw uploadError;
 
@@ -175,12 +202,13 @@ const ProfilePage: React.FC = () => {
                 .getPublicUrl(filePath);
 
             setAvatarUrl(publicUrl);
-            setMsg({ type: 'success', text: 'Image uploaded! Click Save to persist changes.' });
+            setMsg({ type: 'success', text: 'Image cropped & uploaded! Click Save to profile.' });
         } catch (error: any) {
             console.error('Upload error:', error);
             setMsg({ type: 'error', text: 'Failed to upload image.' });
         } finally {
             setSaving(false);
+            setCropImageSrc(null);
         }
     };
 
@@ -587,6 +615,15 @@ const ProfilePage: React.FC = () => {
                     )}
                 </div>
             </div>
+
+            {/* Crop Modal */}
+            {cropModalOpen && cropImageSrc && (
+                <ImageCropModal
+                    imageSrc={cropImageSrc}
+                    onCancel={() => setCropModalOpen(false)}
+                    onCropComplete={handleCropSave}
+                />
+            )}
         </Layout>
     );
 };
