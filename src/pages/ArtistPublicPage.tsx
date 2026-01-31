@@ -485,15 +485,12 @@ const ArtistPublicPage: React.FC = () => {
                         transition={{ type: 'spring', damping: 20, stiffness: 300 }}
                         className="fixed bottom-24 left-1/2 -translate-x-1/2 z-[200] flex items-center gap-3 px-5 py-3 bg-slate-900/90 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl"
                     >
-                        <div className="w-8 h-8 rounded-full bg-green-500/20 flex items-center justify-center">
-                            <svg className="w-4 h-4 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                        <div className="w-6 h-6 aspect-square rounded-full bg-green-500/20 flex items-center justify-center flex-shrink-0">
+                            <svg className="w-3.5 h-3.5 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                                 <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                             </svg>
                         </div>
-                        <div>
-                            <p className="text-white font-semibold text-sm">Link copied!</p>
-                            <p className="text-white/50 text-xs">Share this track with others</p>
-                        </div>
+                        <p className="text-white text-sm font-medium whitespace-nowrap">Link copied! Share this track.</p>
                     </motion.div>
                 )}
             </AnimatePresence>
