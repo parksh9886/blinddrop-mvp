@@ -232,8 +232,11 @@ const ArtistPublicPage: React.FC = () => {
                 {/* Section 2: Profile + Links (snap-start, fills screen) */}
                 <div className="h-screen w-full snap-start flex flex-col overflow-hidden">
 
-                    {/* Profile Section (Fixed at top of Section 2, solid background) */}
-                    <div className="flex-shrink-0 pt-20 pb-6 px-8 bg-black relative z-10">
+                    {/* Profile Section (transparent before scroll, black after scroll) */}
+                    <div
+                        className="flex-shrink-0 pt-20 pb-6 px-8 relative z-10 transition-colors duration-300"
+                        style={{ backgroundColor: `rgba(0, 0, 0, ${scrollProgress})` }}
+                    >
                         <div className="max-w-[300px] space-y-4">
                             <div className="space-y-1">
                                 <h1 className="text-5xl font-bold tracking-tighter text-white drop-shadow-2xl leading-none">
@@ -264,10 +267,10 @@ const ArtistPublicPage: React.FC = () => {
                         </div>
                     </div>
 
-                    {/* Links Container Wrapper (Clips content at boundary) */}
-                    <div className="flex-1 relative overflow-hidden">
+                    {/* Links Container Wrapper (Clips content at boundary, black background) */}
+                    <div className="flex-1 relative overflow-hidden bg-black">
                         {/* Inner Scroll Container */}
-                        <div className="absolute inset-0 overflow-y-auto overflow-x-hidden p-4 md:p-6 pb-24">
+                        <div className="absolute inset-0 overflow-y-auto overflow-x-hidden p-4 md:p-6 pb-24 bg-black">
                             <div className="max-w-2xl mx-auto space-y-4">
 
                                 {/* 1. Discography Button */}
