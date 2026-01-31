@@ -221,6 +221,17 @@ const ArtistPublicPage: React.FC = () => {
                 <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-90" />
             </div>
 
+            {/* Scroll Indicator - fixed at bottom of viewport, fades out on scroll */}
+            <div
+                className="fixed z-20 left-1/2 -translate-x-1/2 transition-opacity duration-500 pointer-events-none"
+                style={{
+                    bottom: 'calc(16px + env(safe-area-inset-bottom, 0px))',
+                    opacity: scrollProgress < 0.1 ? 1 : 0
+                }}
+            >
+                <ChevronDown className="w-8 h-8 text-white/80 animate-bounce" />
+            </div>
+
             {/* Scroll Container (Original) */}
             <div
                 className="relative z-10 h-full overflow-y-auto snap-y snap-mandatory scroll-smooth overscroll-y-none"
@@ -228,17 +239,9 @@ const ArtistPublicPage: React.FC = () => {
             >
                 {/* Spacer - uses svh for consistent height across browsers */}
                 <div
-                    className="w-full snap-start bg-transparent relative h-[55vh]"
+                    className="w-full snap-start bg-transparent pointer-events-none h-[55vh]"
                     style={{ height: 'calc(55svh + env(safe-area-inset-bottom, 0px))' }}
-                >
-                    {/* Scroll Indicator - bounces and fades out on scroll */}
-                    <div
-                        className="absolute bottom-4 left-1/2 -translate-x-1/2 transition-opacity duration-500"
-                        style={{ opacity: scrollProgress < 0.1 ? 1 : 0 }}
-                    >
-                        <ChevronDown className="w-8 h-8 text-white/80 animate-bounce" />
-                    </div>
-                </div>
+                />
 
                 {/* Section 2: Profile + Links - uses svh for consistent sizing */}
                 <div
