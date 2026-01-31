@@ -4,7 +4,7 @@ import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import {
     Play, Loader2, Instagram, Youtube, Music2, Globe, Twitter,
-    Facebook, Linkedin, MoreHorizontal, X, ArrowUpRight, Plus, Disc3, Link as LinkIcon,
+    Facebook, Linkedin, X, ArrowUpRight, Plus, Disc3, Link as LinkIcon,
     ChevronLeft, User, MessageSquare
 } from 'lucide-react';
 import Navbar from '../components/Navbar';
@@ -198,16 +198,6 @@ const ArtistPublicPage: React.FC = () => {
     const displayImage = profile.avatar_url || placeholderImage;
     const displayName = profile.display_name || profile.handle;
     const isCollabOpen = profile.collab_status === 'OPEN';
-
-    // Link Trigger Logic (Kep for compatibility, though we show standard links now)
-    const linkCount = artistLinks.length;
-    let triggerButtons = null;
-    // ... we can reuse the trigger button logic if we want social icons on top, OR hide them since we have a link list now.
-    // The user's prompt implied "Replacing track list with link list". 
-    // Usually Linktree pages DON'T have a separate social icon row AND a link list.
-    // However, the "Previous Design" had them. I will KEEP them for now to be safe, but hide them if they duplicate logic?
-    // Actually, "Remove redundant social icons" was in the original requirement.
-    // So I will OMIT the `triggerButtons` logic block to clean up, as the list below replaces it.
 
     return (
         <div className="fixed inset-0 w-full h-[100dvh] overflow-hidden bg-black text-white">
