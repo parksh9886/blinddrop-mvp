@@ -229,7 +229,7 @@ const ArtistPublicPage: React.FC = () => {
                 {/* Spacer - accounts for safe-area-inset-bottom */}
                 <div
                     className="w-full snap-start bg-transparent pointer-events-none"
-                    style={{ height: 'calc(55vh + env(safe-area-inset-bottom, 0px))', minHeight: '55vh' }}
+                    style={{ height: 'calc(70vh + env(safe-area-inset-bottom, 0px))', minHeight: '70vh' }}
                 />
 
                 {/* Section 2: Profile + Links (background covers navbar area) */}
