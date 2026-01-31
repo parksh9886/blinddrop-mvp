@@ -232,9 +232,9 @@ const ArtistPublicPage: React.FC = () => {
                 {/* Main Content Body (Original Layout) */}
                 <div className="min-h-screen w-full snap-start flex flex-col">
 
-                    {/* Sticky Header (Original Style) */}
+                    {/* Sticky Header (Updated for Masking) */}
                     <div
-                        className="sticky top-0 z-20 pt-32 pb-10 px-8 transition-all duration-300 bg-gradient-to-t from-black via-black/60 to-transparent"
+                        className="sticky top-0 z-50 pt-32 pb-10 px-8 transition-all duration-300 backdrop-blur-md bg-black/10"
                         style={{ pointerEvents: 'none' }}
                     >
                         <div className="max-w-[300px] space-y-6 pointer-events-auto">
@@ -269,9 +269,15 @@ const ArtistPublicPage: React.FC = () => {
                         </div>
                     </div>
 
-                    {/* Main Content List Area (Original Container) */}
+                    {/* Main Content List Area (Masked) */}
                     {/* Replaced 'track list' content with 'link list' content */}
-                    <div className="flex-1 overflow-y-auto p-4 md:p-6 pb-24 bg-black/40 backdrop-blur-md min-h-screen">
+                    <div
+                        className="flex-1 overflow-y-auto p-4 md:p-6 pb-24 min-h-screen"
+                        style={{
+                            maskImage: 'linear-gradient(to bottom, transparent 0%, black 15%, black 100%)',
+                            WebkitMaskImage: 'linear-gradient(to bottom, transparent 0%, black 15%, black 100%)'
+                        }}
+                    >
                         <div className="max-w-2xl mx-auto space-y-4">
 
                             {/* 1. Discography Button (Special) */}
