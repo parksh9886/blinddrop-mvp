@@ -206,11 +206,11 @@ const ArtistPublicPage: React.FC = () => {
         setOverlayView('list');
         setSelectedTrack(null);
 
-        // If entered via deep link, use replaceState to clear track param
+        // If entered via deep link, use replaceState to clear track param but keep isDeepLinkEntry true
         if (isDeepLinkEntry) {
             const cleanUrl = `${window.location.origin}${window.location.pathname}`;
-            history.replaceState(null, '', cleanUrl);
-            setIsDeepLinkEntry(false);
+            history.replaceState({ overlay: 'list' }, '', cleanUrl);
+            // Don't reset isDeepLinkEntry here - keep it true until overlay is fully closed
         } else {
             history.back();
         }
