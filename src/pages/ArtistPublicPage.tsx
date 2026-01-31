@@ -143,9 +143,39 @@ const ArtistPublicPage: React.FC = () => {
                 setSelectedTrack(track);
                 setOverlayView('detail');
                 setIsOverlayOpen(true);
+                // Push initial state for deep link
+                history.replaceState({ overlay: 'detail', trackId: track.id }, '');
             }
         }
     }, [searchParams, tracks]);
+
+    // --- Browser Back Button Handler ---
+    useEffect(() => {
+        const handlePopState = (event: PopStateEvent) => {
+            const state = event.state;
+
+            if (!state || !state.overlay) {
+                // No overlay state - close everything
+                setIsOverlayOpen(false);
+                setSelectedTrack(null);
+                setOverlayView('list');
+            } else if (state.overlay === 'list') {
+                // Go back to list view
+                setOverlayView('list');
+                setSelectedTrack(null);
+            } else if (state.overlay === 'detail' && state.trackId) {
+                // Restore detail view (shouldn't normally happen)
+                const track = tracks.find(t => t.id === state.trackId);
+                if (track) {
+                    setSelectedTrack(track);
+                    setOverlayView('detail');
+                }
+            }
+        };
+
+        window.addEventListener('popstate', handlePopState);
+        return () => window.removeEventListener('popstate', handlePopState);
+    }, [tracks]);
 
 
     // --- Handlers ---
@@ -161,16 +191,27 @@ const ArtistPublicPage: React.FC = () => {
     const openDiscography = () => {
         setOverlayView('list');
         setIsOverlayOpen(true);
+        history.pushState({ overlay: 'list' }, '');
     };
 
     const handleTrackClick = (track: Track) => {
         setSelectedTrack(track);
         setOverlayView('detail');
+        history.pushState({ overlay: 'detail', trackId: track.id }, '');
     };
 
     const handleBackToList = () => {
         setOverlayView('list');
         setSelectedTrack(null);
+        history.back(); // Use browser back instead of pushState
+    };
+
+    const handleCloseOverlay = () => {
+        setIsOverlayOpen(false);
+        setSelectedTrack(null);
+        setOverlayView('list');
+        // Go back to the state before overlay was opened
+        history.back();
     };
 
     // Copy Track Deep Link to Clipboard
@@ -378,7 +419,7 @@ const ArtistPublicPage: React.FC = () => {
                                 {overlayView === 'list' ? 'Discography' : 'Now Playing'}
                             </h2>
 
-                            <button onClick={() => { setIsOverlayOpen(false); setSelectedTrack(null); setOverlayView('list'); }} className="p-2 rounded-full hover:bg-white/10 transition-colors">
+                            <button onClick={handleCloseOverlay} className="p-2 rounded-full hover:bg-white/10 transition-colors">
                                 <X className="w-6 h-6 text-white" />
                             </button>
                         </div>
