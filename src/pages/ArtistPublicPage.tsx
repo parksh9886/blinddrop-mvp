@@ -64,6 +64,9 @@ const ArtistPublicPage: React.FC = () => {
     const [overlayView, setOverlayView] = useState<'list' | 'detail'>('list');
     const [selectedTrack, setSelectedTrack] = useState<Track | null>(null);
 
+    // Toast State for Copy Feedback
+    const [showCopyToast, setShowCopyToast] = useState(false);
+
     // Scroll Progress for Blur
     const [scrollProgress, setScrollProgress] = useState(0);
 
@@ -168,6 +171,16 @@ const ArtistPublicPage: React.FC = () => {
     const handleBackToList = () => {
         setOverlayView('list');
         setSelectedTrack(null);
+    };
+
+    // Copy Track Deep Link to Clipboard
+    const copyTrackLink = (trackId: string, e?: React.MouseEvent) => {
+        e?.stopPropagation(); // Prevent track click when copying
+        const deepLink = `${window.location.origin}${window.location.pathname}?track=${trackId}`;
+        navigator.clipboard.writeText(deepLink).then(() => {
+            setShowCopyToast(true);
+            setTimeout(() => setShowCopyToast(false), 2500);
+        });
     };
 
 
@@ -398,6 +411,14 @@ const ArtistPublicPage: React.FC = () => {
                                                     <h3 className="font-bold text-white group-hover:text-indigo-300 transition-colors line-clamp-1">{track.title}</h3>
                                                     <p className="text-xs text-white/40 uppercase tracking-wider mt-1">{track.platform}</p>
                                                 </div>
+                                                {/* Copy Link Button */}
+                                                <button
+                                                    onClick={(e) => copyTrackLink(track.id, e)}
+                                                    className="ml-auto p-2 rounded-full hover:bg-white/10 transition-colors opacity-50 group-hover:opacity-100"
+                                                    title="Copy track link"
+                                                >
+                                                    <LinkIcon className="w-4 h-4 text-white" />
+                                                </button>
                                             </button>
                                         );
                                     })}
@@ -429,7 +450,16 @@ const ArtistPublicPage: React.FC = () => {
                                         </div>
 
                                         <div className="space-y-2">
-                                            <h1 className="text-2xl font-bold text-white">{selectedTrack.title}</h1>
+                                            <div className="flex items-center justify-between gap-4">
+                                                <h1 className="text-2xl font-bold text-white flex-1 line-clamp-2">{selectedTrack.title}</h1>
+                                                <button
+                                                    onClick={() => copyTrackLink(selectedTrack.id)}
+                                                    className="p-2.5 rounded-full hover:bg-white/10 transition-colors flex-shrink-0"
+                                                    title="Copy track link"
+                                                >
+                                                    <LinkIcon className="w-5 h-5 text-white/70" />
+                                                </button>
+                                            </div>
                                             <p className="text-sm text-white/40">{new Date(selectedTrack.created_at).toLocaleDateString()}</p>
                                         </div>
 
@@ -441,6 +471,20 @@ const ArtistPublicPage: React.FC = () => {
                                 )
                             )}
                         </div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
+            {/* Copy Toast Notification */}
+            <AnimatePresence>
+                {showCopyToast && (
+                    <motion.div
+                        initial={{ opacity: 0, y: 50 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: 50 }}
+                        className="fixed bottom-24 left-1/2 -translate-x-1/2 z-[200] px-6 py-3 bg-white text-slate-900 rounded-full shadow-xl font-medium text-sm"
+                    >
+                        Link copied! Share this track.
                     </motion.div>
                 )}
             </AnimatePresence>
