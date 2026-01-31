@@ -6,10 +6,9 @@ import Layout from '../components/Layout';
 import {
     Loader2, User as UserIcon, Camera, AlertTriangle, Check, Plus, Trash2,
     ExternalLink, GripVertical, Instagram, Youtube, Twitter, Music2, Disc3,
-    Facebook, Linkedin, Globe, Link as LinkIcon
+    Facebook, Linkedin, Globe, Link as LinkIcon, Info
 } from 'lucide-react';
 import ImageCropModal from '../components/ImageCropModal';
-import { useDebounce } from '../hooks/useDebounce';
 
 const ROLES = [
     { value: 'Singer', label: 'Singer' },
@@ -59,8 +58,6 @@ interface LinkItem {
     order_index: number;
 }
 
-type SaveStatus = 'idle' | 'saving' | 'saved' | 'error';
-
 const ProfilePage: React.FC = () => {
     const { user } = useAuth();
     const [searchParams] = useSearchParams();
@@ -72,38 +69,35 @@ const ProfilePage: React.FC = () => {
     const [cropImageSrc, setCropImageSrc] = useState<string | null>(null);
     const [selectedFileToCheckExt, setSelectedFileToCheckExt] = useState<File | null>(null);
 
-    // --- Profile Form State (Group A: Auto-save) ---
+    // --- Profile Data (Group A: Auto-save) ---
     const [displayName, setDisplayName] = useState('');
     const [selectedRoles, setSelectedRoles] = useState<string[]>([]);
     const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
     const [collabStatus, setCollabStatus] = useState<'OPEN' | 'CLOSED'>('OPEN');
     const [collabTypes, setCollabTypes] = useState<string[]>([]);
 
-    // Links State (Group A: Auto-save)
+    // Auto-save Status
+    const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
+    const firstLoad = useRef(true);
+
+    // --- Handle (Group B: Manual Update) ---
+    const [currentHandle, setCurrentHandle] = useState('');
+    const [newHandle, setNewHandle] = useState('');
+    const [handleStatus, setHandleStatus] = useState<'idle' | 'checking' | 'available' | 'taken' | 'same'>('idle');
+    const [handleMsg, setHandleMsg] = useState('');
+
+    // --- Links State ---
     const [links, setLinks] = useState<LinkItem[]>([]);
     const [newLink, setNewLink] = useState({ platform: 'website', title: '', url: '' });
-
-    // --- Handle State (Group B: Manual Update) ---
-    const [handle, setHandle] = useState(''); // Current handle in DB
-    const [draftHandle, setDraftHandle] = useState(''); // Input value
-    const [handleStatus, setHandleStatus] = useState<'idle' | 'checking' | 'available' | 'taken' | 'error'>('idle');
-    const [handleMsg, setHandleMsg] = useState<string>('');
-
-    // --- Status Indicators ---
-    const [profileStatus, setProfileStatus] = useState<SaveStatus>('idle');
-    const [linksStatus, setLinksStatus] = useState<SaveStatus>('idle');
-
-    // --- Debounced Values for Auto-save ---
-    const debouncedProfile = useDebounce({ displayName, selectedRoles, collabStatus, collabTypes }, 1000);
-    // const debouncedLinks = useDebounce(links, 1000); // Unused for now
-
-    // Initial Data Fetched Flag to prevent saving on mount
-    const isLoaded = useRef(false);
+    const [isLinkAdding, setIsLinkAdding] = useState(false);
 
     // Constants
     const COLLAB_OPTIONS = ['Featuring', 'Beat Making', 'Topline', 'Remix', 'Mixing', 'Mastering', 'Lyrics'];
 
-    // Fetch Profile & Links
+    // Helper check for array
+    const isArray = (arr: any): arr is string[] => Array.isArray(arr);
+
+    // --- 1. Fetch Initial Data ---
     useEffect(() => {
         if (!user) return;
 
@@ -112,7 +106,7 @@ const ProfilePage: React.FC = () => {
 
         const fetchData = async () => {
             try {
-                // 1. Fetch Profile
+                // Fetch Profile
                 const { data: userData } = await supabase
                     .from('users')
                     .select('handle, bio, avatar_url, display_name, collab_status, collab_types')
@@ -120,147 +114,82 @@ const ProfilePage: React.FC = () => {
                     .single();
 
                 if (userData) {
-                    setHandle(userData.handle || '');
-                    setDraftHandle(userData.handle || '');
+                    setCurrentHandle(userData.handle || '');
+                    setNewHandle(userData.handle || '');
                     setDisplayName(userData.display_name || '');
                     setCollabStatus(userData.collab_status || 'OPEN');
-                    setCollabTypes(Array.isArray(userData.collab_types) ? userData.collab_types : []);
+                    setCollabTypes(isArray(userData.collab_types) ? userData.collab_types : []);
+                    setAvatarUrl(userData.avatar_url || user.user_metadata.avatar_url);
 
                     if (userData.bio) {
                         const roles = userData.bio.split(' · ').filter((r: string) => ROLES.some(opt => opt.value === r || opt.label === r));
                         if (roles.length > 0) setSelectedRoles(roles);
                         else if (userData.bio.includes(' · ')) setSelectedRoles(userData.bio.split(' · '));
                     }
-                    setAvatarUrl(userData.avatar_url || user.user_metadata.avatar_url);
+                } else {
+                    setAvatarUrl(user.user_metadata.avatar_url);
                 }
 
-                // 2. Fetch Links
+                // Fetch Links
                 const { data: linksData } = await supabase
                     .from('artist_links')
                     .select('*')
                     .eq('user_id', user.id)
                     .order('order_index', { ascending: true });
-
                 setLinks(linksData || []);
-                isLoaded.current = true; // Data loaded, enable auto-save
 
             } catch (err) {
-                console.error('Unexpected error:', err);
+                console.error('Error fetching data:', err);
             } finally {
                 setLoading(false);
+                // Allow a small tick before enabling auto-save to avoid initial save triggers
+                setTimeout(() => { firstLoad.current = false; }, 500);
             }
         };
 
         fetchData();
     }, [user, searchParams]);
 
-    // --- Auto-save Logic: Profile (Group A) ---
-    useEffect(() => {
-        if (!isLoaded.current || !user) return;
 
-        const saveProfile = async () => {
-            setProfileStatus('saving');
+    // --- 2. Auto-save Logic (Group A) ---
+    useEffect(() => {
+        if (loading || firstLoad.current || !user) return;
+
+        setSaveStatus('saving');
+
+        const timer = setTimeout(async () => {
             try {
-                const bio = debouncedProfile.selectedRoles.join(' · ');
+                const bio = selectedRoles.join(' · ');
                 const updates = {
                     id: user.id,
-                    display_name: debouncedProfile.displayName,
+                    display_name: displayName,
                     bio: bio,
-                    collab_status: debouncedProfile.collabStatus,
-                    collab_types: debouncedProfile.collabTypes,
+                    collab_status: collabStatus,
+                    collab_types: collabTypes,
                     updated_at: new Date().toISOString(),
                 };
 
-                const { error } = await supabase.from('users').upsert(updates);
+                const { error } = await supabase
+                    .from('users')
+                    .upsert(updates);
+
                 if (error) throw error;
-
-                setProfileStatus('saved');
-                setTimeout(() => setProfileStatus('idle'), 2000);
-            } catch (err) {
-                console.error('Auto-save error:', err);
-                setProfileStatus('error');
+                setSaveStatus('saved');
+            } catch (error) {
+                console.error('Auto-save error:', error);
+                setSaveStatus('error');
             }
-        };
+        }, 2000); // 2000ms Debounce
 
-        saveProfile();
-    }, [debouncedProfile, user]);
-
-    // --- Auto-save Logic: Links (Group A) ---
-    // Note: Links are typically added/removed individually. 
-    // If we want to auto-save reordering or bulk edits, we use this.
-    // For now, adding/deleting links updates DB immediately, so this effect might be redundant 
-    // unless we implement reordering. We'll leave it as a placeholder or strictly for reordering if implemented.
-    // However, the current "Add Link" and "Delete Link" handle DB interactions directly.
-    // To stick to the "Status Indicator" requirement, we'll update status on those actions instead.
-
-    // --- Manual Update Logic: Handle (Group B) ---
-    const handleDraftHandleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const val = e.target.value.toLowerCase();
-        if (/^[a-z0-9_.]*$/.test(val)) {
-            setDraftHandle(val);
-            setHandleStatus('idle');
-            setHandleMsg('');
-        }
-    };
-
-    const checkHandleAvailability = async () => {
-        if (!draftHandle || draftHandle === handle) return;
-        setHandleStatus('checking');
-
-        try {
-            const { data: existing } = await supabase
-                .from('users')
-                .select('id')
-                .eq('handle', draftHandle)
-                .single();
-
-            if (existing && existing.id !== user?.id) {
-                setHandleStatus('taken');
-                setHandleMsg('This handle is already taken.');
-            } else {
-                setHandleStatus('available');
-                setHandleMsg('Handle available.');
-            }
-        } catch (error) {
-            console.error('Handle check error:', error);
-            setHandleStatus('error');
-            setHandleMsg('Error checking availability.');
-        }
-    };
-
-    const updateHandle = async () => {
-        if (handleStatus !== 'available') return;
-
-        if (!confirm('Warning: Changing your handle will break existing links to your profile. Are you sure you want to proceed?')) {
-            return;
-        }
-
-        try {
-            const { error } = await supabase
-                .from('users')
-                .update({ handle: draftHandle, updated_at: new Date().toISOString() })
-                .eq('id', user?.id);
-
-            if (error) throw error;
-
-            setHandle(draftHandle);
-            setHandleStatus('idle');
-            setHandleMsg('Handle updated successfully.');
-            setTimeout(() => setHandleMsg(''), 3000);
-        } catch (err) {
-            console.error('Handle update error', err);
-            setHandleStatus('error');
-            setHandleMsg('Failed to update handle.');
-        }
-    };
+        return () => clearTimeout(timer);
+    }, [displayName, selectedRoles, collabStatus, collabTypes]); // Dependencies for auto-save
 
 
-    // Avatar Upload Handler (Step 1: File Select & Open Crop Modal)
+    // --- 3. Avatar Logic (Instant Save) ---
     const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         if (!e.target.files || e.target.files.length === 0) return;
         const file = e.target.files[0];
         setSelectedFileToCheckExt(file);
-
         const reader = new FileReader();
         reader.addEventListener('load', () => {
             setCropImageSrc(reader.result?.toString() || null);
@@ -270,68 +199,119 @@ const ProfilePage: React.FC = () => {
         e.target.value = '';
     };
 
-    // Avatar Upload Handler (Step 2: Save Cropped Blob -> Immediate Save)
     const handleCropSave = async (croppedBlob: Blob) => {
         setCropModalOpen(false);
-        setProfileStatus('saving');
+        setSaveStatus('saving'); // Show saving indicator globally
 
         try {
             const fileExt = selectedFileToCheckExt?.name.split('.').pop() || 'jpg';
             const fileName = `${user?.id}-${Math.random()}.${fileExt}`;
             const filePath = `${fileName}`;
 
+            // 1. Upload Blob
             const { error: uploadError } = await supabase.storage
                 .from('avatars')
                 .upload(filePath, croppedBlob, { contentType: croppedBlob.type });
 
             if (uploadError) throw uploadError;
 
+            // 2. Get URL
             const { data: { publicUrl } } = supabase.storage
                 .from('avatars')
                 .getPublicUrl(filePath);
 
-            // Update local state
             setAvatarUrl(publicUrl);
 
-            // Immediate DB Update
-            const { error: dbError } = await supabase
-                .from('users')
-                .update({ avatar_url: publicUrl })
-                .eq('id', user?.id);
+            // 3. Update User Profile Immediately
+            const { error: dbError } = await supabase.from('users').upsert({
+                id: user?.id,
+                avatar_url: publicUrl,
+                updated_at: new Date().toISOString()
+            });
 
             if (dbError) throw dbError;
 
-            // Auth State Update
+            // 4. Update Auth Metadata
             await supabase.auth.updateUser({ data: { avatar_url: publicUrl } });
 
-            setProfileStatus('saved');
-            setTimeout(() => setProfileStatus('idle'), 2000);
-        } catch (error: any) {
-            console.error('Upload error:', error);
-            setProfileStatus('error');
-        } finally {
-            setCropImageSrc(null);
+            setSaveStatus('saved');
+        } catch (error) {
+            console.error('Avatar save error:', error);
+            setSaveStatus('error');
         }
     };
 
-    const toggleRole = (role: string) => {
-        setSelectedRoles(prev =>
-            prev.includes(role) ? prev.filter(r => r !== role) : [...prev, role]
-        );
+
+    // --- 4. Handle Management (Group B) ---
+    const handleNewHandleInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const val = e.target.value.toLowerCase().replace(/[^a-z0-9_.]/g, ''); // Enforce safe chars
+        setNewHandle(val);
+        setHandleStatus('idle');
+        setHandleMsg('');
     };
 
-    const toggleCollabType = (type: string) => {
-        setCollabTypes(prev =>
-            prev.includes(type) ? prev.filter(t => t !== type) : [...prev, type]
-        );
+    const checkHandle = async () => {
+        if (!newHandle) return;
+        if (newHandle === currentHandle) {
+            setHandleStatus('same');
+            return;
+        }
+
+        setHandleStatus('checking');
+        try {
+            const { data } = await supabase
+                .from('users')
+                .select('id')
+                .eq('handle', newHandle)
+                .single();
+
+            if (data && data.id !== user?.id) {
+                setHandleStatus('taken');
+                setHandleMsg('This handle is already taken.');
+            } else {
+                setHandleStatus('available');
+                setHandleMsg('Handle available.');
+            }
+        } catch (error) {
+            // .single() returns error if no rows found, which means available
+            setHandleStatus('available');
+            setHandleMsg('Handle available.');
+        }
     };
 
-    // --- Link Handlers ---
+    const updateHandle = async () => {
+        if (handleStatus !== 'available') return;
+        if (!confirm('Changing your handle will break any existing links you have shared. Are you sure you want to proceed?')) return;
+
+        setHandleStatus('checking'); // reuse checking state for loading
+        try {
+            const { error } = await supabase
+                .from('users')
+                .upsert({
+                    id: user?.id,
+                    handle: newHandle,
+                    updated_at: new Date().toISOString()
+                });
+
+            if (error) throw error;
+            setCurrentHandle(newHandle);
+            setHandleStatus('idle');
+            setHandleMsg('');
+            alert('Handle updated successfully.');
+        } catch (err: any) {
+            console.error('Handle update error:', err);
+            setHandleStatus('taken'); // Fallback
+            setHandleMsg('Error updating handle.');
+        }
+    };
+
+
+    // --- 5. Link Management (Instant) ---
     const handleAddLink = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!user || !newLink.url || !newLink.title) return;
 
-        setLinksStatus('saving');
+        setIsLinkAdding(true);
         try {
             let formattedUrl = newLink.url.trim();
             if (!/^https?:\/\//i.test(formattedUrl)) {
@@ -351,40 +331,40 @@ const ProfilePage: React.FC = () => {
                 .single();
 
             if (error) throw error;
-
             setLinks([...links, data]);
             setNewLink({ platform: 'website', title: '', url: '' });
-            setLinksStatus('saved');
-            setTimeout(() => setLinksStatus('idle'), 2000);
-        } catch (error: any) {
+        } catch (error) {
             console.error('Error adding link:', error);
-            setLinksStatus('error');
+        } finally {
+            setIsLinkAdding(false);
         }
     };
 
     const handleDeleteLink = async (id: string) => {
-        if (!confirm('Are you sure?')) return;
-        setLinksStatus('saving');
+        if (!confirm('Are you sure you want to delete this link?')) return;
         try {
             const { error } = await supabase.from('artist_links').delete().eq('id', id);
             if (error) throw error;
             setLinks(links.filter(l => l.id !== id));
-            setLinksStatus('saved');
-            setTimeout(() => setLinksStatus('idle'), 2000);
         } catch (error) {
             console.error('Error deleting link:', error);
-            setLinksStatus('error');
         }
     };
 
-    // UI Helper: Status Indicator
-    const StatusIndicator = ({ status }: { status: SaveStatus }) => {
-        if (status === 'idle') return null;
-        if (status === 'saving') return <div className="flex items-center gap-1 text-xs text-indigo-400 font-medium animate-pulse"><Loader2 className="w-3 h-3 animate-spin" /> Saving...</div>;
-        if (status === 'saved') return <div className="flex items-center gap-1 text-xs text-green-400 font-medium animate-in fade-in zoom-in"><Check className="w-3 h-3" /> Saved</div>;
-        if (status === 'error') return <div className="flex items-center gap-1 text-xs text-red-400 font-medium"><AlertTriangle className="w-3 h-3" /> Error</div>;
-        return null;
+
+    // --- UI Helpers ---
+    const toggleRole = (role: string) => {
+        setSelectedRoles(prev =>
+            prev.includes(role) ? prev.filter(r => r !== role) : [...prev, role]
+        );
     };
+
+    const toggleCollabType = (type: string) => {
+        setCollabTypes(prev =>
+            prev.includes(type) ? prev.filter(t => t !== type) : [...prev, type]
+        );
+    };
+
 
     if (loading) return (
         <Layout>
@@ -396,7 +376,7 @@ const ProfilePage: React.FC = () => {
 
     return (
         <Layout>
-            <div className="max-w-xl mx-auto px-4">
+            <div className="max-w-xl mx-auto px-4 pb-20">
                 <h1 className="text-3xl font-bold mb-6">Settings</h1>
 
                 {/* Tabs */}
@@ -415,11 +395,33 @@ const ProfilePage: React.FC = () => {
                     </button>
                 </div>
 
-                <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 md:p-8 space-y-8">
+                {activeTab === 'profile' ? (
+                    <div className="space-y-8">
+                        {/* --- Profile Data Section --- */}
+                        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 md:p-8 space-y-8 relative">
+                            {/* Header & Status Indicator */}
+                            <div className="flex items-center justify-between mb-2">
+                                <h2 className="text-xl font-bold text-white">Profile</h2>
+                                <div className="flex items-center gap-2">
+                                    {saveStatus === 'saving' && (
+                                        <div className="flex items-center gap-2 text-indigo-400 text-sm animate-pulse">
+                                            <Loader2 className="w-4 h-4 animate-spin" /> Saving...
+                                        </div>
+                                    )}
+                                    {saveStatus === 'saved' && (
+                                        <div className="flex items-center gap-2 text-green-500 text-sm">
+                                            <Check className="w-4 h-4" /> Saved
+                                        </div>
+                                    )}
+                                    {saveStatus === 'error' && (
+                                        <div className="flex items-center gap-2 text-red-400 text-sm">
+                                            <AlertTriangle className="w-4 h-4" /> Error
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
 
-                    {activeTab === 'profile' ? (
-                        <>
-                            {/* Avatar Section */}
+                            {/* Avatar */}
                             <div className="flex flex-col items-center">
                                 <div className="relative group">
                                     <div className="w-24 h-24 md:w-32 md:h-32 rounded-full bg-slate-800 flex items-center justify-center overflow-hidden border-2 border-slate-700 group-hover:border-indigo-500 transition-colors">
@@ -437,247 +439,235 @@ const ProfilePage: React.FC = () => {
                                 <p className="mt-3 text-sm text-slate-400">Tap icon to change photo</p>
                             </div>
 
-                            <div className="space-y-6">
+                            {/* Display Name */}
+                            <div>
+                                <label className="block text-sm font-medium text-slate-300 mb-2">Activity Name (Display Name)</label>
+                                <input
+                                    type="text"
+                                    value={displayName}
+                                    onChange={(e) => setDisplayName(e.target.value)}
+                                    placeholder="e.g. The Weeknd"
+                                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+                                />
+                            </div>
 
-                                {/* Activity Name (Auto-save) */}
-                                <div>
-                                    <div className="flex items-center justify-between mb-2">
-                                        <label className="block text-sm font-medium text-slate-300">Activity Name (Display Name)</label>
-                                        <StatusIndicator status={profileStatus} />
+                            {/* Roles */}
+                            <div>
+                                <label className="block text-sm font-medium text-slate-300 mb-3">Roles</label>
+                                <div className="flex flex-wrap gap-2">
+                                    {ROLES.map((role) => {
+                                        const isSelected = selectedRoles.includes(role.value);
+                                        return (
+                                            <button
+                                                key={role.value}
+                                                type="button"
+                                                onClick={() => toggleRole(role.value)}
+                                                className={`px-4 py-2 rounded-full text-sm font-medium transition-all flex items-center gap-2 border ${isSelected
+                                                    ? 'bg-indigo-600 border-indigo-500 text-white'
+                                                    : 'bg-slate-950 border-slate-800 text-slate-400 hover:border-slate-600'
+                                                    }`}
+                                            >
+                                                {role.label}
+                                                {isSelected && <Check className="w-3.5 h-3.5" />}
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+
+                            {/* Collaboration Settings */}
+                            <div className="pt-6 border-t border-slate-800">
+                                <h3 className="text-lg font-bold text-white mb-4">Collaboration Preferences</h3>
+
+                                <div className="flex items-center justify-between mb-6 bg-slate-950 p-4 rounded-xl border border-slate-800">
+                                    <div>
+                                        <div className="text-sm font-medium text-white mb-1">Accepting Collaborations?</div>
+                                        <div className="text-xs text-slate-500">Turn this off if you are fully booked.</div>
                                     </div>
-                                    <input
-                                        type="text"
-                                        value={displayName}
-                                        onChange={(e) => setDisplayName(e.target.value)}
-                                        placeholder="e.g. The Weeknd"
-                                        className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
-                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => setCollabStatus(prev => prev === 'OPEN' ? 'CLOSED' : 'OPEN')}
+                                        className={`relative w-14 h-8 rounded-full transition-colors flex items-center px-1 ${collabStatus === 'OPEN' ? 'bg-green-500' : 'bg-slate-700'}`}
+                                    >
+                                        <div className={`w-6 h-6 rounded-full bg-white shadow-md transform transition-transform ${collabStatus === 'OPEN' ? 'translate-x-6' : 'translate-x-0'}`} />
+                                    </button>
                                 </div>
 
-                                {/* Handle (Manual Update) */}
-                                <div>
-                                    <label className="block text-sm font-medium text-slate-300 mb-2">Unique Handle</label>
-                                    <div className="space-y-3">
-                                        <div className="flex gap-2">
-                                            <div className="relative flex-1">
-                                                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 text-sm">blinddrop.com/u/</span>
-                                                <input
-                                                    type="text"
-                                                    value={draftHandle}
-                                                    onChange={handleDraftHandleChange}
-                                                    placeholder="your_handle"
-                                                    className={`w-full bg-slate-950 border rounded-xl pl-36 pr-4 py-3 text-white focus:outline-none focus:ring-2 transition-all ${handleStatus === 'error' || handleStatus === 'taken' ? 'border-red-500/50 focus:ring-red-500' :
-                                                        handleStatus === 'available' ? 'border-green-500/50 focus:ring-green-500' : 'border-slate-800 focus:ring-indigo-500'
-                                                        }`}
-                                                />
-                                            </div>
-
-                                            {/* Action Button */}
-                                            {handle !== draftHandle && (
-                                                handleStatus === 'available' ? (
-                                                    <button
-                                                        onClick={updateHandle}
-                                                        className="px-4 py-2 bg-green-600 hover:bg-green-500 text-white font-bold rounded-xl transition-colors whitespace-nowrap"
-                                                    >
-                                                        Update
-                                                    </button>
-                                                ) : (
-                                                    <button
-                                                        onClick={checkHandleAvailability}
-                                                        disabled={handleStatus === 'checking' || !draftHandle}
-                                                        className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white font-medium rounded-xl transition-colors whitespace-nowrap disabled:opacity-50"
-                                                    >
-                                                        {handleStatus === 'checking' ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Check'}
-                                                    </button>
-                                                )
-                                            )}
-                                        </div>
-                                        {/* Handle Messages */}
-                                        {handleMsg && (
-                                            <p className={`text-sm ${handleStatus === 'available' || handleStatus === 'idle' ? 'text-green-400' : 'text-red-400'
-                                                }`}>
-                                                {handleMsg}
-                                            </p>
-                                        )}
-                                    </div>
-                                </div>
-
-                                {/* Roles (Auto-save) */}
-                                <div>
-                                    <div className="flex items-center justify-between mb-3">
-                                        <label className="block text-sm font-medium text-slate-300">Roles</label>
-                                    </div>
+                                <div className={`transition-opacity duration-300 ${collabStatus === 'CLOSED' ? 'opacity-50 pointer-events-none' : 'opacity-100'}`}>
+                                    <label className="block text-sm font-medium text-slate-300 mb-3">Interests</label>
                                     <div className="flex flex-wrap gap-2">
-                                        {ROLES.map((role) => {
-                                            const isSelected = selectedRoles.includes(role.value);
+                                        {COLLAB_OPTIONS.map((type) => {
+                                            const isSelected = collabTypes.includes(type);
                                             return (
                                                 <button
-                                                    key={role.value}
+                                                    key={type}
                                                     type="button"
-                                                    onClick={() => toggleRole(role.value)}
-                                                    className={`px-4 py-2 rounded-full text-sm font-medium transition-all flex items-center gap-2 border ${isSelected
-                                                        ? 'bg-indigo-600 border-indigo-500 text-white'
+                                                    onClick={() => toggleCollabType(type)}
+                                                    className={`px-4 py-2 rounded-full text-sm font-medium transition-all border ${isSelected
+                                                        ? 'bg-white text-black border-white'
                                                         : 'bg-slate-950 border-slate-800 text-slate-400 hover:border-slate-600'
                                                         }`}
                                                 >
-                                                    {role.label}
-                                                    {isSelected && <Check className="w-3.5 h-3.5" />}
+                                                    {type}
                                                 </button>
                                             );
                                         })}
                                     </div>
                                 </div>
-
-                                {/* Collaboration Settings (Auto-save) */}
-                                <div className="pt-6 border-t border-slate-800">
-                                    <div className="flex items-center justify-between mb-4">
-                                        <h3 className="text-lg font-bold text-white">Collaboration Preferences</h3>
-                                        <StatusIndicator status={profileStatus} />
-                                    </div>
-
-                                    {/* Status Toggle */}
-                                    <div className="flex items-center justify-between mb-6 bg-slate-950 p-4 rounded-xl border border-slate-800">
-                                        <div>
-                                            <div className="text-sm font-medium text-white mb-1">Accepting Collaborations?</div>
-                                            <div className="text-xs text-slate-500">Turn this off if you are fully booked.</div>
-                                        </div>
-                                        <button
-                                            type="button"
-                                            onClick={() => setCollabStatus(prev => prev === 'OPEN' ? 'CLOSED' : 'OPEN')}
-                                            className={`relative w-14 h-8 rounded-full transition-colors flex items-center px-1 ${collabStatus === 'OPEN' ? 'bg-green-500' : 'bg-slate-700'}`}
-                                        >
-                                            <div className={`w-6 h-6 rounded-full bg-white shadow-md transform transition-transform ${collabStatus === 'OPEN' ? 'translate-x-6' : 'translate-x-0'}`} />
-                                        </button>
-                                    </div>
-
-                                    {/* Collab Types */}
-                                    <div className={`transition-opacity duration-300 ${collabStatus === 'CLOSED' ? 'opacity-50 pointer-events-none' : 'opacity-100'}`}>
-                                        <label className="block text-sm font-medium text-slate-300 mb-3">Interests (What are you looking for?)</label>
-                                        <div className="flex flex-wrap gap-2">
-                                            {COLLAB_OPTIONS.map((type) => {
-                                                const isSelected = collabTypes.includes(type);
-                                                return (
-                                                    <button
-                                                        key={type}
-                                                        type="button"
-                                                        onClick={() => toggleCollabType(type)}
-                                                        className={`px-4 py-2 rounded-full text-sm font-medium transition-all border ${isSelected
-                                                            ? 'bg-white text-black border-white'
-                                                            : 'bg-slate-950 border-slate-800 text-slate-400 hover:border-slate-600'
-                                                            }`}
-                                                    >
-                                                        {type}
-                                                    </button>
-                                                );
-                                            })}
-                                        </div>
-                                    </div>
-                                </div>
                             </div>
-                        </>
-                    ) : (
-                        // --- Manage Links Tab ---
-                        <div className="space-y-8">
-                            {/* Header with Save Status */}
-                            <div className="flex items-center justify-between">
-                                <h3 className="text-lg font-bold text-white">Your Links</h3>
-                                <StatusIndicator status={linksStatus} />
+                        </div>
+
+                        {/* --- Unique Handle Section (Group B) --- */}
+                        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 md:p-8 space-y-6">
+                            <div className="flex items-center gap-2">
+                                <h2 className="text-xl font-bold text-white">Unique Handle</h2>
+                                <Info className="w-4 h-4 text-slate-500" />
                             </div>
 
-                            {/* Add New Link Form */}
-                            <form onSubmit={handleAddLink} className="bg-slate-950 p-4 rounded-xl border border-slate-800 space-y-4">
-                                <h3 className="text-sm font-medium text-white mb-2 flex items-center gap-2">
-                                    <Plus className="w-4 h-4" /> Add New Link
-                                </h3>
+                            <div className="p-4 rounded-xl bg-orange-500/10 border border-orange-500/20 text-orange-200 text-sm">
+                                <span className="font-bold flex items-center gap-2 mb-1"><AlertTriangle className="w-4 h-4" /> Warning:</span>
+                                Changing your handle will break your existing profile link (blinddrop.com/u/{currentHandle}).
+                            </div>
 
-                                <div className="space-y-4">
-                                    {/* Title Input */}
-                                    <div>
-                                        <label className="block text-xs font-medium text-slate-400 mb-1.5 ml-1">Link Title</label>
+                            <div>
+                                <label className="block text-sm font-medium text-slate-300 mb-2">My Page URL</label>
+                                <div className="flex items-center gap-3">
+                                    <div className="relative flex-1">
+                                        <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 text-sm">blinddrop.com/u/</span>
                                         <input
                                             type="text"
-                                            placeholder="e.g. Listen on Spotify"
-                                            value={newLink.title}
-                                            onChange={(e) => setNewLink({ ...newLink, title: e.target.value })}
-                                            className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                                            required
+                                            value={newHandle}
+                                            onChange={handleNewHandleInput}
+                                            placeholder="your_handle"
+                                            className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-36 pr-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
                                         />
                                     </div>
-
-                                    {/* URL Input with Auto-Detect Icon */}
-                                    <div>
-                                        <label className="block text-xs font-medium text-slate-400 mb-1.5 ml-1">Link URL</label>
-                                        <div className="relative flex items-center">
-                                            <div className="absolute left-3 text-slate-400 pointer-events-none">
-                                                {getIconForPlatform(newLink.platform, "w-4 h-4")}
-                                            </div>
-                                            <input
-                                                type="text"
-                                                placeholder="Paste any link (YouTube, Instagram, Spotify...)"
-                                                value={newLink.url}
-                                                onChange={(e) => {
-                                                    const url = e.target.value;
-                                                    const detected = detectPlatform(url);
-                                                    setNewLink({ ...newLink, url, platform: detected });
-                                                }}
-                                                className="w-full bg-slate-900 border border-slate-700 rounded-lg pl-10 pr-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all placeholder:text-slate-600"
-                                                required
-                                            />
-                                            {newLink.url && (
-                                                <div className="absolute right-3 text-xs text-indigo-400 font-medium animate-in fade-in slide-in-from-left-1">
-                                                    {newLink.platform}
-                                                </div>
-                                            )}
-                                        </div>
-                                    </div>
+                                    <button
+                                        onClick={checkHandle}
+                                        disabled={newHandle === currentHandle || !newHandle}
+                                        className="px-4 py-3 bg-slate-800 hover:bg-slate-700 text-white text-sm font-bold rounded-xl transition-colors disabled:opacity-50 whitespace-nowrap"
+                                    >
+                                        Check
+                                    </button>
                                 </div>
-
-                                <button
-                                    type="submit"
-                                    disabled={linksStatus === 'saving'}
-                                    className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-bold rounded-lg transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
-                                >
-                                    {linksStatus === 'saving' ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Add to Profile'}
-                                </button>
-                            </form>
-
-                            {/* Links List */}
-                            <div className="space-y-3">
-                                {links.map((link) => (
-                                    <div key={link.id} className="group flex items-center gap-3 bg-slate-800/50 p-3 rounded-xl border border-slate-700 hover:border-slate-500 transition-colors">
-                                        <div className="text-slate-500 cursor-move">
-                                            <GripVertical className="w-5 h-5" />
-                                        </div>
-                                        <div className="flex-1 min-w-0">
-                                            <div className="flex items-center gap-2 mb-0.5">
-                                                <div className="text-slate-400">
-                                                    {getIconForPlatform(link.platform, "w-3.5 h-3.5")}
-                                                </div>
-                                                <h4 className="text-sm font-medium text-white truncate">{link.title}</h4>
-                                            </div>
-                                            <a href={link.url} target="_blank" rel="noreferrer" className="text-xs text-slate-500 truncate hover:text-indigo-400 flex items-center gap-1">
-                                                {link.url} <ExternalLink className="w-3 h-3" />
-                                            </a>
-                                        </div>
-                                        <button
-                                            onClick={() => handleDeleteLink(link.id)}
-                                            className="p-2 text-slate-400 hover:text-red-400 hover:bg-slate-700 rounded-lg transition-colors"
-                                        >
-                                            <Trash2 className="w-4 h-4" />
-                                        </button>
-                                    </div>
-                                ))}
-
-                                {links.length === 0 && (
-                                    <div className="text-center py-10 bg-slate-900/50 rounded-xl border border-dashed border-slate-800">
-                                        <p className="text-slate-400 text-sm">No links yet.</p>
-                                        <p className="text-slate-600 text-xs mt-1">Add your social media to fill up your generic link hub.</p>
+                                {/* Handle Check Message */}
+                                {handleStatus !== 'idle' && (
+                                    <div className={`mt-3 text-sm flex items-center gap-2 ${handleStatus === 'available' ? 'text-green-400' :
+                                        handleStatus === 'taken' ? 'text-red-400' :
+                                            handleStatus === 'same' ? 'text-slate-400' : 'text-indigo-400'
+                                        }`}>
+                                        {handleStatus === 'checking' && <Loader2 className="w-4 h-4 animate-spin" />}
+                                        {handleStatus === 'available' && <Check className="w-4 h-4" />}
+                                        {handleStatus === 'taken' && <AlertTriangle className="w-4 h-4" />}
+                                        {handleMsg || (handleStatus === 'same' && "This is your current handle.")}
                                     </div>
                                 )}
                             </div>
+
+                            {/* Manual Update Button - Only shows if available */}
+                            {handleStatus === 'available' && (
+                                <button
+                                    onClick={updateHandle}
+                                    className="w-full py-3 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl transition-colors shadow-lg shadow-indigo-500/20"
+                                >
+                                    Confirm Update
+                                </button>
+                            )}
                         </div>
-                    )}
-                </div>
+                    </div>
+                ) : (
+                    // --- Manage Links Tab ---
+                    <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 md:p-8 space-y-8">
+                        {/* Add New Link Form */}
+                        <form onSubmit={handleAddLink} className="bg-slate-950 p-4 rounded-xl border border-slate-800 space-y-4">
+                            <h3 className="text-sm font-medium text-white mb-2 flex items-center gap-2">
+                                <Plus className="w-4 h-4" /> Add New Link
+                            </h3>
+
+                            <div className="space-y-4">
+                                <div>
+                                    <label className="block text-xs font-medium text-slate-400 mb-1.5 ml-1">Link Title</label>
+                                    <input
+                                        type="text"
+                                        placeholder="e.g. Listen on Spotify"
+                                        value={newLink.title}
+                                        onChange={(e) => setNewLink({ ...newLink, title: e.target.value })}
+                                        className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                        required
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-medium text-slate-400 mb-1.5 ml-1">Link URL</label>
+                                    <div className="relative flex items-center">
+                                        <div className="absolute left-3 text-slate-400 pointer-events-none">
+                                            {getIconForPlatform(newLink.platform, "w-4 h-4")}
+                                        </div>
+                                        <input
+                                            type="text"
+                                            placeholder="Paste any link (YouTube, Instagram, Spotify...)"
+                                            value={newLink.url}
+                                            onChange={(e) => {
+                                                const url = e.target.value;
+                                                const detected = detectPlatform(url);
+                                                setNewLink({ ...newLink, url, platform: detected });
+                                            }}
+                                            className="w-full bg-slate-900 border border-slate-700 rounded-lg pl-10 pr-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all placeholder:text-slate-600"
+                                            required
+                                        />
+                                        {newLink.url && (
+                                            <div className="absolute right-3 text-xs text-indigo-400 font-medium animate-in fade-in slide-in-from-left-1">
+                                                {newLink.platform}
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <button
+                                type="submit"
+                                disabled={isLinkAdding}
+                                className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-bold rounded-lg transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                            >
+                                {isLinkAdding ? 'Adding...' : 'Add to Profile'}
+                            </button>
+                        </form>
+
+                        {/* Links List */}
+                        <div className="space-y-3">
+                            {links.map((link) => (
+                                <div key={link.id} className="group flex items-center gap-3 bg-slate-800/50 p-3 rounded-xl border border-slate-700 hover:border-slate-500 transition-colors">
+                                    <div className="text-slate-500 cursor-move">
+                                        <GripVertical className="w-5 h-5" />
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                        <div className="flex items-center gap-2 mb-0.5">
+                                            <div className="text-slate-400">
+                                                {getIconForPlatform(link.platform, "w-3.5 h-3.5")}
+                                            </div>
+                                            <h4 className="text-sm font-medium text-white truncate">{link.title}</h4>
+                                        </div>
+                                        <a href={link.url} target="_blank" rel="noreferrer" className="text-xs text-slate-500 truncate hover:text-indigo-400 flex items-center gap-1">
+                                            {link.url} <ExternalLink className="w-3 h-3" />
+                                        </a>
+                                    </div>
+                                    <button
+                                        onClick={() => handleDeleteLink(link.id)}
+                                        className="p-2 text-slate-400 hover:text-red-400 hover:bg-slate-700 rounded-lg transition-colors"
+                                    >
+                                        <Trash2 className="w-4 h-4" />
+                                    </button>
+                                </div>
+                            ))}
+
+                            {links.length === 0 && (
+                                <div className="text-center py-10 bg-slate-900/50 rounded-xl border border-dashed border-slate-800">
+                                    <p className="text-slate-400 text-sm">No links yet.</p>
+                                    <p className="text-slate-600 text-xs mt-1">Add your social media to fill up your generic link hub.</p>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                )}
             </div>
 
             {/* Crop Modal */}
