@@ -4,8 +4,8 @@ import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import {
     Play, Loader2, Instagram, Youtube, Music2, Globe, Twitter,
-    Facebook, Linkedin, MoreHorizontal, X, ArrowUpRight, Plus, Disc3, Link as LinkIcon,
-    ChevronLeft, Lock, CheckCircle2, User, MessageSquare, ChevronDown, ChevronUp
+    X, ArrowUpRight, Plus, Disc3, Link as LinkIcon,
+    ChevronLeft, User, MessageSquare
 } from 'lucide-react';
 import Navbar from '../components/Navbar';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -171,20 +171,7 @@ const ArtistPublicPage: React.FC = () => {
     };
 
     // Feedback Reply Handler (moved from TrackPage logic essentially)
-    const handleFeedbackSubmit = async (e: React.FormEvent, trackId: string, content: string) => {
-        e.preventDefault();
-        try {
-            const { error } = await supabase.from('feedbacks').insert({
-                track_id: trackId,
-                content: content
-            });
-            if (error) throw error;
-            alert('Feedback sent! Wait for the artist to reply.');
-            // Optimistic update omitted for brevity, or re-fetch
-        } catch (err) {
-            alert('Failed to send feedback.');
-        }
-    };
+
 
 
     // Helper: Icon Map
@@ -334,7 +321,7 @@ const ArtistPublicPage: React.FC = () => {
                             {overlayView === 'list' ? (
                                 // LIST VIEW
                                 <div className="max-w-xl mx-auto space-y-3">
-                                    {tracks.map((track, idx) => {
+                                    {tracks.map((track) => {
                                         let thumbnailUrl = '/placeholder-track.png';
                                         if (track.platform === 'youtube') {
                                             const videoId = track.url.split('v=')[1]?.split('&')[0] || track.url.split('/').pop();
@@ -395,7 +382,7 @@ const ArtistPublicPage: React.FC = () => {
                                         <div className="h-px bg-white/10 w-full" />
 
                                         {/* Feedback Section (Simplified for Overlay) */}
-                                        <FeedbackSection track={selectedTrack} user={user} />
+                                        <FeedbackSection track={selectedTrack} />
                                     </div>
                                 )
                             )}
@@ -408,7 +395,7 @@ const ArtistPublicPage: React.FC = () => {
 };
 
 // --- Sub-Component: Feedback Section (Simplified) ---
-const FeedbackSection = ({ track, user }: { track: Track, user: any }) => {
+const FeedbackSection = ({ track }: { track: Track }) => {
     const [comment, setComment] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
 
