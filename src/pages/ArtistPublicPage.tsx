@@ -226,18 +226,18 @@ const ArtistPublicPage: React.FC = () => {
                 className="relative z-10 h-full overflow-y-auto snap-y snap-mandatory scroll-smooth overscroll-y-none"
                 onScroll={handleScroll}
             >
-                {/* Spacer (Original) - Increased to 50vh */}
-                <div className="w-full h-[50vh] snap-start bg-transparent pointer-events-none" />
+                {/* Spacer (Original) */}
+                <div className="w-full h-[45vh] md:h-[60vh] snap-start bg-transparent pointer-events-none" />
 
                 {/* Main Content Body (Original Layout) */}
                 <div className="min-h-screen w-full snap-start flex flex-col">
 
                     {/* Sticky Header (Original Style) */}
                     <div
-                        className="sticky top-0 z-50 pt-10 pb-10 px-8 transition-all duration-300 bg-transparent"
+                        className="sticky top-0 z-20 pt-32 pb-10 px-8 transition-all duration-300 bg-gradient-to-t from-black via-black/60 to-transparent"
                         style={{ pointerEvents: 'none' }}
                     >
-                        <div className="max-w-[300px] space-y-6 pointer-events-auto mt-[40vh]">
+                        <div className="max-w-[300px] space-y-6 pointer-events-auto">
                             <div className="flex flex-col gap-3">
                                 <div className="space-y-1">
                                     <h1 className="text-5xl font-bold tracking-tighter text-white drop-shadow-2xl leading-none">
@@ -271,14 +271,8 @@ const ArtistPublicPage: React.FC = () => {
 
                     {/* Main Content List Area (Original Container) */}
                     {/* Replaced 'track list' content with 'link list' content */}
-                    <div
-                        className="flex-1 overflow-y-auto p-4 md:p-6 pb-24 min-h-screen"
-                        style={{
-                            maskImage: 'linear-gradient(to bottom, transparent 0%, black 40px, black 100%)',
-                            WebkitMaskImage: 'linear-gradient(to bottom, transparent 0%, black 40px, black 100%)'
-                        }}
-                    >
-                        <div className="max-w-2xl mx-auto space-y-4 pt-4">
+                    <div className="flex-1 overflow-y-auto p-4 md:p-6 pb-24 bg-black/40 backdrop-blur-md min-h-screen">
+                        <div className="max-w-2xl mx-auto space-y-4">
 
                             {/* 1. Discography Button (Special) */}
                             <button
