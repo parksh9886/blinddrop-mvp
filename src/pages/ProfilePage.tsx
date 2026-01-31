@@ -298,6 +298,7 @@ const ProfilePage: React.FC = () => {
             setHandleStatus('idle');
             setHandleMsg('');
             alert('Handle updated successfully.');
+            window.location.reload();
         } catch (err: any) {
             console.error('Handle update error:', err);
             setHandleStatus('taken'); // Fallback
