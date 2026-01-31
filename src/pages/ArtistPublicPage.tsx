@@ -229,7 +229,7 @@ const ArtistPublicPage: React.FC = () => {
                     opacity: scrollProgress < 0.1 ? 1 : 0
                 }}
             >
-                <div className="animate-pulse">
+                <div className="animate-bounce" style={{ animationDuration: '2s' }}>
                     <ChevronDown className="w-6 h-6 text-white/70" strokeWidth={1.5} />
                 </div>
             </div>
