@@ -1,14 +1,15 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
 import Layout from '../components/Layout';
 import {
-    Save, Loader2, User as UserIcon, Camera, AlertTriangle, Check, Plus, Trash2,
+    Loader2, User as UserIcon, Camera, AlertTriangle, Check, Plus, Trash2,
     ExternalLink, GripVertical, Instagram, Youtube, Twitter, Music2, Disc3,
     Facebook, Linkedin, Globe, Link as LinkIcon
 } from 'lucide-react';
 import ImageCropModal from '../components/ImageCropModal';
+import { useDebounce } from '../hooks/useDebounce';
 
 const ROLES = [
     { value: 'Singer', label: 'Singer' },
@@ -58,11 +59,12 @@ interface LinkItem {
     order_index: number;
 }
 
+type SaveStatus = 'idle' | 'saving' | 'saved' | 'error';
+
 const ProfilePage: React.FC = () => {
     const { user } = useAuth();
     const [searchParams] = useSearchParams();
     const [loading, setLoading] = useState(true);
-    const [saving, setSaving] = useState(false);
     const [activeTab, setActiveTab] = useState<'profile' | 'links'>('profile');
 
     // Crop Modal State
@@ -70,19 +72,33 @@ const ProfilePage: React.FC = () => {
     const [cropImageSrc, setCropImageSrc] = useState<string | null>(null);
     const [selectedFileToCheckExt, setSelectedFileToCheckExt] = useState<File | null>(null);
 
-    // Profile Form State
-    const [handle, setHandle] = useState('');
+    // --- Profile Form State (Group A: Auto-save) ---
     const [displayName, setDisplayName] = useState('');
     const [selectedRoles, setSelectedRoles] = useState<string[]>([]);
     const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
-    const [originalHandle, setOriginalHandle] = useState('');
-    const [msg, setMsg] = useState<{ type: 'success' | 'error' | 'warning', text: string } | null>(null);
     const [collabStatus, setCollabStatus] = useState<'OPEN' | 'CLOSED'>('OPEN');
     const [collabTypes, setCollabTypes] = useState<string[]>([]);
 
-    // Links State
+    // Links State (Group A: Auto-save)
     const [links, setLinks] = useState<LinkItem[]>([]);
     const [newLink, setNewLink] = useState({ platform: 'website', title: '', url: '' });
+
+    // --- Handle State (Group B: Manual Update) ---
+    const [handle, setHandle] = useState(''); // Current handle in DB
+    const [draftHandle, setDraftHandle] = useState(''); // Input value
+    const [handleStatus, setHandleStatus] = useState<'idle' | 'checking' | 'available' | 'taken' | 'error'>('idle');
+    const [handleMsg, setHandleMsg] = useState<string>('');
+
+    // --- Status Indicators ---
+    const [profileStatus, setProfileStatus] = useState<SaveStatus>('idle');
+    const [linksStatus, setLinksStatus] = useState<SaveStatus>('idle');
+
+    // --- Debounced Values for Auto-save ---
+    const debouncedProfile = useDebounce({ displayName, selectedRoles, collabStatus, collabTypes }, 1000);
+    // const debouncedLinks = useDebounce(links, 1000); // Unused for now
+
+    // Initial Data Fetched Flag to prevent saving on mount
+    const isLoaded = useRef(false);
 
     // Constants
     const COLLAB_OPTIONS = ['Featuring', 'Beat Making', 'Topline', 'Remix', 'Mixing', 'Mastering', 'Lyrics'];
@@ -91,58 +107,42 @@ const ProfilePage: React.FC = () => {
     useEffect(() => {
         if (!user) return;
 
-        // Check for tab param
         const tabParam = searchParams.get('tab');
-        if (tabParam === 'links') {
-            setActiveTab('links');
-        }
+        if (tabParam === 'links') setActiveTab('links');
 
         const fetchData = async () => {
             try {
                 // 1. Fetch Profile
-                const { data: userData, error: userError } = await supabase
+                const { data: userData } = await supabase
                     .from('users')
                     .select('handle, bio, avatar_url, display_name, collab_status, collab_types')
                     .eq('id', user.id)
                     .single();
 
-                if (userError && userError.code !== 'PGRST116') {
-                    console.error('Error fetching profile:', userError);
-                }
-
                 if (userData) {
                     setHandle(userData.handle || '');
-                    setOriginalHandle(userData.handle || '');
+                    setDraftHandle(userData.handle || '');
                     setDisplayName(userData.display_name || '');
-
-                    // Collab Settings
                     setCollabStatus(userData.collab_status || 'OPEN');
-                    setCollabTypes(isArray(userData.collab_types) ? userData.collab_types : []);
+                    setCollabTypes(Array.isArray(userData.collab_types) ? userData.collab_types : []);
 
-                    // Parse Roles from Bio
                     if (userData.bio) {
                         const roles = userData.bio.split(' · ').filter((r: string) => ROLES.some(opt => opt.value === r || opt.label === r));
-                        if (roles.length > 0) {
-                            setSelectedRoles(roles);
-                        } else if (userData.bio.includes(' · ')) {
-                            setSelectedRoles(userData.bio.split(' · '));
-                        }
+                        if (roles.length > 0) setSelectedRoles(roles);
+                        else if (userData.bio.includes(' · ')) setSelectedRoles(userData.bio.split(' · '));
                     }
-
                     setAvatarUrl(userData.avatar_url || user.user_metadata.avatar_url);
-                } else {
-                    setAvatarUrl(user.user_metadata.avatar_url);
                 }
 
                 // 2. Fetch Links
-                const { data: linksData, error: linksError } = await supabase
+                const { data: linksData } = await supabase
                     .from('artist_links')
                     .select('*')
                     .eq('user_id', user.id)
                     .order('order_index', { ascending: true });
 
-                if (linksError) throw linksError;
                 setLinks(linksData || []);
+                isLoaded.current = true; // Data loaded, enable auto-save
 
             } catch (err) {
                 console.error('Unexpected error:', err);
@@ -154,46 +154,135 @@ const ProfilePage: React.FC = () => {
         fetchData();
     }, [user, searchParams]);
 
-    // Helper check for array
-    const isArray = (arr: any): arr is string[] => Array.isArray(arr);
+    // --- Auto-save Logic: Profile (Group A) ---
+    useEffect(() => {
+        if (!isLoaded.current || !user) return;
+
+        const saveProfile = async () => {
+            setProfileStatus('saving');
+            try {
+                const bio = debouncedProfile.selectedRoles.join(' · ');
+                const updates = {
+                    id: user.id,
+                    display_name: debouncedProfile.displayName,
+                    bio: bio,
+                    collab_status: debouncedProfile.collabStatus,
+                    collab_types: debouncedProfile.collabTypes,
+                    updated_at: new Date().toISOString(),
+                };
+
+                const { error } = await supabase.from('users').upsert(updates);
+                if (error) throw error;
+
+                setProfileStatus('saved');
+                setTimeout(() => setProfileStatus('idle'), 2000);
+            } catch (err) {
+                console.error('Auto-save error:', err);
+                setProfileStatus('error');
+            }
+        };
+
+        saveProfile();
+    }, [debouncedProfile, user]);
+
+    // --- Auto-save Logic: Links (Group A) ---
+    // Note: Links are typically added/removed individually. 
+    // If we want to auto-save reordering or bulk edits, we use this.
+    // For now, adding/deleting links updates DB immediately, so this effect might be redundant 
+    // unless we implement reordering. We'll leave it as a placeholder or strictly for reordering if implemented.
+    // However, the current "Add Link" and "Delete Link" handle DB interactions directly.
+    // To stick to the "Status Indicator" requirement, we'll update status on those actions instead.
+
+    // --- Manual Update Logic: Handle (Group B) ---
+    const handleDraftHandleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const val = e.target.value.toLowerCase();
+        if (/^[a-z0-9_.]*$/.test(val)) {
+            setDraftHandle(val);
+            setHandleStatus('idle');
+            setHandleMsg('');
+        }
+    };
+
+    const checkHandleAvailability = async () => {
+        if (!draftHandle || draftHandle === handle) return;
+        setHandleStatus('checking');
+
+        try {
+            const { data: existing } = await supabase
+                .from('users')
+                .select('id')
+                .eq('handle', draftHandle)
+                .single();
+
+            if (existing && existing.id !== user?.id) {
+                setHandleStatus('taken');
+                setHandleMsg('This handle is already taken.');
+            } else {
+                setHandleStatus('available');
+                setHandleMsg('Handle available.');
+            }
+        } catch (error) {
+            console.error('Handle check error:', error);
+            setHandleStatus('error');
+            setHandleMsg('Error checking availability.');
+        }
+    };
+
+    const updateHandle = async () => {
+        if (handleStatus !== 'available') return;
+
+        if (!confirm('Warning: Changing your handle will break existing links to your profile. Are you sure you want to proceed?')) {
+            return;
+        }
+
+        try {
+            const { error } = await supabase
+                .from('users')
+                .update({ handle: draftHandle, updated_at: new Date().toISOString() })
+                .eq('id', user?.id);
+
+            if (error) throw error;
+
+            setHandle(draftHandle);
+            setHandleStatus('idle');
+            setHandleMsg('Handle updated successfully.');
+            setTimeout(() => setHandleMsg(''), 3000);
+        } catch (err) {
+            console.error('Handle update error', err);
+            setHandleStatus('error');
+            setHandleMsg('Failed to update handle.');
+        }
+    };
+
 
     // Avatar Upload Handler (Step 1: File Select & Open Crop Modal)
     const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         if (!e.target.files || e.target.files.length === 0) return;
-
         const file = e.target.files[0];
         setSelectedFileToCheckExt(file);
 
-        // Read file to data URL for cropper
         const reader = new FileReader();
         reader.addEventListener('load', () => {
             setCropImageSrc(reader.result?.toString() || null);
             setCropModalOpen(true);
         });
         reader.readAsDataURL(file);
-
-        // Reset input to allow selecting same file again if cancelled
         e.target.value = '';
     };
 
-    // Avatar Upload Handler (Step 2: Save Cropped Blob)
+    // Avatar Upload Handler (Step 2: Save Cropped Blob -> Immediate Save)
     const handleCropSave = async (croppedBlob: Blob) => {
         setCropModalOpen(false);
-        setSaving(true);
-        setMsg(null);
+        setProfileStatus('saving');
 
         try {
-            // Determine extension
             const fileExt = selectedFileToCheckExt?.name.split('.').pop() || 'jpg';
             const fileName = `${user?.id}-${Math.random()}.${fileExt}`;
             const filePath = `${fileName}`;
 
-            // Upload Blob
             const { error: uploadError } = await supabase.storage
                 .from('avatars')
-                .upload(filePath, croppedBlob, {
-                    contentType: croppedBlob.type
-                });
+                .upload(filePath, croppedBlob, { contentType: croppedBlob.type });
 
             if (uploadError) throw uploadError;
 
@@ -201,48 +290,48 @@ const ProfilePage: React.FC = () => {
                 .from('avatars')
                 .getPublicUrl(filePath);
 
+            // Update local state
             setAvatarUrl(publicUrl);
-            setMsg({ type: 'success', text: 'Image cropped & uploaded! Click Save to profile.' });
+
+            // Immediate DB Update
+            const { error: dbError } = await supabase
+                .from('users')
+                .update({ avatar_url: publicUrl })
+                .eq('id', user?.id);
+
+            if (dbError) throw dbError;
+
+            // Auth State Update
+            await supabase.auth.updateUser({ data: { avatar_url: publicUrl } });
+
+            setProfileStatus('saved');
+            setTimeout(() => setProfileStatus('idle'), 2000);
         } catch (error: any) {
             console.error('Upload error:', error);
-            setMsg({ type: 'error', text: 'Failed to upload image.' });
+            setProfileStatus('error');
         } finally {
-            setSaving(false);
             setCropImageSrc(null);
-        }
-    };
-
-    // Handle Validation
-    const handleHandleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const val = e.target.value.toLowerCase();
-        if (/^[a-z0-9_.]*$/.test(val)) {
-            setHandle(val);
         }
     };
 
     const toggleRole = (role: string) => {
         setSelectedRoles(prev =>
-            prev.includes(role)
-                ? prev.filter(r => r !== role)
-                : [...prev, role]
+            prev.includes(role) ? prev.filter(r => r !== role) : [...prev, role]
         );
     };
 
     const toggleCollabType = (type: string) => {
         setCollabTypes(prev =>
-            prev.includes(type)
-                ? prev.filter(t => t !== type)
-                : [...prev, type]
+            prev.includes(type) ? prev.filter(t => t !== type) : [...prev, type]
         );
     };
 
-    // --- Link Management Handlers ---
-
+    // --- Link Handlers ---
     const handleAddLink = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!user || !newLink.url || !newLink.title) return;
 
-        setSaving(true);
+        setLinksStatus('saving');
         try {
             let formattedUrl = newLink.url.trim();
             if (!/^https?:\/\//i.test(formattedUrl)) {
@@ -265,86 +354,36 @@ const ProfilePage: React.FC = () => {
 
             setLinks([...links, data]);
             setNewLink({ platform: 'website', title: '', url: '' });
-            setMsg({ type: 'success', text: 'Link added successfully!' });
+            setLinksStatus('saved');
+            setTimeout(() => setLinksStatus('idle'), 2000);
         } catch (error: any) {
             console.error('Error adding link:', error);
-            setMsg({ type: 'error', text: 'Failed to add link.' });
-        } finally {
-            setSaving(false);
+            setLinksStatus('error');
         }
     };
 
     const handleDeleteLink = async (id: string) => {
         if (!confirm('Are you sure?')) return;
+        setLinksStatus('saving');
         try {
-            const { error } = await supabase
-                .from('artist_links')
-                .delete()
-                .eq('id', id);
-
+            const { error } = await supabase.from('artist_links').delete().eq('id', id);
             if (error) throw error;
             setLinks(links.filter(l => l.id !== id));
+            setLinksStatus('saved');
+            setTimeout(() => setLinksStatus('idle'), 2000);
         } catch (error) {
             console.error('Error deleting link:', error);
+            setLinksStatus('error');
         }
     };
 
-    const handleSaveProfile = async (e: React.FormEvent) => {
-        e.preventDefault();
-        if (!user) return;
-
-        setSaving(true);
-        setMsg(null);
-
-        try {
-            // Check for handle Uniqueness if changed
-            if (handle !== originalHandle) {
-                const { data: existing } = await supabase
-                    .from('users')
-                    .select('id')
-                    .eq('handle', handle)
-                    .single();
-
-                if (existing && existing.id !== user.id) {
-                    throw new Error('This handle is already taken.');
-                }
-            }
-
-            // Construct Bio from Roles
-            const bio = selectedRoles.join(' · ');
-
-            // Upsert Profile
-            const updates = {
-                id: user.id,
-                handle,
-                display_name: displayName,
-                bio: bio,
-                avatar_url: avatarUrl,
-                collab_status: collabStatus,
-                collab_types: collabTypes,
-                updated_at: new Date().toISOString(),
-            };
-
-            const { error } = await supabase
-                .from('users')
-                .upsert(updates);
-
-            if (error) throw error;
-
-            if (avatarUrl !== user.user_metadata.avatar_url) {
-                await supabase.auth.updateUser({
-                    data: { avatar_url: avatarUrl }
-                });
-            }
-
-            setOriginalHandle(handle);
-            setMsg({ type: 'success', text: 'Profile saved successfully!' });
-        } catch (error: any) {
-            console.error('Save error:', error);
-            setMsg({ type: 'error', text: error.message || 'Error saving profile.' });
-        } finally {
-            setSaving(false);
-        }
+    // UI Helper: Status Indicator
+    const StatusIndicator = ({ status }: { status: SaveStatus }) => {
+        if (status === 'idle') return null;
+        if (status === 'saving') return <div className="flex items-center gap-1 text-xs text-indigo-400 font-medium animate-pulse"><Loader2 className="w-3 h-3 animate-spin" /> Saving...</div>;
+        if (status === 'saved') return <div className="flex items-center gap-1 text-xs text-green-400 font-medium animate-in fade-in zoom-in"><Check className="w-3 h-3" /> Saved</div>;
+        if (status === 'error') return <div className="flex items-center gap-1 text-xs text-red-400 font-medium"><AlertTriangle className="w-3 h-3" /> Error</div>;
+        return null;
     };
 
     if (loading) return (
@@ -392,17 +431,20 @@ const ProfilePage: React.FC = () => {
                                     </div>
                                     <label className="absolute bottom-0 right-0 p-2 bg-indigo-600 rounded-full text-white cursor-pointer hover:bg-indigo-500 transition-colors shadow-lg">
                                         <Camera className="w-4 h-4" />
-                                        <input type="file" accept="image/*" className="hidden" onChange={handleAvatarUpload} disabled={saving} />
+                                        <input type="file" accept="image/*" className="hidden" onChange={handleAvatarUpload} />
                                     </label>
                                 </div>
                                 <p className="mt-3 text-sm text-slate-400">Tap icon to change photo</p>
                             </div>
 
-                            <form onSubmit={handleSaveProfile} className="space-y-6">
+                            <div className="space-y-6">
 
-                                {/* Display Name Input (Activity Name) */}
+                                {/* Activity Name (Auto-save) */}
                                 <div>
-                                    <label className="block text-sm font-medium text-slate-300 mb-2">Activity Name (Display Name)</label>
+                                    <div className="flex items-center justify-between mb-2">
+                                        <label className="block text-sm font-medium text-slate-300">Activity Name (Display Name)</label>
+                                        <StatusIndicator status={profileStatus} />
+                                    </div>
                                     <input
                                         type="text"
                                         value={displayName}
@@ -412,25 +454,59 @@ const ProfilePage: React.FC = () => {
                                     />
                                 </div>
 
-                                {/* Handle Input */}
+                                {/* Handle (Manual Update) */}
                                 <div>
                                     <label className="block text-sm font-medium text-slate-300 mb-2">Unique Handle</label>
-                                    <div className="relative">
-                                        <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 text-sm">blinddrop.com/u/</span>
-                                        <input
-                                            type="text"
-                                            value={handle}
-                                            onChange={handleHandleChange}
-                                            placeholder="your_handle"
-                                            className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-36 pr-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
-                                            required
-                                        />
+                                    <div className="space-y-3">
+                                        <div className="flex gap-2">
+                                            <div className="relative flex-1">
+                                                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 text-sm">blinddrop.com/u/</span>
+                                                <input
+                                                    type="text"
+                                                    value={draftHandle}
+                                                    onChange={handleDraftHandleChange}
+                                                    placeholder="your_handle"
+                                                    className={`w-full bg-slate-950 border rounded-xl pl-36 pr-4 py-3 text-white focus:outline-none focus:ring-2 transition-all ${handleStatus === 'error' || handleStatus === 'taken' ? 'border-red-500/50 focus:ring-red-500' :
+                                                        handleStatus === 'available' ? 'border-green-500/50 focus:ring-green-500' : 'border-slate-800 focus:ring-indigo-500'
+                                                        }`}
+                                                />
+                                            </div>
+
+                                            {/* Action Button */}
+                                            {handle !== draftHandle && (
+                                                handleStatus === 'available' ? (
+                                                    <button
+                                                        onClick={updateHandle}
+                                                        className="px-4 py-2 bg-green-600 hover:bg-green-500 text-white font-bold rounded-xl transition-colors whitespace-nowrap"
+                                                    >
+                                                        Update
+                                                    </button>
+                                                ) : (
+                                                    <button
+                                                        onClick={checkHandleAvailability}
+                                                        disabled={handleStatus === 'checking' || !draftHandle}
+                                                        className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white font-medium rounded-xl transition-colors whitespace-nowrap disabled:opacity-50"
+                                                    >
+                                                        {handleStatus === 'checking' ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Check'}
+                                                    </button>
+                                                )
+                                            )}
+                                        </div>
+                                        {/* Handle Messages */}
+                                        {handleMsg && (
+                                            <p className={`text-sm ${handleStatus === 'available' || handleStatus === 'idle' ? 'text-green-400' : 'text-red-400'
+                                                }`}>
+                                                {handleMsg}
+                                            </p>
+                                        )}
                                     </div>
                                 </div>
 
-                                {/* Roles Selection */}
+                                {/* Roles (Auto-save) */}
                                 <div>
-                                    <label className="block text-sm font-medium text-slate-300 mb-3">Roles</label>
+                                    <div className="flex items-center justify-between mb-3">
+                                        <label className="block text-sm font-medium text-slate-300">Roles</label>
+                                    </div>
                                     <div className="flex flex-wrap gap-2">
                                         {ROLES.map((role) => {
                                             const isSelected = selectedRoles.includes(role.value);
@@ -452,9 +528,12 @@ const ProfilePage: React.FC = () => {
                                     </div>
                                 </div>
 
-                                {/* Collaboration Settings */}
+                                {/* Collaboration Settings (Auto-save) */}
                                 <div className="pt-6 border-t border-slate-800">
-                                    <h3 className="text-lg font-bold text-white mb-4">Collaboration Preferences</h3>
+                                    <div className="flex items-center justify-between mb-4">
+                                        <h3 className="text-lg font-bold text-white">Collaboration Preferences</h3>
+                                        <StatusIndicator status={profileStatus} />
+                                    </div>
 
                                     {/* Status Toggle */}
                                     <div className="flex items-center justify-between mb-6 bg-slate-950 p-4 rounded-xl border border-slate-800">
@@ -494,32 +573,17 @@ const ProfilePage: React.FC = () => {
                                         </div>
                                     </div>
                                 </div>
-
-                                {/* Status Message */}
-                                {msg && (
-                                    <div className={`flex items-center gap-2 p-4 rounded-xl text-sm ${msg.type === 'success' ? 'bg-green-500/10 text-green-400 border border-green-500/20' :
-                                        msg.type === 'error' ? 'bg-red-500/10 text-red-400 border border-red-500/20' :
-                                            'bg-indigo-500/10 text-indigo-400'
-                                        }`}>
-                                        {msg.type === 'error' ? <AlertTriangle className="w-4 h-4" /> : <Save className="w-4 h-4" />}
-                                        {msg.text}
-                                    </div>
-                                )}
-
-                                {/* Save Button */}
-                                <button
-                                    type="submit"
-                                    disabled={saving}
-                                    className="w-full flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3.5 rounded-xl transition-all disabled:opacity-50 shadow-lg shadow-indigo-500/20"
-                                >
-                                    {saving ? <Loader2 className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
-                                    {saving ? 'Saving...' : 'Save Profile'}
-                                </button>
-                            </form>
+                            </div>
                         </>
                     ) : (
                         // --- Manage Links Tab ---
                         <div className="space-y-8">
+                            {/* Header with Save Status */}
+                            <div className="flex items-center justify-between">
+                                <h3 className="text-lg font-bold text-white">Your Links</h3>
+                                <StatusIndicator status={linksStatus} />
+                            </div>
+
                             {/* Add New Link Form */}
                             <form onSubmit={handleAddLink} className="bg-slate-950 p-4 rounded-xl border border-slate-800 space-y-4">
                                 <h3 className="text-sm font-medium text-white mb-2 flex items-center gap-2">
@@ -570,10 +634,10 @@ const ProfilePage: React.FC = () => {
 
                                 <button
                                     type="submit"
-                                    disabled={saving}
+                                    disabled={linksStatus === 'saving'}
                                     className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-bold rounded-lg transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
                                 >
-                                    {saving ? 'Adding...' : 'Add to Profile'}
+                                    {linksStatus === 'saving' ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Add to Profile'}
                                 </button>
                             </form>
 
