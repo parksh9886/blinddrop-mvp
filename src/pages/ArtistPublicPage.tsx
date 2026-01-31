@@ -232,25 +232,11 @@ const ArtistPublicPage: React.FC = () => {
                 {/* Main Content Body (Original Layout) */}
                 <div className="min-h-screen w-full snap-start flex flex-col">
 
-                    {/* Sticky Header - with opaque background + blurred image overlay */}
+                    {/* Sticky Header (Original Style) */}
                     <div
-                        className="sticky top-0 z-20 pt-32 pb-10 px-8 transition-all duration-300 overflow-hidden"
+                        className="sticky top-0 z-20 pt-32 pb-10 px-8 transition-all duration-300 bg-gradient-to-t from-black via-black/60 to-transparent"
                         style={{ pointerEvents: 'none' }}
                     >
-                        {/* Opaque background with blurred image - blocks link list from showing through */}
-                        <div className="absolute inset-0 -z-10">
-                            <img
-                                src={displayImage}
-                                alt=""
-                                className="w-full h-full object-cover"
-                                style={{
-                                    filter: `blur(20px) brightness(40%)`,
-                                    transform: 'scale(1.2)'
-                                }}
-                            />
-                            <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent" />
-                        </div>
-
                         <div className="max-w-[300px] space-y-6 pointer-events-auto">
                             <div className="flex flex-col gap-3">
                                 <div className="space-y-1">
@@ -262,13 +248,13 @@ const ArtistPublicPage: React.FC = () => {
                                     </p>
                                 </div>
                                 <div className="space-y-4">
-                                    {/* Collab Badge */}
+                                    {/* Collab Badge (Original) */}
                                     <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full backdrop-blur-md transition-colors ${isCollabOpen ? 'bg-green-500/20 text-green-200' : 'bg-red-500/20 text-red-200'}`}>
                                         <div className={`w-2 h-2 rounded-full ${isCollabOpen ? 'bg-green-400 shadow-[0_0_8px_rgba(74,222,128,0.5)]' : 'bg-red-400 shadow-[0_0_8px_rgba(248,113,113,0.5)]'}`} />
                                         <span className="text-xs font-bold tracking-wide">{isCollabOpen ? 'OPEN FOR COLLAB' : 'NOT TAKING REQUESTS'}</span>
                                     </div>
 
-                                    {/* Collab Types */}
+                                    {/* Collab Types (Original) */}
                                     {isCollabOpen && profile.collab_types && profile.collab_types.length > 0 && (
                                         <div className="flex flex-wrap gap-2">
                                             {profile.collab_types.map((type, i) => (
@@ -283,52 +269,50 @@ const ArtistPublicPage: React.FC = () => {
                         </div>
                     </div>
 
-                    {/* Main Content List Area - Separate scroll container */}
-                    {/* overflow-hidden clips content at boundaries, inner div handles scrolling */}
-                    <div className="flex-1 overflow-hidden bg-black/40 backdrop-blur-md">
-                        <div className="h-full overflow-y-auto p-4 md:p-6 pb-24">
-                            <div className="max-w-2xl mx-auto space-y-4">
+                    {/* Main Content List Area (Original Container) */}
+                    {/* Replaced 'track list' content with 'link list' content */}
+                    <div className="flex-1 overflow-y-auto p-4 md:p-6 pb-24 bg-black/40 backdrop-blur-md min-h-screen">
+                        <div className="max-w-2xl mx-auto space-y-4">
 
-                                {/* 1. Discography Button (Special) */}
-                                <button
-                                    onClick={openDiscography}
-                                    className="group relative w-full p-4 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-500/20 transition-all flex items-center justify-between overflow-hidden"
-                                >
-                                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000" />
-                                    <div className="flex items-center gap-3">
-                                        <div className="p-2 bg-white/20 rounded-lg backdrop-blur-sm">
-                                            <Disc3 className="w-5 h-5 text-white" />
-                                        </div>
-                                        <span className="font-bold text-lg tracking-wide">Discography</span>
+                            {/* 1. Discography Button (Special) */}
+                            <button
+                                onClick={openDiscography}
+                                className="group relative w-full p-4 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-500/20 transition-all flex items-center justify-between overflow-hidden"
+                            >
+                                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000" />
+                                <div className="flex items-center gap-3">
+                                    <div className="p-2 bg-white/20 rounded-lg backdrop-blur-sm">
+                                        <Disc3 className="w-5 h-5 text-white" />
                                     </div>
-                                    <ArrowUpRight className="w-5 h-5 opacity-50 group-hover:opacity-100 transition-opacity" />
-                                </button>
+                                    <span className="font-bold text-lg tracking-wide">Discography</span>
+                                </div>
+                                <ArrowUpRight className="w-5 h-5 opacity-50 group-hover:opacity-100 transition-opacity" />
+                            </button>
 
-                                {/* 2. Artist Links */}
-                                {artistLinks.map((link) => (
-                                    <a
-                                        key={link.id}
-                                        href={link.url}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="group w-full p-4 rounded-xl bg-white/5 hover:bg-white/10 border border-white/5 hover:border-white/20 backdrop-blur-md transition-all flex items-center justify-between hover:scale-[1.02]"
-                                    >
-                                        <div className="flex items-center gap-3">
-                                            <div className="text-white/70 group-hover:text-white transition-colors">
-                                                {getIconForPlatform(link.platform)}
-                                            </div>
-                                            <span className="font-medium text-white/90">{link.title}</span>
+                            {/* 2. Artist Links */}
+                            {artistLinks.map((link) => (
+                                <a
+                                    key={link.id}
+                                    href={link.url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="group w-full p-4 rounded-xl bg-white/5 hover:bg-white/10 border border-white/5 hover:border-white/20 backdrop-blur-md transition-all flex items-center justify-between hover:scale-[1.02]"
+                                >
+                                    <div className="flex items-center gap-3">
+                                        <div className="text-white/70 group-hover:text-white transition-colors">
+                                            {getIconForPlatform(link.platform)}
                                         </div>
-                                        <ArrowUpRight className="w-4 h-4 text-white/30 group-hover:text-white transition-colors" />
-                                    </a>
-                                ))}
+                                        <span className="font-medium text-white/90">{link.title}</span>
+                                    </div>
+                                    <ArrowUpRight className="w-4 h-4 text-white/30 group-hover:text-white transition-colors" />
+                                </a>
+                            ))}
 
-                                {isOwner && (
-                                    <Link to="/profile?tab=links" className="flex items-center justify-center p-3 rounded-xl border border-dashed border-white/20 text-white/50 hover:text-white hover:border-white/40 transition-colors text-sm">
-                                        <Plus className="w-4 h-4 mr-2" /> Manage Links
-                                    </Link>
-                                )}
-                            </div>
+                            {isOwner && (
+                                <Link to="/profile?tab=links" className="flex items-center justify-center p-3 rounded-xl border border-dashed border-white/20 text-white/50 hover:text-white hover:border-white/40 transition-colors text-sm">
+                                    <Plus className="w-4 h-4 mr-2" /> Manage Links
+                                </Link>
+                            )}
                         </div>
                     </div>
                 </div>
