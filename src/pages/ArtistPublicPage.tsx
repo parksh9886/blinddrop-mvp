@@ -200,18 +200,15 @@ const ArtistPublicPage: React.FC = () => {
     const isCollabOpen = profile.collab_status === 'OPEN';
 
     return (
-        <div
-            className="h-screen w-full overflow-y-auto bg-black text-white relative snap-y snap-mandatory"
-            onScroll={handleScroll}
-        >
+        <div className="fixed inset-0 w-full h-[100dvh] overflow-hidden bg-black text-white">
             <div className="absolute z-50 w-full top-0 left-0 pointer-events-none">
                 <div className="pointer-events-auto">
                     <Navbar />
                 </div>
             </div>
 
-            {/* Background Layer - Fixed */}
-            <div className="fixed inset-0 z-0 pointer-events-none">
+            {/* Background Layer (Original) */}
+            <div className="fixed inset-0 z-0">
                 <img
                     src={displayImage}
                     alt="Background"
@@ -221,95 +218,102 @@ const ArtistPublicPage: React.FC = () => {
                         transform: 'scale(1.1)'
                     }}
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent opacity-90" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-90" />
             </div>
 
-            {/* 1. Spacer for Initial Hero View */}
-            <div className="w-full h-[45vh] snap-start bg-transparent pointer-events-none" />
+            {/* Scroll Container (Original) */}
+            <div
+                className="relative z-10 h-full overflow-y-auto snap-y snap-mandatory scroll-smooth overscroll-y-none"
+                onScroll={handleScroll}
+            >
+                {/* Spacer (Original) */}
+                <div className="w-full h-[45vh] md:h-[60vh] snap-start bg-transparent pointer-events-none" />
 
-            {/* 2. Sticky Wrapper: Becomes the 'App Interface' once scrolled to top */}
-            <div className="sticky top-0 z-10 h-screen flex flex-col snap-start">
+                {/* Main Content Body (Original Layout) */}
+                <div className="min-h-screen w-full snap-start flex flex-col">
 
-                {/* Header (Top Box) */}
-                <div className="shrink-0 pt-10 pb-6 px-8 flex flex-col items-start relative z-20 transition-all duration-300">
-                    {/* Reverted opacity/gradient to represent original transparent feel, 
-                        but relying on Flexbox structure to prevent list overlap */}
-                    <div className="absolute inset-0 bg-gradient-to-b from-black/80 via-black/40 to-transparent -z-10" />
-
-                    <div className="max-w-[300px] space-y-6 pt-20">
-                        <div className="flex flex-col gap-3">
-                            <div className="space-y-1">
-                                <h1 className="text-5xl font-bold tracking-tighter text-white drop-shadow-2xl leading-none">
-                                    {displayName}
-                                </h1>
-                                <p className="text-lg text-white/60 font-medium tracking-wide drop-shadow-lg leading-relaxed">
-                                    {profile.bio || "Artist"}
-                                </p>
-                            </div>
-                            <div className="space-y-4">
-                                {/* Collab Badge */}
-                                <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full backdrop-blur-md transition-colors ${isCollabOpen ? 'bg-green-500/20 text-green-200' : 'bg-red-500/20 text-red-200'}`}>
-                                    <div className={`w-2 h-2 rounded-full ${isCollabOpen ? 'bg-green-400 shadow-[0_0_8px_rgba(74,222,128,0.5)]' : 'bg-red-400 shadow-[0_0_8px_rgba(248,113,113,0.5)]'}`} />
-                                    <span className="text-xs font-bold tracking-wide">{isCollabOpen ? 'OPEN FOR COLLAB' : 'NOT TAKING REQUESTS'}</span>
+                    {/* Sticky Header (Original Style) */}
+                    <div
+                        className="sticky top-0 z-20 pt-32 pb-10 px-8 transition-all duration-300 bg-gradient-to-t from-black via-black/60 to-transparent"
+                        style={{ pointerEvents: 'none' }}
+                    >
+                        <div className="max-w-[300px] space-y-6 pointer-events-auto">
+                            <div className="flex flex-col gap-3">
+                                <div className="space-y-1">
+                                    <h1 className="text-5xl font-bold tracking-tighter text-white drop-shadow-2xl leading-none">
+                                        {displayName}
+                                    </h1>
+                                    <p className="text-lg text-white/60 font-medium tracking-wide drop-shadow-lg leading-relaxed">
+                                        {profile.bio || "Artist"}
+                                    </p>
                                 </div>
-
-                                {/* Collab Types */}
-                                {isCollabOpen && profile.collab_types && profile.collab_types.length > 0 && (
-                                    <div className="flex flex-wrap gap-2">
-                                        {profile.collab_types.map((type, i) => (
-                                            <span key={i} className="px-3 py-1 rounded-full bg-white/10 hover:bg-white/20 text-white/90 text-sm font-medium backdrop-blur-sm transition-colors cursor-default">
-                                                {type}
-                                            </span>
-                                        ))}
+                                <div className="space-y-4">
+                                    {/* Collab Badge (Original) */}
+                                    <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full backdrop-blur-md transition-colors ${isCollabOpen ? 'bg-green-500/20 text-green-200' : 'bg-red-500/20 text-red-200'}`}>
+                                        <div className={`w-2 h-2 rounded-full ${isCollabOpen ? 'bg-green-400 shadow-[0_0_8px_rgba(74,222,128,0.5)]' : 'bg-red-400 shadow-[0_0_8px_rgba(248,113,113,0.5)]'}`} />
+                                        <span className="text-xs font-bold tracking-wide">{isCollabOpen ? 'OPEN FOR COLLAB' : 'NOT TAKING REQUESTS'}</span>
                                     </div>
-                                )}
+
+                                    {/* Collab Types (Original) */}
+                                    {isCollabOpen && profile.collab_types && profile.collab_types.length > 0 && (
+                                        <div className="flex flex-wrap gap-2">
+                                            {profile.collab_types.map((type, i) => (
+                                                <span key={i} className="px-3 py-1 rounded-full bg-white/10 hover:bg-white/20 text-white/90 text-sm font-medium backdrop-blur-sm transition-colors cursor-default">
+                                                    {type}
+                                                </span>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
 
-                {/* List Container (Bottom Box) */}
-                <div className="flex-1 overflow-y-auto relative p-6 bg-transparent" id="link-list-container">
-                    <div className="max-w-2xl mx-auto space-y-4 pb-32">
-                        {/* 1. Discography Button */}
-                        <button
-                            onClick={openDiscography}
-                            className="group relative w-full p-4 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-500/20 transition-all flex items-center justify-between overflow-hidden"
-                        >
-                            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000" />
-                            <div className="flex items-center gap-3">
-                                <div className="p-2 bg-white/20 rounded-lg backdrop-blur-sm">
-                                    <Disc3 className="w-5 h-5 text-white" />
-                                </div>
-                                <span className="font-bold text-lg tracking-wide">Discography</span>
-                            </div>
-                            <ArrowUpRight className="w-5 h-5 opacity-50 group-hover:opacity-100 transition-opacity" />
-                        </button>
+                    {/* Main Content List Area (Original Container) */}
+                    {/* Replaced 'track list' content with 'link list' content */}
+                    <div className="flex-1 overflow-y-auto p-4 md:p-6 pb-24 bg-black/40 backdrop-blur-md min-h-screen">
+                        <div className="max-w-2xl mx-auto space-y-4">
 
-                        {/* 2. Artist Links */}
-                        {artistLinks.map((link) => (
-                            <a
-                                key={link.id}
-                                href={link.url}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="group w-full p-4 rounded-xl bg-white/5 hover:bg-white/10 border border-white/5 hover:border-white/20 backdrop-blur-md transition-all flex items-center justify-between hover:scale-[1.02]"
+                            {/* 1. Discography Button (Special) */}
+                            <button
+                                onClick={openDiscography}
+                                className="group relative w-full p-4 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-500/20 transition-all flex items-center justify-between overflow-hidden"
                             >
+                                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000" />
                                 <div className="flex items-center gap-3">
-                                    <div className="text-white/70 group-hover:text-white transition-colors">
-                                        {getIconForPlatform(link.platform)}
+                                    <div className="p-2 bg-white/20 rounded-lg backdrop-blur-sm">
+                                        <Disc3 className="w-5 h-5 text-white" />
                                     </div>
-                                    <span className="font-medium text-white/90">{link.title}</span>
+                                    <span className="font-bold text-lg tracking-wide">Discography</span>
                                 </div>
-                                <ArrowUpRight className="w-4 h-4 text-white/30 group-hover:text-white transition-colors" />
-                            </a>
-                        ))}
+                                <ArrowUpRight className="w-5 h-5 opacity-50 group-hover:opacity-100 transition-opacity" />
+                            </button>
 
-                        {isOwner && (
-                            <Link to="/profile?tab=links" className="flex items-center justify-center p-3 rounded-xl border border-dashed border-white/20 text-white/50 hover:text-white hover:border-white/40 transition-colors text-sm">
-                                <Plus className="w-4 h-4 mr-2" /> Manage Links
-                            </Link>
-                        )}
+                            {/* 2. Artist Links */}
+                            {artistLinks.map((link) => (
+                                <a
+                                    key={link.id}
+                                    href={link.url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="group w-full p-4 rounded-xl bg-white/5 hover:bg-white/10 border border-white/5 hover:border-white/20 backdrop-blur-md transition-all flex items-center justify-between hover:scale-[1.02]"
+                                >
+                                    <div className="flex items-center gap-3">
+                                        <div className="text-white/70 group-hover:text-white transition-colors">
+                                            {getIconForPlatform(link.platform)}
+                                        </div>
+                                        <span className="font-medium text-white/90">{link.title}</span>
+                                    </div>
+                                    <ArrowUpRight className="w-4 h-4 text-white/30 group-hover:text-white transition-colors" />
+                                </a>
+                            ))}
+
+                            {isOwner && (
+                                <Link to="/profile?tab=links" className="flex items-center justify-center p-3 rounded-xl border border-dashed border-white/20 text-white/50 hover:text-white hover:border-white/40 transition-colors text-sm">
+                                    <Plus className="w-4 h-4 mr-2" /> Manage Links
+                                </Link>
+                            )}
+                        </div>
                     </div>
                 </div>
             </div>
