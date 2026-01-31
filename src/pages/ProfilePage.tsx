@@ -543,6 +543,7 @@ const ProfilePage: React.FC = () => {
                                             autoCapitalize="off"
                                             autoCorrect="off"
                                             spellCheck="false"
+                                            style={{ imeMode: 'disabled' } as any}
                                             className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-36 pr-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
                                         />
                                     </div>
