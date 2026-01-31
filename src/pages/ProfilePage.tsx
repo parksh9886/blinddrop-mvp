@@ -179,7 +179,7 @@ const ProfilePage: React.FC = () => {
                 console.error('Auto-save error:', error);
                 setSaveStatus('error');
             }
-        }, 2000); // 2000ms Debounce
+        }, 1000); // 1000ms Debounce
 
         return () => clearTimeout(timer);
     }, [displayName, selectedRoles, collabStatus, collabTypes]); // Dependencies for auto-save
@@ -539,6 +539,10 @@ const ProfilePage: React.FC = () => {
                                             value={newHandle}
                                             onChange={handleNewHandleInput}
                                             placeholder="your_handle"
+                                            autoComplete="off"
+                                            autoCapitalize="off"
+                                            autoCorrect="off"
+                                            spellCheck="false"
                                             className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-36 pr-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
                                         />
                                     </div>
