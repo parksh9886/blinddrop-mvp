@@ -232,8 +232,8 @@ const ArtistPublicPage: React.FC = () => {
                 {/* Section 2: Profile + Links (snap-start, fills screen) */}
                 <div className="h-screen w-full snap-start flex flex-col overflow-hidden">
 
-                    {/* Profile Section (Fixed at top of Section 2, not sticky) */}
-                    <div className="flex-shrink-0 pt-20 pb-6 px-8 bg-gradient-to-b from-black/80 via-black/60 to-transparent">
+                    {/* Profile Section (Fixed at top of Section 2, solid background) */}
+                    <div className="flex-shrink-0 pt-20 pb-6 px-8 bg-black relative z-10">
                         <div className="max-w-[300px] space-y-4">
                             <div className="space-y-1">
                                 <h1 className="text-5xl font-bold tracking-tighter text-white drop-shadow-2xl leading-none">
@@ -264,49 +264,52 @@ const ArtistPublicPage: React.FC = () => {
                         </div>
                     </div>
 
-                    {/* Links Container (Scrollable independently, clipped) */}
-                    <div className="flex-1 overflow-y-auto overflow-x-hidden p-4 md:p-6 pb-24">
-                        <div className="max-w-2xl mx-auto space-y-4">
+                    {/* Links Container Wrapper (Clips content at boundary) */}
+                    <div className="flex-1 relative overflow-hidden">
+                        {/* Inner Scroll Container */}
+                        <div className="absolute inset-0 overflow-y-auto overflow-x-hidden p-4 md:p-6 pb-24">
+                            <div className="max-w-2xl mx-auto space-y-4">
 
-                            {/* 1. Discography Button */}
-                            <button
-                                onClick={openDiscography}
-                                className="group relative w-full p-4 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-500/20 transition-all flex items-center justify-between overflow-hidden"
-                            >
-                                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000" />
-                                <div className="flex items-center gap-3">
-                                    <div className="p-2 bg-white/20 rounded-lg backdrop-blur-sm">
-                                        <Disc3 className="w-5 h-5 text-white" />
-                                    </div>
-                                    <span className="font-bold text-lg tracking-wide">Discography</span>
-                                </div>
-                                <ArrowUpRight className="w-5 h-5 opacity-50 group-hover:opacity-100 transition-opacity" />
-                            </button>
-
-                            {/* 2. Artist Links */}
-                            {artistLinks.map((link) => (
-                                <a
-                                    key={link.id}
-                                    href={link.url}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="group w-full p-4 rounded-xl bg-white/5 hover:bg-white/10 border border-white/5 hover:border-white/20 backdrop-blur-md transition-all flex items-center justify-between hover:scale-[1.02]"
+                                {/* 1. Discography Button */}
+                                <button
+                                    onClick={openDiscography}
+                                    className="group relative w-full p-4 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-500/20 transition-all flex items-center justify-between overflow-hidden"
                                 >
+                                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000" />
                                     <div className="flex items-center gap-3">
-                                        <div className="text-white/70 group-hover:text-white transition-colors">
-                                            {getIconForPlatform(link.platform)}
+                                        <div className="p-2 bg-white/20 rounded-lg backdrop-blur-sm">
+                                            <Disc3 className="w-5 h-5 text-white" />
                                         </div>
-                                        <span className="font-medium text-white/90">{link.title}</span>
+                                        <span className="font-bold text-lg tracking-wide">Discography</span>
                                     </div>
-                                    <ArrowUpRight className="w-4 h-4 text-white/30 group-hover:text-white transition-colors" />
-                                </a>
-                            ))}
+                                    <ArrowUpRight className="w-5 h-5 opacity-50 group-hover:opacity-100 transition-opacity" />
+                                </button>
 
-                            {isOwner && (
-                                <Link to="/profile?tab=links" className="flex items-center justify-center p-3 rounded-xl border border-dashed border-white/20 text-white/50 hover:text-white hover:border-white/40 transition-colors text-sm">
-                                    <Plus className="w-4 h-4 mr-2" /> Manage Links
-                                </Link>
-                            )}
+                                {/* 2. Artist Links */}
+                                {artistLinks.map((link) => (
+                                    <a
+                                        key={link.id}
+                                        href={link.url}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="group w-full p-4 rounded-xl bg-white/5 hover:bg-white/10 border border-white/5 hover:border-white/20 backdrop-blur-md transition-all flex items-center justify-between hover:scale-[1.02]"
+                                    >
+                                        <div className="flex items-center gap-3">
+                                            <div className="text-white/70 group-hover:text-white transition-colors">
+                                                {getIconForPlatform(link.platform)}
+                                            </div>
+                                            <span className="font-medium text-white/90">{link.title}</span>
+                                        </div>
+                                        <ArrowUpRight className="w-4 h-4 text-white/30 group-hover:text-white transition-colors" />
+                                    </a>
+                                ))}
+
+                                {isOwner && (
+                                    <Link to="/profile?tab=links" className="flex items-center justify-center p-3 rounded-xl border border-dashed border-white/20 text-white/50 hover:text-white hover:border-white/40 transition-colors text-sm">
+                                        <Plus className="w-4 h-4 mr-2" /> Manage Links
+                                    </Link>
+                                )}
+                            </div>
                         </div>
                     </div>
                 </div>
