@@ -226,8 +226,11 @@ const ArtistPublicPage: React.FC = () => {
                 className="relative z-10 h-full overflow-y-auto snap-y snap-mandatory scroll-smooth overscroll-y-none"
                 onScroll={handleScroll}
             >
-                {/* Spacer (Original) */}
-                <div className="w-full h-[45vh] md:h-[60vh] snap-start bg-transparent pointer-events-none" />
+                {/* Spacer - accounts for safe-area-inset-bottom */}
+                <div
+                    className="w-full snap-start bg-transparent pointer-events-none"
+                    style={{ height: 'calc(55vh + env(safe-area-inset-bottom, 0px))', minHeight: '55vh' }}
+                />
 
                 {/* Section 2: Profile + Links (background covers navbar area) */}
                 <div
@@ -269,8 +272,11 @@ const ArtistPublicPage: React.FC = () => {
 
                     {/* Links Container Wrapper */}
                     <div className="flex-1 relative overflow-hidden">
-                        {/* Inner Scroll Container */}
-                        <div className="absolute inset-0 overflow-y-auto overflow-x-hidden p-4 md:p-6 pb-24">
+                        {/* Inner Scroll Container - uses safe-area-inset-bottom for iOS */}
+                        <div
+                            className="absolute inset-0 overflow-y-auto overflow-x-hidden p-4 md:p-6"
+                            style={{ paddingBottom: 'calc(24px + env(safe-area-inset-bottom, 0px))' }}
+                        >
                             <div className="max-w-2xl mx-auto space-y-4">
 
                                 {/* 1. Discography Button */}
