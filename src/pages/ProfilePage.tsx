@@ -432,7 +432,7 @@ const ProfilePage: React.FC = () => {
         }
     };
 
-    const handleDragEnd = (event: DragEndEvent) => {
+    const handleDragEnd = async (event: DragEndEvent) => {
         const { active, over } = event;
         if (active.id !== over?.id) {
             setLinks((items) => {
@@ -440,19 +440,28 @@ const ProfilePage: React.FC = () => {
                 const newIndex = items.findIndex((l) => l.id === over?.id);
                 const newLinks = arrayMove(items, oldIndex, newIndex);
 
-                // Persist new order
+                // Prepare updates
                 const updates = newLinks.map((link, index) => ({
                     id: link.id,
-                    order_index: index,
-                    title: link.title, // required for update? likely not if just patching, but safe
-                    url: link.url,
-                    updated_at: new Date().toISOString()
+                    order_index: index
                 }));
 
-                // Update in background
-                updates.forEach(async (update) => {
-                    await supabase.from('artist_links').update({ order_index: update.order_index }).eq('id', update.id);
-                });
+                // Execute updates in background with Promise.all
+                const saveOrder = async () => {
+                    try {
+                        setSaveStatus('saving');
+                        const promises = updates.map(update =>
+                            supabase.from('artist_links').update({ order_index: update.order_index }).eq('id', update.id)
+                        );
+                        await Promise.all(promises);
+                        setSaveStatus('saved');
+                        setTimeout(() => setSaveStatus('idle'), 2000);
+                    } catch (err) {
+                        console.error('Failed to save link order:', err);
+                        setSaveStatus('error');
+                    }
+                };
+                saveOrder();
 
                 return newLinks;
             });
@@ -666,8 +675,8 @@ const ProfilePage: React.FC = () => {
                                 {/* Handle Check Message */}
                                 {handleStatus !== 'idle' && (
                                     <div className={`mt-3 text-sm flex items-center gap-2 ${handleStatus === 'available' ? 'text-green-400' :
-                                            handleStatus === 'taken' ? 'text-red-400' :
-                                                handleStatus === 'same' ? 'text-slate-400' : 'text-indigo-400'
+                                        handleStatus === 'taken' ? 'text-red-400' :
+                                            handleStatus === 'same' ? 'text-slate-400' : 'text-indigo-400'
                                         }`}>
                                         {handleStatus === 'checking' && <Loader2 className="w-4 h-4 animate-spin" />}
                                         {handleStatus === 'available' && <Check className="w-4 h-4" />}

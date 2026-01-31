@@ -335,17 +335,21 @@ const TracksPage: React.FC = () => {
     const fetchData = async () => {
         if (!user) return;
         try {
-            // Fetch Tracks ordered by order_index (assuming it exists, fallback to created_at)
+            // Fetch Tracks
+            // NOTE: Reverted to sorting by created_at because 'order_index' column likely doesn't exist yet.
             const { data: tracksData, error: tracksError } = await supabase
                 .from('tracks')
                 .select('*')
                 .eq('user_id', user.id)
-                .order('order_index', { ascending: true }) // Changed from created_at to order_index
-                .order('created_at', { ascending: false }); // Secondary sort
+                .order('created_at', { ascending: false });
 
             if (tracksError) throw tracksError;
 
             if (tracksData && tracksData.length > 0) {
+                // Client-side sort if order_index exists
+                if (tracksData[0].order_index !== undefined) {
+                    tracksData.sort((a, b) => (a.order_index || 0) - (b.order_index || 0));
+                }
                 const trackIds = tracksData.map((t: Track) => t.id);
                 // Fetch Feedbacks
                 const { data: feedbacksData, error: feedbacksError } = await supabase

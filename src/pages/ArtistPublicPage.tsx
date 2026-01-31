@@ -36,6 +36,7 @@ interface Track {
     url: string;
     platform: 'youtube' | 'soundcloud';
     created_at: string;
+    order_index?: number;
     feedbacks?: Feedback[];
 }
 
@@ -170,6 +171,11 @@ const ArtistPublicPage: React.FC = () => {
                     .order('created_at', { ascending: false });
 
                 if (tracksError) throw tracksError;
+
+                // Sort by order_index if available (Client-side fallback)
+                if (tracksData && tracksData.length > 0 && tracksData[0].order_index !== undefined) {
+                    tracksData.sort((a, b) => (a.order_index ?? 0) - (b.order_index ?? 0));
+                }
 
                 // 2.1 Fetch Feedbacks (Public View logic)
                 let tracksWithFeedbacks = tracksData || [];
