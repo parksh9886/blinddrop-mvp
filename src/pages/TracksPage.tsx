@@ -170,7 +170,7 @@ const SortableTrackItem = ({
 
                 <div className="flex items-center gap-1 flex-shrink-0 ml-2 mt-1">
                     <a
-                        href={`/@${userHandle}?track=${track.id}`}
+                        href={`/u/${userHandle}?track=${track.id}`}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="p-2 text-slate-400 hover:text-indigo-400 transition-colors"
@@ -509,7 +509,7 @@ const TracksPage: React.FC = () => {
     };
 
     const handleCopyLink = (trackId: string) => {
-        const url = `${window.location.origin}/@${user?.user_metadata?.handle || user?.email?.split('@')[0]}?track=${trackId}`;
+        const url = `${window.location.origin}/u/${user?.user_metadata?.handle || user?.email?.split('@')[0]}?track=${trackId}`;
         navigator.clipboard.writeText(url).then(() => setToast({ message: 'Copied!', type: 'success' }));
     };
 

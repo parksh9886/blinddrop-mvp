@@ -453,8 +453,8 @@ const ArtistPublicPage: React.FC = () => {
     // Copy Track Deep Link to Clipboard
     const copyTrackLink = (trackId: string, e?: React.MouseEvent) => {
         e?.stopPropagation(); // Prevent track click when copying
-        // Use the new /@handle format
-        const deepLink = `${window.location.origin}/@${profile?.handle}?track=${trackId}`;
+        // Use standard /u/:handle format to ensure reliability
+        const deepLink = `${window.location.origin}/u/${profile?.handle}?track=${trackId}`;
         navigator.clipboard.writeText(deepLink).then(() => {
             setShowCopyToast(true);
             setTimeout(() => setShowCopyToast(false), 2500);
