@@ -1,55 +1,23 @@
-import React, { useEffect, useState } from 'react';
-import { useParams, Link, useSearchParams } from 'react-router-dom';
-import { supabase } from '../lib/supabase';
-import { useAuth } from '../contexts/AuthContext';
 import {
     Play, Loader2, Instagram, Youtube, Music2, Globe, Twitter,
     Facebook, Linkedin, X, ArrowUpRight, Plus, Disc3, Link as LinkIcon,
-    ChevronLeft, ChevronDown, User, MessageSquare
+    ChevronLeft, ChevronDown, User, MessageSquare, CheckCircle2, Lock
 } from 'lucide-react';
-import Navbar from '../components/Navbar';
-import { motion, AnimatePresence } from 'framer-motion';
 
-// --- Interfaces ---
-interface UserProfile {
-    id: string;
-    handle: string;
-    display_name: string | null;
-    avatar_url: string | null;
-    bio: string | null;
-    collab_status: 'OPEN' | 'CLOSED' | null;
-    collab_types: string[] | null;
-}
+// ... existing interfaces ...
 
-interface Feedback {
-    id: string;
-    content: string;
-    created_at: string;
-    reply: string | null;
-    is_unlocked: boolean;
-    track_id: string;
-}
-
-interface Track {
-    id: string;
-    title: string;
-    url: string;
-    platform: 'youtube' | 'soundcloud';
-    created_at: string;
-    order_index?: number;
-    feedbacks?: Feedback[];
-}
-
-interface ArtistLink {
-    id: string;
-    platform: string;
-    title: string;
-    url: string;
-    order_index: number;
-}
-
-// --- Sub-Component: Feedback Section (Simplified) ---
-const FeedbackSection = ({ track }: { track: Track }) => {
+// --- Sub-Component: Feedback Section (Dual Mode) ---
+const FeedbackSection = ({
+    track,
+    isOwner,
+    onReply,
+    onUnlock
+}: {
+    track: Track;
+    isOwner: boolean;
+    onReply: (fid: string, tid: string, content: string) => void;
+    onUnlock: (fid: string, tid: string) => void;
+}) => {
     const [comment, setComment] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -78,6 +46,7 @@ const FeedbackSection = ({ track }: { track: Track }) => {
                 <MessageSquare className="w-5 h-5" /> Secret Feedback
             </h3>
 
+            {/* Submit Form (Always visible to Public, hidden/different in Owner view potentially, but keeping it for now) */}
             <form onSubmit={handleSubmit} className="flex gap-2">
                 <input
                     type="text"
@@ -95,27 +64,112 @@ const FeedbackSection = ({ track }: { track: Track }) => {
             </form>
 
             <div className="space-y-4">
-                {track.feedbacks?.map((fb, idx) => {
-                    // Check readability
-                    const isReadable = idx < 3 || fb.is_unlocked;
-                    return (
-                        <div key={fb.id} className={`p-4 rounded-xl border ${isReadable ? 'bg-white/5 border-white/10' : 'bg-white/5 border-white/5 relative overflow-hidden'}`}>
-                            <div className="flex items-center gap-2 mb-2">
-                                <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold ${isReadable ? 'bg-indigo-500' : 'bg-slate-700'}`}>
-                                    <User className="w-3 h-3 text-white" />
+                {track.feedbacks && track.feedbacks.length > 0 ? (
+                    (() => {
+                        // Sort: Replied (Top) -> Waiting (Bottom). Both desc by date.
+                        const replied = track.feedbacks.filter(f => f.reply);
+                        const waiting = track.feedbacks.filter(f => !f.reply);
+                        // For Owner, we might want natural date order or priority order, but let's stick to simple date descending or this bucket sort.
+                        // Actually, maintaining date sort is usually better for 'timeline', but PublicFeedbackPage does Replied -> Waiting.
+                        // Let's replicate PublicFeedbackPage sorting for consistency.
+                        const sortedFeedbacks = [...replied, ...waiting];
+
+                        return sortedFeedbacks.map((fb, idx) => {
+                            let isReadable = false;
+
+                            if (isOwner) {
+                                // Owner Logic: Readable if in top 3 OR manually unlocked
+                                isReadable = idx < 3 || fb.is_unlocked;
+                            } else {
+                                // Public Logic: Readable ONLY if replied
+                                isReadable = !!fb.reply;
+                            }
+
+                            // Blur condition
+                            const shouldBlur = !isReadable;
+
+                            return (
+                                <div key={fb.id} className={`p-4 rounded-xl border transition-all relative ${shouldBlur ? 'bg-white/5 border-white/5 overflow-hidden' : 'bg-white/5 border-white/10'}`}>
+                                    {/* Header */}
+                                    <div className="flex items-center gap-2 mb-2">
+                                        <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold ${!shouldBlur ? 'bg-indigo-500' : 'bg-slate-700'}`}>
+                                            <User className="w-3 h-3 text-white" />
+                                        </div>
+                                        <span className={`text-xs font-bold ${shouldBlur ? 'text-white/30' : 'text-white/50'}`}>Anonymous</span>
+                                        <span className="text-[10px] text-white/30 ml-auto">{new Date(fb.created_at).toLocaleDateString()}</span>
+                                    </div>
+
+                                    {/* Content */}
+                                    <p className={`text-sm ${shouldBlur ? 'text-white/20 blur-sm pointer-events-none select-none' : 'text-white/80'}`}>
+                                        {fb.content}
+                                    </p>
+
+                                    {/* Reply Section / Logic */}
+                                    {fb.reply ? (
+                                        // Has Reply (Visible)
+                                        (isReadable || isOwner) && (
+                                            <div className="mt-3 pl-3 border-l-2 border-indigo-500">
+                                                <div className="flex items-center gap-1 mb-1">
+                                                    <CheckCircle2 className="w-3 h-3 text-indigo-400" />
+                                                    <p className="text-xs text-indigo-300 font-bold">Artist Reply</p>
+                                                </div>
+                                                <p className="text-sm text-white/70">{fb.reply}</p>
+                                            </div>
+                                        )
+                                    ) : (
+                                        // No Reply
+                                        isOwner ? (
+                                            // Owner Controls
+                                            isReadable ? (
+                                                <form
+                                                    onSubmit={(e) => {
+                                                        e.preventDefault();
+                                                        const form = e.target as HTMLFormElement;
+                                                        const input = form.elements.namedItem('reply') as HTMLInputElement;
+                                                        onReply(fb.id, track.id, input.value);
+                                                        form.reset();
+                                                    }}
+                                                    className="mt-3 flex gap-2"
+                                                >
+                                                    <input
+                                                        name="reply"
+                                                        type="text"
+                                                        placeholder="Reply to unlock for public..."
+                                                        className="flex-1 bg-black/30 border border-white/10 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-indigo-500 transition-colors"
+                                                        required
+                                                    />
+                                                    <button type="submit" className="bg-indigo-600 hover:bg-indigo-500 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition-colors">
+                                                        Reply
+                                                    </button>
+                                                </form>
+                                            ) : (
+                                                <div className="absolute inset-0 z-10 flex items-center justify-center">
+                                                    <button
+                                                        onClick={() => onUnlock(fb.id, track.id)}
+                                                        className="flex items-center gap-2 bg-slate-800/90 hover:bg-indigo-600/90 backdrop-blur-md text-white px-4 py-2 rounded-xl text-sm font-bold transition-all border border-white/10 hover:border-indigo-500 shadow-xl"
+                                                    >
+                                                        <Lock className="w-4 h-4" /> Unlock to View
+                                                    </button>
+                                                </div>
+                                            )
+                                        ) : (
+                                            // Public View (Locked)
+                                            <div className="absolute inset-0 z-10 flex items-center justify-center">
+                                                <div className="flex items-center gap-2 bg-black/60 backdrop-blur-md text-white/70 px-4 py-2 rounded-xl text-xs font-bold border border-white/5">
+                                                    <Lock className="w-3 h-3" /> Waiting for artist's reply
+                                                </div>
+                                            </div>
+                                        )
+                                    )}
                                 </div>
-                                <span className="text-xs font-bold text-white/50">Anonymous</span>
-                            </div>
-                            <p className={`text-sm ${isReadable ? 'text-white/80' : 'text-white/20 blur-sm'}`}>{fb.content}</p>
-                            {fb.reply && (
-                                <div className="mt-3 pl-3 border-l-2 border-indigo-500">
-                                    <p className="text-xs text-indigo-300 font-bold mb-1">Artist Reply</p>
-                                    <p className="text-sm text-white/70">{fb.reply}</p>
-                                </div>
-                            )}
-                        </div>
-                    );
-                })}
+                            );
+                        });
+                    })()
+                ) : (
+                    <div className="text-center py-6 text-white/30 text-sm border border-dashed border-white/10 rounded-xl">
+                        Be the first to leave feedback!
+                    </div>
+                )}
             </div>
         </div>
     );
