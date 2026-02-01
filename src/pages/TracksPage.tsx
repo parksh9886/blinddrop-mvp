@@ -336,9 +336,22 @@ const TracksPage: React.FC = () => {
         }
     }, [toast]);
 
+    const [userHandle, setUserHandle] = useState<string | null>(null);
+
     const fetchData = async () => {
         if (!user) return;
         try {
+            // Fetch User Handle
+            const { data: userData, error: userError } = await supabase
+                .from('users')
+                .select('handle')
+                .eq('id', user.id)
+                .single();
+
+            if (!userError && userData) {
+                setUserHandle(userData.handle);
+            }
+
             // Fetch Tracks
             // NOTE: Reverted to sorting by created_at because 'order_index' column likely doesn't exist yet.
             const { data: tracksData, error: tracksError } = await supabase
@@ -509,7 +522,7 @@ const TracksPage: React.FC = () => {
     };
 
     const handleCopyLink = (trackId: string) => {
-        const url = `${window.location.origin}/u/${user?.user_metadata?.handle || user?.email?.split('@')[0]}?track=${trackId}`;
+        const url = `${window.location.origin}/u/${userHandle || user?.user_metadata?.handle || 'user'}?track=${trackId}`;
         navigator.clipboard.writeText(url).then(() => setToast({ message: 'Copied!', type: 'success' }));
     };
 
@@ -566,7 +579,7 @@ const TracksPage: React.FC = () => {
                                         <SortableTrackItem
                                             key={track.id}
                                             track={track}
-                                            userHandle={user?.user_metadata?.handle || user?.email?.split('@')[0]}
+                                            userHandle={userHandle || user?.user_metadata?.handle || 'user'}
                                             editingTrack={editingTrack}
                                             expandedTrackId={expandedTrackId}
                                             setEditingTrack={setEditingTrack}
