@@ -1,9 +1,16 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Music, ArrowRight, Shield, Zap } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { useAuth } from '../contexts/AuthContext';
 
 const LandingPage: React.FC = () => {
+    const { user } = useAuth();
+    const navigate = useNavigate();
+
+    React.useEffect(() => {
+        if (user) navigate('/dashboard');
+    }, [user, navigate]);
     return (
         <div className="min-h-screen flex flex-col items-center justify-center bg-slate-950 text-white relative overflow-hidden">
             {/* Background Gradients */}

@@ -28,14 +28,12 @@ const LoginPage: React.FC = () => {
 
     const handleGoogleLogin = async () => {
         setLoading(true);
-        const params = new URLSearchParams(window.location.search);
-        const returnUrl = params.get('returnUrl') || '/dashboard';
 
         try {
             const { error } = await supabase.auth.signInWithOAuth({
                 provider: 'google',
                 options: {
-                    redirectTo: `${window.location.origin}/login?returnUrl=${encodeURIComponent(returnUrl)}`,
+                    redirectTo: `${window.location.origin}`,
                 },
             });
             if (error) throw error;
