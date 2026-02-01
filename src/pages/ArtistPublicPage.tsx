@@ -1,10 +1,52 @@
+import React, { useEffect, useState } from 'react';
+import { useParams, Link, useSearchParams } from 'react-router-dom';
+import { supabase } from '../lib/supabase';
+import { useAuth } from '../contexts/AuthContext';
 import {
     Play, Loader2, Instagram, Youtube, Music2, Globe, Twitter,
     Facebook, Linkedin, X, ArrowUpRight, Plus, Disc3, Link as LinkIcon,
     ChevronLeft, ChevronDown, User, MessageSquare, CheckCircle2, Lock
 } from 'lucide-react';
+import Navbar from '../components/Navbar';
+import { motion, AnimatePresence } from 'framer-motion';
 
-// ... existing interfaces ...
+// --- Interfaces ---
+interface UserProfile {
+    id: string;
+    handle: string;
+    display_name: string | null;
+    avatar_url: string | null;
+    bio: string | null;
+    collab_status: 'OPEN' | 'CLOSED' | null;
+    collab_types: string[] | null;
+}
+
+interface Feedback {
+    id: string;
+    content: string;
+    created_at: string;
+    reply: string | null;
+    is_unlocked: boolean;
+    track_id: string;
+}
+
+interface Track {
+    id: string;
+    title: string;
+    url: string;
+    platform: 'youtube' | 'soundcloud';
+    created_at: string;
+    order_index?: number;
+    feedbacks?: Feedback[];
+}
+
+interface ArtistLink {
+    id: string;
+    platform: string;
+    title: string;
+    url: string;
+    order_index: number;
+}
 
 // --- Sub-Component: Feedback Section (Dual Mode) ---
 const FeedbackSection = ({
@@ -314,6 +356,52 @@ const ArtistPublicPage: React.FC = () => {
 
 
     // --- Handlers ---
+
+    // --- Handlers for Feedback (Owner Mode) ---
+    const handleReply = async (feedbackId: string, trackId: string, replyContent: string) => {
+        if (!replyContent.trim()) return;
+        try {
+            const { error } = await supabase.from('feedbacks').update({ reply: replyContent }).eq('id', feedbackId);
+            if (error) throw error;
+
+            // Optimistic Update
+            setTracks(prev => prev.map(t => t.id === trackId ? {
+                ...t, feedbacks: t.feedbacks?.map(f => f.id === feedbackId ? { ...f, reply: replyContent } : f)
+            } : t));
+
+            // Also update selectedTrack if it's the one being viewed
+            if (selectedTrack?.id === trackId) {
+                setSelectedTrack(prev => prev ? {
+                    ...prev, feedbacks: prev.feedbacks?.map(f => f.id === feedbackId ? { ...f, reply: replyContent } : f)
+                } : null);
+            }
+        } catch (error) {
+            console.error("Failed to reply", error);
+            alert("Failed to reply");
+        }
+    };
+
+    const handleUnlock = async (feedbackId: string, trackId: string) => {
+        try {
+            const { error } = await supabase.from('feedbacks').update({ is_unlocked: true }).eq('id', feedbackId);
+            if (error) throw error;
+
+            // Optimistic Update
+            setTracks(prev => prev.map(t => t.id === trackId ? {
+                ...t, feedbacks: t.feedbacks?.map(f => f.id === feedbackId ? { ...f, is_unlocked: true } : f)
+            } : t));
+
+            if (selectedTrack?.id === trackId) {
+                setSelectedTrack(prev => prev ? {
+                    ...prev, feedbacks: prev.feedbacks?.map(f => f.id === feedbackId ? { ...f, is_unlocked: true } : f)
+                } : null);
+            }
+        } catch (error) {
+            console.error("Failed to unlock", error);
+            alert("Failed to unlock");
+        }
+    };
+
     const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
         const scrollTop = e.currentTarget.scrollTop;
         const windowHeight = window.innerHeight;
@@ -686,8 +774,13 @@ const ArtistPublicPage: React.FC = () => {
 
                                         <div className="h-px bg-white/10 w-full" />
 
-                                        {/* Feedback Section (Simplified for Overlay) */}
-                                        <FeedbackSection track={selectedTrack} />
+                                        {/* Feedback Section (Dual Mode) */}
+                                        <FeedbackSection
+                                            track={selectedTrack}
+                                            isOwner={isOwner}
+                                            onReply={handleReply}
+                                            onUnlock={handleUnlock}
+                                        />
                                     </div>
                                 )
                             )}
