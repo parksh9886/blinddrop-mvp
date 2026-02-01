@@ -3,7 +3,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
 import Layout from '../components/Layout';
 import { Plus, Loader2, Music, ExternalLink, Trash2, Link as LinkIcon, AlertCircle, MessageSquare, ChevronDown, ChevronUp, CheckCircle2, User, Lock, Pencil, GripVertical } from 'lucide-react';
-import { Link } from 'react-router-dom';
+// import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 
 // DnD Kit
@@ -47,6 +47,7 @@ interface Track {
 // --- Sortable Track Item Component ---
 interface SortableTrackItemProps {
     track: Track;
+    userHandle: string; // Add this prop
     editingTrack: Track | null;
     expandedTrackId: string | null;
     setEditingTrack: (track: Track | null) => void;
@@ -62,6 +63,7 @@ interface SortableTrackItemProps {
 
 const SortableTrackItem = ({
     track,
+    userHandle,
     editingTrack,
     expandedTrackId,
     setEditingTrack,
@@ -167,13 +169,15 @@ const SortableTrackItem = ({
                 </div>
 
                 <div className="flex items-center gap-1 flex-shrink-0 ml-2 mt-1">
-                    <Link
-                        to={`/track/${track.id}`}
+                    <a
+                        href={`/@${userHandle}?track=${track.id}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
                         className="p-2 text-slate-400 hover:text-indigo-400 transition-colors"
                         title="View Public Link"
                     >
                         <ExternalLink className="w-4 h-4" />
-                    </Link>
+                    </a>
 
                     <button
                         onClick={() => setEditingTrack(track)}
@@ -505,7 +509,7 @@ const TracksPage: React.FC = () => {
     };
 
     const handleCopyLink = (trackId: string) => {
-        const url = `${window.location.origin}/track/${trackId}`;
+        const url = `${window.location.origin}/@${user?.user_metadata?.handle || user?.email?.split('@')[0]}?track=${trackId}`;
         navigator.clipboard.writeText(url).then(() => setToast({ message: 'Copied!', type: 'success' }));
     };
 
@@ -562,6 +566,7 @@ const TracksPage: React.FC = () => {
                                         <SortableTrackItem
                                             key={track.id}
                                             track={track}
+                                            userHandle={user?.user_metadata?.handle || user?.email?.split('@')[0]}
                                             editingTrack={editingTrack}
                                             expandedTrackId={expandedTrackId}
                                             setEditingTrack={setEditingTrack}

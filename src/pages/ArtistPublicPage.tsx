@@ -108,13 +108,11 @@ const FeedbackSection = ({
             <div className="space-y-4">
                 {track.feedbacks && track.feedbacks.length > 0 ? (
                     (() => {
-                        // Sort: Replied (Top) -> Waiting (Bottom). Both desc by date.
-                        const replied = track.feedbacks.filter(f => f.reply);
-                        const waiting = track.feedbacks.filter(f => !f.reply);
-                        // For Owner, we might want natural date order or priority order, but let's stick to simple date descending or this bucket sort.
-                        // Actually, maintaining date sort is usually better for 'timeline', but PublicFeedbackPage does Replied -> Waiting.
-                        // Let's replicate PublicFeedbackPage sorting for consistency.
-                        const sortedFeedbacks = [...replied, ...waiting];
+                        // Sort: Visible (Replied OR Unlocked) -> Hidden (Locked). Both desc by date.
+                        const visible = track.feedbacks.filter(f => f.reply || f.is_unlocked);
+                        const hidden = track.feedbacks.filter(f => !f.reply && !f.is_unlocked);
+
+                        const sortedFeedbacks = [...visible, ...hidden];
 
                         return sortedFeedbacks.map((fb, idx) => {
                             let isReadable = false;
@@ -455,7 +453,8 @@ const ArtistPublicPage: React.FC = () => {
     // Copy Track Deep Link to Clipboard
     const copyTrackLink = (trackId: string, e?: React.MouseEvent) => {
         e?.stopPropagation(); // Prevent track click when copying
-        const deepLink = `${window.location.origin}${window.location.pathname}?track=${trackId}`;
+        // Use the new /@handle format
+        const deepLink = `${window.location.origin}/@${profile?.handle}?track=${trackId}`;
         navigator.clipboard.writeText(deepLink).then(() => {
             setShowCopyToast(true);
             setTimeout(() => setShowCopyToast(false), 2500);

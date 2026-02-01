@@ -7,7 +7,7 @@ import DashboardPage from './pages/DashboardPage';
 import TracksPage from './pages/TracksPage';
 import ProfilePage from './pages/ProfilePage';
 import ArtistPublicPage from './pages/ArtistPublicPage';
-import PublicFeedbackPage from './pages/PublicFeedbackPage';
+// import PublicFeedbackPage from './pages/PublicFeedbackPage';
 
 function App() {
   return (
@@ -16,6 +16,7 @@ function App() {
         <Routes>
           {/* Public Profile Route */}
           <Route path="/u/:handle" element={<ArtistPublicPage />} />
+          <Route path="/@:handle" element={<ArtistPublicPage />} />
 
           <Route path="/" element={<LandingPage />} />
           <Route path="/login" element={<LoginPage />} />
@@ -26,7 +27,7 @@ function App() {
           <Route path="/profile" element={<ProfilePage />} />
 
           {/* Other Public Routes */}
-          <Route path="/track/:trackId" element={<PublicFeedbackPage />} />
+          {/* <Route path="/track/:trackId" element={<PublicFeedbackPage />} /> REMOVED */}
 
           {/* Fallback */}
           <Route path="*" element={<Navigate to="/" replace />} />
