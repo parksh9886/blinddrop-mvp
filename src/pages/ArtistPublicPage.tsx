@@ -263,6 +263,62 @@ const ArtistPublicPage: React.FC = () => {
     };
 
 
+    // --- Handlers for Feedback (Owner Mode) ---
+    const handleReply = async (feedbackId: string, trackId: string, replyContent: string) => {
+        if (!replyContent.trim()) return;
+        try {
+            const { error } = await supabase.from('feedbacks').update({ reply: replyContent }).eq('id', feedbackId);
+            if (error) throw error;
+
+            // Optimistic Update
+            setTracks(prev => prev.map(t => t.id === trackId ? {
+                ...t, feedbacks: t.feedbacks?.map(f => f.id === feedbackId ? { ...f, reply: replyContent } : f)
+            } : t));
+
+            // Also update selectedTrack if it's the one being viewed
+            if (selectedTrack?.id === trackId) {
+                setSelectedTrack(prev => prev ? {
+                    ...prev, feedbacks: prev.feedbacks?.map(f => f.id === feedbackId ? { ...f, reply: replyContent } : f)
+                } : null);
+            }
+            showToast("Reply saved!", "success");
+        } catch (error) {
+            console.error("Failed to reply", error);
+            showToast("Failed to reply", "error");
+        }
+    };
+
+    const handleUnlock = async (feedbackId: string, trackId: string) => {
+        try {
+            const { error } = await supabase.from('feedbacks').update({ is_unlocked: true }).eq('id', feedbackId);
+            if (error) throw error;
+
+            // Optimistic Update
+            setTracks(prev => prev.map(t => t.id === trackId ? {
+                ...t, feedbacks: t.feedbacks?.map(f => f.id === feedbackId ? { ...f, is_unlocked: true } : f)
+            } : t));
+
+            if (selectedTrack?.id === trackId) {
+                setSelectedTrack(prev => prev ? {
+                    ...prev, feedbacks: prev.feedbacks?.map(f => f.id === feedbackId ? { ...f, is_unlocked: true } : f)
+                } : null);
+            }
+            showToast("Feedback unlocked!", "success");
+        } catch (error) {
+            console.error("Failed to unlock", error);
+            showToast("Failed to unlock", "error");
+        }
+    };
+
+    const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
+        const scrollTop = e.currentTarget.scrollTop;
+        const windowHeight = window.innerHeight;
+        const spacerHeight = windowHeight * 0.6;
+        let progress = scrollTop / spacerHeight;
+        if (progress > 1) progress = 1;
+        setScrollProgress(progress);
+    };
+
     // Helper: Icon Map
     const getIconForPlatform = (platform: string, className = "w-5 h-5") => {
         switch (platform.toLowerCase()) {
