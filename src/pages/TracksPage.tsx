@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
 import Layout from '../components/Layout';
-import { Plus, Loader2, Music, ExternalLink, Trash2, Link as LinkIcon, AlertCircle, MessageSquare, ChevronDown, ChevronUp, CheckCircle2, User, Lock, Pencil, GripVertical } from 'lucide-react';
+import { Plus, Loader2, Music, ExternalLink, Trash2, Link as LinkIcon, AlertCircle, MessageSquare, ChevronDown, ChevronUp, Pencil, GripVertical } from 'lucide-react';
 // import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -24,6 +24,7 @@ import {
     useSortable
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
+import { FeedbackList } from '../components/FeedbackList';
 
 interface Feedback {
     id: string;
@@ -227,79 +228,13 @@ const SortableTrackItem = ({
                         className="overflow-hidden"
                     >
                         <div className="pt-3 space-y-2 ml-9">
-                            {track.feedbacks && track.feedbacks.length > 0 ? (
-                                (() => {
-                                    const sortedByDate = [...track.feedbacks].sort((a, b) =>
-                                        new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-                                    );
-
-                                    const processedFeedbacks = sortedByDate.map((fb, index) => ({
-                                        ...fb,
-                                        isReadable: index < 3 || fb.is_unlocked
-                                    }));
-
-                                    return processedFeedbacks.map((fb) => (
-                                        <div key={fb.id} className={`rounded-xl p-3 border transition-all ${fb.isReadable ? 'bg-slate-950 border-slate-800' : 'bg-slate-900/50 border-slate-800/50 relative overflow-hidden'}`}>
-                                            <div className="flex items-center gap-2 mb-1">
-                                                <div className={`w-5 h-5 rounded-full flex items-center justify-center text-[8px] font-bold text-white ${fb.isReadable ? 'bg-gradient-to-br from-indigo-500 to-purple-500' : 'bg-slate-800'}`}>
-                                                    <User className="w-2.5 h-2.5" />
-                                                </div>
-                                                <span className={`text-xs font-bold ${fb.isReadable ? 'text-slate-400' : 'text-slate-500'}`}>Anonymous</span>
-                                                <span className={`text-[10px] ml-auto ${fb.isReadable ? 'text-slate-600' : 'text-slate-700'}`}>{new Date(fb.created_at).toLocaleDateString()}</span>
-                                            </div>
-
-                                            <p className={`text-sm leading-relaxed mb-2 transition-all ${fb.isReadable ? 'text-slate-300' : 'text-slate-500 blur-sm select-none pointer-events-none'}`}>
-                                                {fb.content}
-                                            </p>
-
-                                            {fb.isReadable ? (
-                                                fb.reply ? (
-                                                    <div className="bg-indigo-500/10 border border-indigo-500/20 rounded-lg p-2 ml-3 border-l-2 border-l-indigo-500">
-                                                        <div className="text-[10px] font-bold text-indigo-400 mb-0.5 flex items-center gap-1">
-                                                            <CheckCircle2 className="w-2.5 h-2.5" /> Reply
-                                                        </div>
-                                                        <p className="text-xs text-indigo-200">{fb.reply}</p>
-                                                    </div>
-                                                ) : (
-                                                    <form
-                                                        onSubmit={(e) => {
-                                                            e.preventDefault();
-                                                            const form = e.target as HTMLFormElement;
-                                                            const input = form.elements.namedItem('reply') as HTMLInputElement;
-                                                            handleReply(fb.id, track.id, input.value);
-                                                        }}
-                                                        className="flex gap-2"
-                                                    >
-                                                        <input
-                                                            name="reply"
-                                                            type="text"
-                                                            placeholder="Reply..."
-                                                            className="flex-1 bg-slate-900 border border-slate-800 rounded-lg px-2 py-1.5 text-xs text-white focus:outline-none focus:border-indigo-500 transition-colors"
-                                                            required
-                                                        />
-                                                        <button type="submit" className="bg-slate-800 hover:bg-indigo-600 text-white px-3 py-1.5 rounded-lg text-xs transition-colors">
-                                                            Reply
-                                                        </button>
-                                                    </form>
-                                                )
-                                            ) : (
-                                                <div className="absolute inset-0 flex items-center justify-center z-10">
-                                                    <button
-                                                        onClick={() => handleUnlock(fb.id, track.id)}
-                                                        className="flex items-center gap-1 bg-slate-800/90 hover:bg-indigo-600/90 backdrop-blur-sm text-white px-3 py-1.5 rounded-lg text-xs font-bold transition-all border border-slate-700 hover:border-indigo-500"
-                                                    >
-                                                        <Lock className="w-3 h-3" /> Unlock
-                                                    </button>
-                                                </div>
-                                            )}
-                                        </div>
-                                    ));
-                                })()
-                            ) : (
-                                <div className="text-center py-4 text-slate-500 text-xs bg-slate-950/50 rounded-xl border border-dashed border-slate-800">
-                                    No feedback yet.
-                                </div>
-                            )}
+                            <FeedbackList
+                                feedbacks={track.feedbacks}
+                                isOwner={true}
+                                onReply={handleReply}
+                                onUnlock={handleUnlock}
+                                trackId={track.id}
+                            />
                         </div>
                     </motion.div>
                 )}
