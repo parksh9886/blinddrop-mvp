@@ -11,14 +11,13 @@ import {
 import ImageCropModal from '../components/ImageCropModal';
 import { useToast } from '../contexts/ToastContext';
 import {
-import {
-        DndContext,
-        closestCenter,
-        KeyboardSensor,
-        PointerSensor,
-        useSensor,
-        useSensors,
-    } from '@dnd-kit/core';
+    DndContext,
+    closestCenter,
+    KeyboardSensor,
+    PointerSensor,
+    useSensor,
+    useSensors,
+} from '@dnd-kit/core';
 import type { DragEndEvent } from '@dnd-kit/core';
 import {
     arrayMove,
