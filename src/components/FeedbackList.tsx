@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { User, CheckCircle2, Lock } from 'lucide-react';
-import { useFeedbackLogic, Feedback } from '../hooks/useFeedbackLogic';
+import { useFeedbackLogic } from '../hooks/useFeedbackLogic';
+import type { Feedback } from '../hooks/useFeedbackLogic';
 
 interface FeedbackListProps {
     feedbacks: Feedback[] | undefined;
@@ -113,35 +114,6 @@ export const FeedbackList: React.FC<FeedbackListProps> = ({
     trackId
 }) => {
     const { displayFeedbacks } = useFeedbackLogic(feedbacks, isOwner);
-    const [comment, setComment] = useState('');
-    const [isSubmitting, setIsSubmitting] = useState(false);
-
-    // Placeholder submit handler (Actual submission logic should be passed down or handled here if we want to move API calls)
-    // For now, let's keep the API call in the parent or assume onReply handles it? 
-    // Wait, the "New Feedback" form is usually separate. 
-    // In ArtistPublicPage, there was a form to add feedback.
-    // In TracksPage, there isn't usually a form to add feedback (User creates tracks, doesn't feedback themselves usually, but maybe for testing).
-
-    // Let's assume this component JUST lists them, but for ArtistPublicPage we need the input form.
-    // To make it truly reusable, we might want to optionally include the input form or just let the parent handle it.
-    // Given the prompt "FeedbackList (or FeedbackSection)", it usually implies the whole section.
-    // Let's include the "Add Feedback" logic BUT only if it's NOT the owner (Visitors write feedback).
-    // Or if we want to allow the owner to write feedback to themselves for testing?
-
-    // Actually, `onReply` is for replying to existing feedback. 
-    // We need an `onAddFeedback` prop if we want to include the input form.
-    // I check the ArtistPublicPage code: it has `<FeedbackSection>` which includes the form.
-    // TracksPage doesn't have the form.
-
-    // Let's make the input form optional or part of the parent. 
-    // However, to fully replace `FeedbackSection` in `ArtistPublicPage`, we should probably handle it or let parent pass a "header" or "footer".
-    // Let's stick to the LIST for now, and let `ArtistPublicPage` keep the form above the list, OR add `onAddFeedback` prop.
-
-    // Decision: Keep it simple. Just the list. The input form can be outside in `ArtistPublicPage`.
-    // Wait, the prompt said "UI 컴포넌트 분리 (FeedbackList.tsx)... 역할: 피드백 데이터 배열을 받아 정렬 로직을 처리하고, 디자인(UI)을 일관되게 렌더링함."
-    // It doesn't explicitly say "Input Form". But `ArtistPublicPage` has it. 
-    // I will exclude the "New Feedback Input" from this list component to keep it focused on *displaying* the list.
-    // `ArtistPublicPage` can render the input form above this list.
 
     return (
         <div className="space-y-4">
