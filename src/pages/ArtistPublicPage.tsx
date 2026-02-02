@@ -120,7 +120,7 @@ const FeedbackSection = ({
 
 const ArtistPublicPage: React.FC = () => {
     const { handle } = useParams<{ handle: string }>();
-    const [searchParams] = useSearchParams();
+    const [searchParams, setSearchParams] = useSearchParams();
     const { user } = useAuth();
 
     // Data State
@@ -134,7 +134,6 @@ const ArtistPublicPage: React.FC = () => {
     const [isOverlayOpen, setIsOverlayOpen] = useState(false);
     const [overlayView, setOverlayView] = useState<'list' | 'detail'>('list');
     const [selectedTrack, setSelectedTrack] = useState<Track | null>(null);
-    const [isDeepLinkEntry, setIsDeepLinkEntry] = useState(false); // Track if user entered via deep link
     const { showToast } = useToast();
 
     // Scroll Progress for Blur
@@ -211,148 +210,46 @@ const ArtistPublicPage: React.FC = () => {
         fetchData();
     }, [handle]);
 
-    // --- Deep Linking Logic ---
+    // --- Persistence & Deep Linking Logic ---
     useEffect(() => {
         const trackId = searchParams.get('track');
+        const view = searchParams.get('view');
+
         if (trackId && tracks.length > 0) {
+            // Track Detail View
             const track = tracks.find(t => t.id === trackId);
             if (track) {
                 setSelectedTrack(track);
                 setOverlayView('detail');
                 setIsOverlayOpen(true);
-                setIsDeepLinkEntry(true); // Mark as deep link entry
-                // Push initial state for deep link
-                history.replaceState({ overlay: 'detail', trackId: track.id }, '');
             }
+        } else if (view === 'discography') {
+            // Discography List View
+            setOverlayView('list');
+            setIsOverlayOpen(true);
+            setSelectedTrack(null);
+        } else {
+            // Default Profile View
+            setIsOverlayOpen(false);
+            setSelectedTrack(null);
+            setOverlayView('list');
         }
     }, [searchParams, tracks]);
 
-    // --- Browser Back Button Handler ---
-    useEffect(() => {
-        const handlePopState = (event: PopStateEvent) => {
-            const state = event.state;
-
-            if (!state || !state.overlay) {
-                // No overlay state - close everything
-                setIsOverlayOpen(false);
-                setSelectedTrack(null);
-                setOverlayView('list');
-            } else if (state.overlay === 'list') {
-                // Go back to list view
-                setOverlayView('list');
-                setSelectedTrack(null);
-            } else if (state.overlay === 'detail' && state.trackId) {
-                // Restore detail view (shouldn't normally happen)
-                const track = tracks.find(t => t.id === state.trackId);
-                if (track) {
-                    setSelectedTrack(track);
-                    setOverlayView('detail');
-                }
-            }
-        };
-
-        window.addEventListener('popstate', handlePopState);
-        return () => window.removeEventListener('popstate', handlePopState);
-    }, [tracks]);
-
-
-    // --- Handlers ---
-
-    // --- Handlers for Feedback (Owner Mode) ---
-    const handleReply = async (feedbackId: string, trackId: string, replyContent: string) => {
-        if (!replyContent.trim()) return;
-        try {
-            const { error } = await supabase.from('feedbacks').update({ reply: replyContent }).eq('id', feedbackId);
-            if (error) throw error;
-
-            // Optimistic Update
-            setTracks(prev => prev.map(t => t.id === trackId ? {
-                ...t, feedbacks: t.feedbacks?.map(f => f.id === feedbackId ? { ...f, reply: replyContent } : f)
-            } : t));
-
-            // Also update selectedTrack if it's the one being viewed
-            if (selectedTrack?.id === trackId) {
-                setSelectedTrack(prev => prev ? {
-                    ...prev, feedbacks: prev.feedbacks?.map(f => f.id === feedbackId ? { ...f, reply: replyContent } : f)
-                } : null);
-            }
-            showToast("Reply saved!", "success");
-        } catch (error) {
-            console.error("Failed to reply", error);
-            showToast("Failed to reply", "error");
-        }
-    };
-
-    const handleUnlock = async (feedbackId: string, trackId: string) => {
-        try {
-            const { error } = await supabase.from('feedbacks').update({ is_unlocked: true }).eq('id', feedbackId);
-            if (error) throw error;
-
-            // Optimistic Update
-            setTracks(prev => prev.map(t => t.id === trackId ? {
-                ...t, feedbacks: t.feedbacks?.map(f => f.id === feedbackId ? { ...f, is_unlocked: true } : f)
-            } : t));
-
-            if (selectedTrack?.id === trackId) {
-                setSelectedTrack(prev => prev ? {
-                    ...prev, feedbacks: prev.feedbacks?.map(f => f.id === feedbackId ? { ...f, is_unlocked: true } : f)
-                } : null);
-            }
-            showToast("Feedback unlocked!", "success");
-        } catch (error) {
-            console.error("Failed to unlock", error);
-            showToast("Failed to unlock", "error");
-        }
-    };
-
-    const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
-        const scrollTop = e.currentTarget.scrollTop;
-        const windowHeight = window.innerHeight;
-        const spacerHeight = windowHeight * 0.6;
-        let progress = scrollTop / spacerHeight;
-        if (progress > 1) progress = 1;
-        setScrollProgress(progress);
-    };
-
     const openDiscography = () => {
-        setOverlayView('list');
-        setIsOverlayOpen(true);
-        history.pushState({ overlay: 'list' }, '');
+        setSearchParams({ view: 'discography' });
     };
 
     const handleTrackClick = (track: Track) => {
-        setSelectedTrack(track);
-        setOverlayView('detail');
-        history.pushState({ overlay: 'detail', trackId: track.id }, '');
+        setSearchParams({ track: track.id });
     };
 
     const handleBackToList = () => {
-        setOverlayView('list');
-        setSelectedTrack(null);
-
-        // If entered via deep link, use replaceState to clear track param but keep isDeepLinkEntry true
-        if (isDeepLinkEntry) {
-            const cleanUrl = `${window.location.origin}${window.location.pathname}`;
-            history.replaceState({ overlay: 'list' }, '', cleanUrl);
-            // Don't reset isDeepLinkEntry here - keep it true until overlay is fully closed
-        } else {
-            history.back();
-        }
+        setSearchParams({ view: 'discography' });
     };
 
     const handleCloseOverlay = () => {
-        setIsOverlayOpen(false);
-        setSelectedTrack(null);
-        setOverlayView('list');
-
-        // If entered via deep link, just clear the overlay and URL param without history.back()
-        if (isDeepLinkEntry) {
-            const cleanUrl = `${window.location.origin}${window.location.pathname}`;
-            history.replaceState(null, '', cleanUrl);
-            setIsDeepLinkEntry(false);
-        } else {
-            history.back();
-        }
+        setSearchParams({});
     };
 
     // Copy Track Deep Link to Clipboard
@@ -684,13 +581,30 @@ const ArtistPublicPage: React.FC = () => {
                                             onReply={handleReply}
                                             onUnlock={handleUnlock}
                                             onSubmitFeedback={async (trackId, content) => {
-                                                const { error } = await supabase.from('feedbacks').insert({
+                                                const { data, error } = await supabase.from('feedbacks').insert({
                                                     track_id: trackId,
                                                     content: content
-                                                });
+                                                }).select().single();
+
                                                 if (error) throw error;
+
+                                                const newFeedback = { ...data, isAccessible: false }; // Assume strictly new feedback is not accessible to public immediately if logic dictates, though for 'sent' it might be just hidden or waiting for reply. But typically list shows it.
+                                                // Actually Feedback type in this component usually has is_unlocked etc.
+                                                // Let's ensure data shape matches.
+
+                                                // Update Tracks State
+                                                setTracks(prev => prev.map(t => t.id === trackId ? {
+                                                    ...t, feedbacks: [newFeedback, ...(t.feedbacks || [])]
+                                                } : t));
+
+                                                // Update Selected Track State
+                                                if (selectedTrack?.id === trackId) {
+                                                    setSelectedTrack(prev => prev ? {
+                                                        ...prev, feedbacks: [newFeedback, ...(prev.feedbacks || [])]
+                                                    } : null);
+                                                }
+
                                                 showToast("Feedback sent!", "success");
-                                                // Optimistic update could be added here similar to reply/unlock
                                             }}
                                         />
                                     </div>
