@@ -373,6 +373,12 @@ const TracksPage: React.FC = () => {
         }
 
         try {
+            // Find the current minimum order_index to place the new track at the top
+            const minIndex = tracks.length > 0
+                ? Math.min(...tracks.map(t => t.order_index || 0))
+                : 0;
+            const newOrderIndex = minIndex - 1;
+
             const { data, error } = await supabase
                 .from('tracks')
                 .insert({
@@ -380,7 +386,7 @@ const TracksPage: React.FC = () => {
                     url: newTrackUrl,
                     platform: platform,
                     title: newTrackTitle || 'Untitled Track',
-                    order_index: tracks.length // Add to end
+                    order_index: newOrderIndex // Add to top (smallest index)
                 })
                 .select()
                 .single();
