@@ -9,16 +9,16 @@ import {
     Facebook, Linkedin, Globe, Link as LinkIcon, Info
 } from 'lucide-react';
 import ImageCropModal from '../components/ImageCropModal';
-
-// DnD Kit imports
+import { useToast } from '../contexts/ToastContext';
 import {
-    DndContext,
-    closestCenter,
-    KeyboardSensor,
-    PointerSensor,
-    useSensor,
-    useSensors,
-} from '@dnd-kit/core';
+import {
+        DndContext,
+        closestCenter,
+        KeyboardSensor,
+        PointerSensor,
+        useSensor,
+        useSensors,
+    } from '@dnd-kit/core';
 import type { DragEndEvent } from '@dnd-kit/core';
 import {
     arrayMove,
@@ -135,6 +135,7 @@ const SortableLinkItem = ({ link, handleDeleteLink }: SortableLinkItemProps) => 
 const ProfilePage: React.FC = () => {
     const { user } = useAuth();
     const [searchParams] = useSearchParams();
+    const { showToast } = useToast();
     const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState<'profile' | 'links'>('profile');
 
@@ -377,8 +378,21 @@ const ProfilePage: React.FC = () => {
             setCurrentHandle(newHandle);
             setHandleStatus('idle');
             setHandleMsg('');
-            alert('Handle updated successfully.');
-            window.location.reload();
+            showToast('Handle updated successfully.', 'success');
+            // window.location.reload(); // Reload might clear toast, maybe remove? Or keep?
+            // If I reload, toast won't show.
+            // Let's keep reload for now as handle change might require full re-fetch/context update if not handled reactively.
+            // Actually, if we use ToastContext, it's inside App, so reload will kill it.
+            // But updating handle changes URL potentially?
+            // "Changing your handle will break any existing links..."
+            // If I reload, the toast is lost.
+            // Better to NOT reload if possible, or accept toast is lost.
+            // Given the requirement "Refactoring Toast Notifications", let's assuming we want to SEE the notification.
+            // I'll show toast and DELAY reload, or just not reload if the app handles it.
+            // The code sets currentHandle(newHandle).
+            // Let's remove reload for better UX if the state updates effectively.
+            // But if there are other side effects... let's stick to simple replacement first but comment out reload or use setTimeout.
+            setTimeout(() => window.location.reload(), 2000);
         } catch (err: any) {
             console.error('Handle update error:', err);
             setHandleStatus('taken'); // Fallback

@@ -2,7 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
 import Layout from '../components/Layout';
-import { Loader2, Link as LinkIcon, Music, Ghost, Share2, PlusCircle, ArrowRight } from 'lucide-react';
+import { useToast } from '../contexts/ToastContext';
+import { Loader2, Music, Share2, PlusCircle, ArrowRight, Ghost } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 const DashboardPage: React.FC = () => {
@@ -14,15 +15,7 @@ const DashboardPage: React.FC = () => {
         profileVisits: 0,
         linkClicks: 0
     });
-    const [toast, setToast] = useState<{ message: string, type: 'success' | 'error' } | null>(null);
-
-    // Auto-dismiss toast
-    useEffect(() => {
-        if (toast) {
-            const timer = setTimeout(() => setToast(null), 3000);
-            return () => clearTimeout(timer);
-        }
-    }, [toast]);
+    const { showToast } = useToast();
 
     useEffect(() => {
         if (!user) return;
@@ -65,9 +58,9 @@ const DashboardPage: React.FC = () => {
         if (!handle) return;
         const url = `${window.location.origin}/u/${handle}`;
         navigator.clipboard.writeText(url).then(() => {
-            setToast({ message: 'Profile link copied to clipboard!', type: 'success' });
+            showToast('Profile link copied to clipboard!', 'success');
         }).catch(() => {
-            setToast({ message: 'Failed to copy link.', type: 'error' });
+            showToast('Failed to copy link.', 'error');
         });
     };
 
@@ -81,13 +74,7 @@ const DashboardPage: React.FC = () => {
 
     return (
         <Layout>
-            {/* Toast Notification */}
-            {toast && (
-                <div className={`fixed bottom-6 right-6 px-6 py-3 rounded-xl shadow-2xl transition-all z-50 flex items-center gap-2 ${toast.type === 'success' ? 'bg-indigo-600 text-white' : 'bg-red-600 text-white'}`}>
-                    {toast.type === 'success' ? <LinkIcon className="w-4 h-4" /> : <Ghost className="w-4 h-4" />}
-                    {toast.message}
-                </div>
-            )}
+
 
             <div className="max-w-5xl mx-auto space-y-12">
 

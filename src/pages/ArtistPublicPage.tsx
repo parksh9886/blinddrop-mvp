@@ -7,6 +7,7 @@ import {
     Facebook, Linkedin, X, ArrowUpRight, Plus, Disc3, Link as LinkIcon,
     ChevronLeft, ChevronDown, MessageSquare
 } from 'lucide-react';
+import { useToast } from '../contexts/ToastContext';
 import Navbar from '../components/Navbar';
 import { FeedbackList } from '../components/FeedbackList';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -134,9 +135,9 @@ const ArtistPublicPage: React.FC = () => {
     const [overlayView, setOverlayView] = useState<'list' | 'detail'>('list');
     const [selectedTrack, setSelectedTrack] = useState<Track | null>(null);
     const [isDeepLinkEntry, setIsDeepLinkEntry] = useState(false); // Track if user entered via deep link
+    const { showToast } = useToast();
 
-    // Toast State for Copy Feedback
-    const [showCopyToast, setShowCopyToast] = useState(false);
+    // Scroll Progress for Blur
 
     // Scroll Progress for Blur
     const [scrollProgress, setScrollProgress] = useState(0);
@@ -277,7 +278,7 @@ const ArtistPublicPage: React.FC = () => {
             }
         } catch (error) {
             console.error("Failed to reply", error);
-            alert("Failed to reply");
+            showToast("Failed to reply", "error");
         }
     };
 
@@ -298,7 +299,7 @@ const ArtistPublicPage: React.FC = () => {
             }
         } catch (error) {
             console.error("Failed to unlock", error);
-            alert("Failed to unlock");
+            showToast("Failed to unlock", "error");
         }
     };
 
@@ -358,8 +359,7 @@ const ArtistPublicPage: React.FC = () => {
         // Use standard /u/:handle format to ensure reliability
         const deepLink = `${window.location.origin}/u/${profile?.handle}?track=${trackId}`;
         navigator.clipboard.writeText(deepLink).then(() => {
-            setShowCopyToast(true);
-            setTimeout(() => setShowCopyToast(false), 2500);
+            showToast("Link copied to clipboard!", "success");
         });
     };
 
@@ -687,7 +687,7 @@ const ArtistPublicPage: React.FC = () => {
                                                     content: content
                                                 });
                                                 if (error) throw error;
-                                                alert("Feedback sent!");
+                                                showToast("Feedback sent!", "success");
                                                 // Optimistic update could be added here similar to reply/unlock
                                             }}
                                         />
@@ -699,26 +699,8 @@ const ArtistPublicPage: React.FC = () => {
                 )}
             </AnimatePresence>
 
-            {/* Copy Toast Notification */}
-            <AnimatePresence>
-                {showCopyToast && (
-                    <motion.div
-                        initial={{ opacity: 0, y: 50, scale: 0.9 }}
-                        animate={{ opacity: 1, y: 0, scale: 1 }}
-                        exit={{ opacity: 0, y: 20, scale: 0.95 }}
-                        transition={{ type: 'spring', damping: 20, stiffness: 300 }}
-                        className="fixed bottom-24 left-1/2 -translate-x-1/2 z-[200] flex items-center gap-3 px-5 py-3 bg-slate-900/90 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl"
-                    >
-                        <div className="w-6 h-6 aspect-square rounded-full bg-green-500/20 flex items-center justify-center flex-shrink-0">
-                            <svg className="w-3.5 h-3.5 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                            </svg>
-                        </div>
-                        <p className="text-white text-sm font-medium whitespace-nowrap">Link copied! Share this track.</p>
-                    </motion.div>
-                )}
-            </AnimatePresence>
-        </div>
+
+        </div >
     );
 };
 

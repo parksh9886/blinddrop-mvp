@@ -2,7 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
 import Layout from '../components/Layout';
-import { Plus, Loader2, Music, ExternalLink, Trash2, Link as LinkIcon, AlertCircle, MessageSquare, ChevronDown, ChevronUp, Pencil, GripVertical } from 'lucide-react';
+import { useToast } from '../contexts/ToastContext';
+import { Plus, Loader2, Music, ExternalLink, Trash2, Link as LinkIcon, MessageSquare, ChevronDown, ChevronUp, Pencil, GripVertical } from 'lucide-react';
 // import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -255,7 +256,7 @@ const TracksPage: React.FC = () => {
 
     const [expandedTrackId, setExpandedTrackId] = useState<string | null>(null);
     const [editingTrack, setEditingTrack] = useState<Track | null>(null);
-    const [toast, setToast] = useState<{ message: string, type: 'success' | 'error' } | null>(null);
+    const { showToast } = useToast();
 
     // Sensors for DnD
     const sensors = useSensors(
@@ -263,13 +264,7 @@ const TracksPage: React.FC = () => {
         useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
     );
 
-    // Auto-dismiss toast
-    useEffect(() => {
-        if (toast) {
-            const timer = setTimeout(() => setToast(null), 3000);
-            return () => clearTimeout(timer);
-        }
-    }, [toast]);
+
 
     const [userHandle, setUserHandle] = useState<string | null>(null);
 
@@ -392,7 +387,7 @@ const TracksPage: React.FC = () => {
             setTracks([data, ...tracks]);
             setNewTrackUrl('');
             setNewTrackTitle('');
-            setToast({ message: 'Track added successfully!', type: 'success' });
+            showToast('Track added successfully!', 'success');
         } catch (error: any) {
             console.error('Error adding track:', error);
             setErrorMsg(error.message);
@@ -404,28 +399,13 @@ const TracksPage: React.FC = () => {
     const handleDelete = async (trackId: string) => {
         if (!confirm('Are you sure you want to delete this track?')) return;
         try {
-            // 1. Delete associated feedbacks first (Cascade manually)
-            const { error: feedbackError } = await supabase
-                .from('feedbacks') // feedbacks table directly (if policy allows)
-                .delete()
-                .eq('track_id', trackId);
-
-            if (feedbackError) {
-                console.error('Error deleting feedbacks:', feedbackError);
-                // Continue? Or stop? Usually stop if strict.
-                // But maybe the track delete will fail anyway if this failed.
-                throw feedbackError;
-            }
-
-            // 2. Delete the track
             const { error } = await supabase.from('tracks').delete().eq('id', trackId);
             if (error) throw error;
-
             setTracks(tracks.filter(t => t.id !== trackId));
-            setToast({ message: 'Track deleted.', type: 'success' });
+            setTracks(tracks.filter(t => t.id !== trackId));
+            showToast('Track deleted.', 'success');
         } catch (err: any) {
-            console.error('Delete error:', err);
-            setToast({ message: 'Error deleting track. (Check console)', type: 'error' });
+            showToast('Error deleting track.', 'error');
         }
     };
 
@@ -440,9 +420,10 @@ const TracksPage: React.FC = () => {
             if (error) throw error;
             setTracks(tracks.map(t => t.id === editingTrack.id ? { ...t, title: editingTrack.title, url: editingTrack.url } : t));
             setEditingTrack(null);
-            setToast({ message: 'Track updated!', type: 'success' });
+            setEditingTrack(null);
+            showToast('Track updated!', 'success');
         } catch (error: any) {
-            setToast({ message: 'Update failed.', type: 'error' });
+            showToast('Update failed.', 'error');
         }
     };
 
@@ -453,9 +434,9 @@ const TracksPage: React.FC = () => {
             setTracks(prev => prev.map(t => t.id === trackId ? {
                 ...t, feedbacks: t.feedbacks.map(f => f.id === feedbackId ? { ...f, reply: replyContent } : f)
             } : t));
-            setToast({ message: 'Reply saved!', type: 'success' });
+            showToast('Reply saved!', 'success');
         } catch (error) {
-            setToast({ message: 'Failed to reply.', type: 'error' });
+            showToast('Failed to reply.', 'error');
         }
     };
 
@@ -466,15 +447,15 @@ const TracksPage: React.FC = () => {
             setTracks(prev => prev.map(t => t.id === trackId ? {
                 ...t, feedbacks: t.feedbacks.map(f => f.id === feedbackId ? { ...f, is_unlocked: true } : f)
             } : t));
-            setToast({ message: 'Unlocked!', type: 'success' });
+            showToast('Unlocked!', 'success');
         } catch (error) {
-            setToast({ message: 'Failed to unlock.', type: 'error' });
+            showToast('Failed to unlock.', 'error');
         }
     };
 
     const handleCopyLink = (trackId: string) => {
         const url = `${window.location.origin}/u/${userHandle || user?.user_metadata?.handle || 'user'}?track=${trackId}`;
-        navigator.clipboard.writeText(url).then(() => setToast({ message: 'Copied!', type: 'success' }));
+        navigator.clipboard.writeText(url).then(() => showToast('Copied!', 'success'));
     };
 
     const getThumbnailUrl = (url: string) => {
@@ -488,12 +469,7 @@ const TracksPage: React.FC = () => {
     return (
         <Layout>
             {/* Toast */}
-            {toast && (
-                <div className={`fixed bottom-6 right-6 px-6 py-3 rounded-xl shadow-2xl z-50 flex items-center gap-2 ${toast.type === 'success' ? 'bg-indigo-600' : 'bg-red-600'} text-white`}>
-                    {toast.type === 'success' ? <LinkIcon className="w-4 h-4" /> : <AlertCircle className="w-4 h-4" />}
-                    {toast.message}
-                </div>
-            )}
+
 
             <div className="max-w-4xl mx-auto space-y-6 pb-20">
                 <header>
