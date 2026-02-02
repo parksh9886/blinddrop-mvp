@@ -276,6 +276,7 @@ const ArtistPublicPage: React.FC = () => {
                     ...prev, feedbacks: prev.feedbacks?.map(f => f.id === feedbackId ? { ...f, reply: replyContent } : f)
                 } : null);
             }
+            showToast("Reply saved!", "success");
         } catch (error) {
             console.error("Failed to reply", error);
             showToast("Failed to reply", "error");
@@ -297,6 +298,7 @@ const ArtistPublicPage: React.FC = () => {
                     ...prev, feedbacks: prev.feedbacks?.map(f => f.id === feedbackId ? { ...f, is_unlocked: true } : f)
                 } : null);
             }
+            showToast("Feedback unlocked!", "success");
         } catch (error) {
             console.error("Failed to unlock", error);
             showToast("Failed to unlock", "error");

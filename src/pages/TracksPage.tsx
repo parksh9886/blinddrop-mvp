@@ -3,6 +3,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
 import Layout from '../components/Layout';
 import { useToast } from '../contexts/ToastContext';
+import ConfirmModal from '../components/ConfirmModal';
 import { Plus, Loader2, Music, ExternalLink, Trash2, Link as LinkIcon, MessageSquare, ChevronDown, ChevronUp, Pencil, GripVertical } from 'lucide-react';
 // import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -256,6 +257,7 @@ const TracksPage: React.FC = () => {
 
     const [expandedTrackId, setExpandedTrackId] = useState<string | null>(null);
     const [editingTrack, setEditingTrack] = useState<Track | null>(null);
+    const [trackToDelete, setTrackToDelete] = useState<string | null>(null);
     const { showToast } = useToast();
 
     // Sensors for DnD
@@ -396,16 +398,21 @@ const TracksPage: React.FC = () => {
         }
     };
 
-    const handleDelete = async (trackId: string) => {
-        if (!confirm('Are you sure you want to delete this track?')) return;
+    const handleDelete = (trackId: string) => {
+        setTrackToDelete(trackId);
+    };
+
+    const confirmDeleteTrack = async () => {
+        if (!trackToDelete) return;
         try {
-            const { error } = await supabase.from('tracks').delete().eq('id', trackId);
+            const { error } = await supabase.from('tracks').delete().eq('id', trackToDelete);
             if (error) throw error;
-            setTracks(tracks.filter(t => t.id !== trackId));
-            setTracks(tracks.filter(t => t.id !== trackId));
+            setTracks(tracks.filter(t => t.id !== trackToDelete));
             showToast('Track deleted.', 'success');
         } catch (err: any) {
             showToast('Error deleting track.', 'error');
+        } finally {
+            setTrackToDelete(null);
         }
     };
 
@@ -468,6 +475,15 @@ const TracksPage: React.FC = () => {
 
     return (
         <Layout>
+            <ConfirmModal
+                isOpen={!!trackToDelete}
+                title="Delete Track"
+                message="Are you sure you want to delete this track? This action cannot be undone."
+                confirmLabel="Delete"
+                isDestructive
+                onConfirm={confirmDeleteTrack}
+                onCancel={() => setTrackToDelete(null)}
+            />
             {/* Toast */}
 
 
