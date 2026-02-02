@@ -404,12 +404,28 @@ const TracksPage: React.FC = () => {
     const handleDelete = async (trackId: string) => {
         if (!confirm('Are you sure you want to delete this track?')) return;
         try {
+            // 1. Delete associated feedbacks first (Cascade manually)
+            const { error: feedbackError } = await supabase
+                .from('feedbacks') // feedbacks table directly (if policy allows)
+                .delete()
+                .eq('track_id', trackId);
+
+            if (feedbackError) {
+                console.error('Error deleting feedbacks:', feedbackError);
+                // Continue? Or stop? Usually stop if strict.
+                // But maybe the track delete will fail anyway if this failed.
+                throw feedbackError;
+            }
+
+            // 2. Delete the track
             const { error } = await supabase.from('tracks').delete().eq('id', trackId);
             if (error) throw error;
+
             setTracks(tracks.filter(t => t.id !== trackId));
             setToast({ message: 'Track deleted.', type: 'success' });
         } catch (err: any) {
-            setToast({ message: 'Error deleting track.', type: 'error' });
+            console.error('Delete error:', err);
+            setToast({ message: 'Error deleting track. (Check console)', type: 'error' });
         }
     };
 
