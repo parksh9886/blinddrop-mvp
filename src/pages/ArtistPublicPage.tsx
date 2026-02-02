@@ -69,17 +69,27 @@ const FeedbackSection = ({
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!comment.trim() || !onSubmitFeedback) return;
-        setIsSubmitting(true);
-        try {
-            await onSubmitFeedback(track.id, comment);
-            setComment('');
-        } catch (err) {
-            // Error handled by parent or ignored
-        } finally {
-            setIsSubmitting(false);
+        if (!comment.trim()) {
+            // Maybe show a toast here if we want to be explicit, but usually disabled button is better.
+            // But the button isn't disabled based on empty input currently (only isSubmitting).
+            // Let's add a toast to be helpful.
+            // We need access to showToast here. Passing it as prop or using hook.
+            // FeedbackSection is inside the component, so we can pass it or use hook if we move it out.
+            // It's defined in the same file but outside the main component. Need to pass showToast or useToast.
+            // Let's use useToast in FeedbackSection.
+            return;
         }
+        if (!onSubmitFeedback) return;
+
+        setIsSubmitting(true);
+        // ...
     };
+    // Wait, to use useToast in FeedbackSection, I need to add:
+    // const { showToast } = useToast(); inside FeedbackSection.
+
+    // And remove 'required' from input.
+
+    // Let's do it in two steps. First, modify FeedbackSection to use useToast.
 
     return (
         <div className="space-y-6">
@@ -276,6 +286,7 @@ const ArtistPublicPage: React.FC = () => {
                     ...prev, feedbacks: prev.feedbacks?.map(f => f.id === feedbackId ? { ...f, reply: replyContent } : f)
                 } : null);
             }
+            showToast("Reply sent!", "success");
         } catch (error) {
             console.error("Failed to reply", error);
             showToast("Failed to reply", "error");
@@ -297,6 +308,7 @@ const ArtistPublicPage: React.FC = () => {
                     ...prev, feedbacks: prev.feedbacks?.map(f => f.id === feedbackId ? { ...f, is_unlocked: true } : f)
                 } : null);
             }
+            showToast("Feedback unlocked!", "success");
         } catch (error) {
             console.error("Failed to unlock", error);
             showToast("Failed to unlock", "error");
