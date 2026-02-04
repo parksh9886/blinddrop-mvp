@@ -240,12 +240,14 @@ const TrackListOverlay: React.FC<TrackListOverlayProps> = ({
                                                 />
                                             ) : (
                                                 <div className={`w-full h-full bg-gradient-to-br ${fallbackGradient} flex items-center justify-center p-4 relative`}>
-                                                    <span className="text-7xl font-black text-white/10 select-none uppercase absolute">
-                                                        {track.title.charAt(0)}
-                                                    </span>
-                                                    <h3 className="text-white font-bold text-center text-sm md:text-base leading-tight drop-shadow-lg line-clamp-3 relative z-10">
-                                                        {track.title}
-                                                    </h3>
+                                                    <div className={`flex flex-col items-center justify-center w-full h-full transition-all duration-300 ${isSelected ? 'opacity-0 blur-sm' : 'opacity-100'}`}>
+                                                        <span className="text-7xl font-black text-white/10 select-none uppercase absolute">
+                                                            {track.title.charAt(0)}
+                                                        </span>
+                                                        <h3 className="text-white font-bold text-center text-sm md:text-base leading-tight drop-shadow-lg line-clamp-3 relative z-10">
+                                                            {track.title}
+                                                        </h3>
+                                                    </div>
                                                 </div>
                                             )}
 
