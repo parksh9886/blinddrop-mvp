@@ -10,6 +10,10 @@ interface Feedback {
     reply: string | null;
     is_unlocked: boolean;
     track_id: string;
+    vibe_energy?: number;
+    vibe_mood?: number;
+    vibe_style?: number;
+    situations?: string[];
 }
 
 interface Track {
@@ -35,7 +39,7 @@ interface TrackListOverlayProps {
     onCopyLink: (trackId: string, e?: React.MouseEvent) => void;
     onReply: (fid: string, tid: string, content: string) => void;
     onUnlock: (fid: string, tid: string) => void;
-    onSubmitFeedback: (trackId: string, content: string) => Promise<void>;
+    onSubmitFeedback: (trackId: string, content: string, vibes?: { energy: number; mood: number; style: number }, situations?: string[]) => Promise<void>;
     artistName?: string;
 }
 
@@ -50,18 +54,53 @@ const FeedbackSection = ({
     isOwner: boolean;
     onReply: (fid: string, tid: string, content: string) => void;
     onUnlock: (fid: string, tid: string) => void;
-    onSubmitFeedback: (trackId: string, content: string) => Promise<void>;
+    onSubmitFeedback: (trackId: string, content: string, vibes?: { energy: number; mood: number; style: number }, situations?: string[]) => Promise<void>;
 }) => {
     const [comment, setComment] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [vibe_energy, setVibeEnergy] = useState(50);
+    const [vibe_mood, setVibeMood] = useState(50);
+    const [vibe_style, setVibeStyle] = useState(50);
+    const [selectedSituations, setSelectedSituations] = useState<string[]>([]);
+
+    const situations = [
+        { id: 'focus', label: '🏠집중' },
+        { id: 'workout', label: '💪운동' },
+        { id: 'mood', label: '🌃감성' },
+        { id: 'drive', label: '🚗드라이브' },
+        { id: 'commute', label: '🚃출퇴근' },
+        { id: 'chill', label: '☕휴식' },
+        { id: 'party', label: '🎉파티' },
+        { id: 'comfort', label: '🩹위로' }
+    ];
+
+    const toggleSituation = (label: string) => {
+        setSelectedSituations(prev =>
+            prev.includes(label)
+                ? prev.filter(s => s !== label)
+                : [...prev, label]
+        );
+    };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!comment.trim()) return;
+        // Allow submission if there's a comment OR any vibe changed OR any situation selected
+        // For simplicity, we'll just check if any interaction happened.
+        if (!comment.trim() && selectedSituations.length === 0 && vibe_energy === 50 && vibe_mood === 50 && vibe_style === 50) return;
+
         setIsSubmitting(true);
         try {
-            await onSubmitFeedback(track.id, comment);
+            await onSubmitFeedback(
+                track.id,
+                comment,
+                { energy: vibe_energy, mood: vibe_mood, style: vibe_style },
+                selectedSituations
+            );
             setComment('');
+            setVibeEnergy(50);
+            setVibeMood(50);
+            setVibeStyle(50);
+            setSelectedSituations([]);
         } catch (err) {
             // Error handled by parent
         } finally {
@@ -77,22 +116,73 @@ const FeedbackSection = ({
 
             {/* Submit Form (Always visible to Public) */}
             {!isOwner && (
-                <form onSubmit={handleSubmit} className="flex gap-2">
-                    <input
-                        type="text"
-                        value={comment}
-                        onChange={(e) => setComment(e.target.value)}
-                        placeholder="Send anonymous feedback..."
-                        className="flex-1 bg-white/5 backdrop-blur-md border border-white/10 rounded-xl px-4 py-3 text-white placeholder-white/40 focus:outline-none focus:ring-1 focus:ring-white/30 transition-all font-medium"
-                        required
-                    />
-                    <button
-                        disabled={isSubmitting}
-                        className="bg-white/10 hover:bg-white/20 backdrop-blur-md text-white px-6 py-2 rounded-xl font-bold transition-all disabled:opacity-50 border border-white/10 active:scale-95"
-                    >
-                        {isSubmitting ? '...' : 'Send'}
-                    </button>
-                </form>
+                <div className="space-y-6 bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-4 shadow-2xl">
+                    {/* Review Controls - Vibe Sliders */}
+                    <div className="space-y-4">
+                        <div className="grid grid-cols-1 gap-4">
+                            {[
+                                { label: 'Energy', left: 'Calm', right: 'Exciting', val: vibe_energy, set: setVibeEnergy },
+                                { label: 'Mood', left: 'Dark', right: 'Bright', val: vibe_mood, set: setVibeMood },
+                                { label: 'Style', left: 'Pop', right: 'Unique', val: vibe_style, set: setVibeStyle }
+                            ].map((s) => (
+                                <div key={s.label} className="space-y-1.5">
+                                    <div className="flex justify-between text-[10px] font-bold uppercase tracking-widest text-white/40 px-1">
+                                        <span>{s.left}</span>
+                                        <span>{s.right}</span>
+                                    </div>
+                                    <div className="relative flex items-center group">
+                                        <input
+                                            type="range"
+                                            min="0"
+                                            max="100"
+                                            value={s.val}
+                                            onChange={(e) => s.set(parseInt(e.target.value))}
+                                            className="w-full h-1 bg-white/10 rounded-full appearance-none cursor-pointer accent-white hover:accent-indigo-400 transition-all"
+                                            style={{
+                                                background: `linear-gradient(to right, rgba(255,255,255,0.4) 0%, rgba(255,255,255,0.4) ${s.val}%, rgba(255,255,255,0.1) ${s.val}%, rgba(255,255,255,0.1) 100%)`
+                                            }}
+                                        />
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+
+                        {/* Situation Chips */}
+                        <div className="flex flex-wrap gap-2 pt-2">
+                            {situations.map((s) => {
+                                const isSelected = selectedSituations.includes(s.label);
+                                return (
+                                    <button
+                                        key={s.id}
+                                        onClick={() => toggleSituation(s.label)}
+                                        className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all border ${isSelected
+                                            ? 'bg-white text-black border-white shadow-[0_0_15px_rgba(255,255,255,0.3)]'
+                                            : 'bg-white/5 text-white/60 border-white/10 hover:bg-white/10'
+                                            }`}
+                                    >
+                                        {s.label}
+                                    </button>
+                                );
+                            })}
+                        </div>
+                    </div>
+
+                    <form onSubmit={handleSubmit} className="flex gap-2">
+                        <input
+                            type="text"
+                            value={comment}
+                            onChange={(e) => setComment(e.target.value)}
+                            placeholder="Add a message (optional)..."
+                            className="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white placeholder-white/40 focus:outline-none focus:ring-1 focus:ring-white/30 transition-all font-medium"
+                        />
+                        <button
+                            disabled={isSubmitting}
+                            className="bg-white/10 hover:bg-white/20 backdrop-blur-md text-white px-6 py-2 rounded-xl font-extrabold text-sm transition-all disabled:opacity-50 border border-white/10 active:scale-95 shadow-lg"
+                        >
+                            {isSubmitting ? '...' : 'Send'}
+                        </button>
+                    </form>
+                </div>
             )}
 
             <div className="bg-black/30 backdrop-blur-md border border-white/10 rounded-2xl p-4">

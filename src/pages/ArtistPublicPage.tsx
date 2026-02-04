@@ -29,6 +29,10 @@ interface Feedback {
     reply: string | null;
     is_unlocked: boolean;
     track_id: string;
+    vibe_energy?: number;
+    vibe_mood?: number;
+    vibe_style?: number;
+    situations?: string[];
 }
 
 interface Track {
@@ -466,10 +470,14 @@ const ArtistPublicPage: React.FC = () => {
                 onReply={handleReply}
                 onUnlock={handleUnlock}
                 artistName={profile?.display_name || profile?.handle || ""}
-                onSubmitFeedback={async (trackId: string, content: string) => {
+                onSubmitFeedback={async (trackId: string, content: string, vibes?: { energy: number; mood: number; style: number }, situations?: string[]) => {
                     const { data, error } = await supabase.from('feedbacks').insert({
                         track_id: trackId,
-                        content: content
+                        content: content,
+                        vibe_energy: vibes?.energy,
+                        vibe_mood: vibes?.mood,
+                        vibe_style: vibes?.style,
+                        situations: situations || []
                     }).select().single();
 
                     if (error) throw error;

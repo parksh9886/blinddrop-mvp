@@ -41,9 +41,50 @@ const FeedbackItem = ({
             </div>
 
             {/* Content */}
-            <p className={`text-sm leading-relaxed mb-2 transition-all ${shouldBlur ? 'text-white/20 blur-sm select-none pointer-events-none' : 'text-white/80'}`}>
+            <p className={`text-sm leading-relaxed mb-3 transition-all ${shouldBlur ? 'text-white/20 blur-sm select-none pointer-events-none' : 'text-white/80'}`}>
                 {content}
             </p>
+
+            {!shouldBlur && (
+                <div className="flex flex-wrap gap-1.5 mb-2">
+                    {/* Situation Tags */}
+                    {feedback.situations && feedback.situations.map((s, i) => (
+                        <span key={i} className="text-[10px] bg-white/10 text-white/70 px-2 py-0.5 rounded-full font-bold border border-white/5">
+                            #{s}
+                        </span>
+                    ))}
+
+                    {/* Vibe Indicators (Simplified) */}
+                    {(feedback.vibe_energy !== undefined || feedback.vibe_mood !== undefined || feedback.vibe_style !== undefined) && (
+                        <div className="flex gap-2 items-center ml-1">
+                            {feedback.vibe_energy !== undefined && (
+                                <div className="flex items-center gap-1" title="Energy">
+                                    <div className="w-8 h-1 bg-white/5 rounded-full overflow-hidden">
+                                        <div className="h-full bg-white/40" style={{ width: `${feedback.vibe_energy}%` }} />
+                                    </div>
+                                    <span className="text-[8px] text-white/30 font-black">E</span>
+                                </div>
+                            )}
+                            {feedback.vibe_mood !== undefined && (
+                                <div className="flex items-center gap-1" title="Mood">
+                                    <div className="w-8 h-1 bg-white/5 rounded-full overflow-hidden">
+                                        <div className="h-full bg-white/40" style={{ width: `${feedback.vibe_mood}%` }} />
+                                    </div>
+                                    <span className="text-[8px] text-white/30 font-black">M</span>
+                                </div>
+                            )}
+                            {feedback.vibe_style !== undefined && (
+                                <div className="flex items-center gap-1" title="Style">
+                                    <div className="w-8 h-1 bg-white/5 rounded-full overflow-hidden">
+                                        <div className="h-full bg-white/40" style={{ width: `${feedback.vibe_style}%` }} />
+                                    </div>
+                                    <span className="text-[8px] text-white/30 font-black">S</span>
+                                </div>
+                            )}
+                        </div>
+                    )}
+                </div>
+            )}
 
             {/* Action Area */}
             {reply ? (

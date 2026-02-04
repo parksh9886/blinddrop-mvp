@@ -7,6 +7,10 @@ export interface Feedback {
     reply: string | null;
     is_unlocked: boolean;
     track_id: string;
+    vibe_energy?: number;
+    vibe_mood?: number;
+    vibe_style?: number;
+    situations?: string[];
 }
 
 export const useFeedbackLogic = (feedbacks: Feedback[] | undefined, isOwner: boolean) => {
