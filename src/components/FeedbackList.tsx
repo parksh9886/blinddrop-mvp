@@ -59,7 +59,7 @@ const FeedbackItem = ({
                     )}
 
                     {/* Vibe Stats (Calculated) */}
-                    {(feedback.vibe_energy !== undefined || feedback.vibe_mood !== undefined || feedback.vibe_style !== undefined) && (
+                    {(feedback.vibe_energy != null || feedback.vibe_mood != null || feedback.vibe_style != null) && (
                         <div className="flex flex-wrap gap-3 p-3 bg-white/5 rounded-lg border border-white/5">
                             {/* Helper to calculate and render vibe */}
                             {[
@@ -67,7 +67,7 @@ const FeedbackItem = ({
                                 { val: feedback.vibe_mood, left: 'Dark', right: 'Bright' },
                                 { val: feedback.vibe_style, left: 'Popular', right: 'Unique' }
                             ].map((v, idx) => {
-                                if (v.val === undefined) return null;
+                                if (v.val == null) return null;
                                 const value = v.val;
                                 // Logic: 0-100. 50 is Neutral.
                                 // If < 50: Left Dominant. Intensity = (50 - val) * 2

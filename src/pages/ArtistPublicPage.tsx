@@ -115,7 +115,7 @@ const ArtistPublicPage: React.FC = () => {
                 if (tracksData && tracksData.length > 0) {
                     const trackIds = tracksData.map(t => t.id);
                     const { data: feedbacksData } = await supabase
-                        .from('feedbacks_secure_view')
+                        .from('feedbacks')
                         .select('*')
                         .in('track_id', trackIds);
 
