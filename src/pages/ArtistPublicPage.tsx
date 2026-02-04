@@ -3,14 +3,13 @@ import { useParams, Link, useSearchParams } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import {
-    Play, Loader2, Instagram, Youtube, Music2, Globe, Twitter,
-    Facebook, Linkedin, X, ArrowUpRight, Plus, Disc3, Link as LinkIcon,
-    ChevronLeft, ChevronDown, MessageSquare
+    Loader2, Instagram, Youtube, Music2, Globe, Twitter,
+    Facebook, Linkedin, ArrowUpRight, Plus, Disc3, Link as LinkIcon,
+    ChevronDown
 } from 'lucide-react';
 import { useToast } from '../contexts/ToastContext';
 import Navbar from '../components/Navbar';
-import { FeedbackList } from '../components/FeedbackList';
-import { motion, AnimatePresence } from 'framer-motion';
+import TrackListOverlay from '../components/TrackListOverlay';
 
 // --- Interfaces ---
 interface UserProfile {
@@ -50,73 +49,6 @@ interface ArtistLink {
     order_index: number;
 }
 
-// --- Sub-Component: Feedback Section (Dual Mode) ---
-const FeedbackSection = ({
-    track,
-    isOwner,
-    onReply,
-    onUnlock,
-    onSubmitFeedback
-}: {
-    track: Track;
-    isOwner: boolean;
-    onReply: (fid: string, tid: string, content: string) => void;
-    onUnlock: (fid: string, tid: string) => void;
-    onSubmitFeedback?: (trackId: string, content: string) => Promise<void>;
-}) => {
-    const [comment, setComment] = useState('');
-    const [isSubmitting, setIsSubmitting] = useState(false);
-
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        if (!comment.trim() || !onSubmitFeedback) return;
-        setIsSubmitting(true);
-        try {
-            await onSubmitFeedback(track.id, comment);
-            setComment('');
-        } catch (err) {
-            // Error handled by parent or ignored
-        } finally {
-            setIsSubmitting(false);
-        }
-    };
-
-    return (
-        <div className="space-y-6">
-            <h3 className="text-lg font-bold flex items-center gap-2 text-white">
-                <MessageSquare className="w-5 h-5" /> Secret Feedback
-            </h3>
-
-            {/* Submit Form (Always visible to Public) */}
-            {!isOwner && (
-                <form onSubmit={handleSubmit} className="flex gap-2">
-                    <input
-                        type="text"
-                        value={comment}
-                        onChange={(e) => setComment(e.target.value)}
-                        placeholder="Send anonymous feedback..."
-                        className="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-white/30 focus:outline-none focus:border-indigo-500 transition-colors"
-                        required
-                    />
-                    <button
-                        disabled={isSubmitting}
-                        className="bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded-xl font-bold transition-colors disabled:opacity-50"
-                    >
-                        {isSubmitting ? 'Sending...' : 'Send'}
-                    </button>
-                </form>
-            )}
-
-            <FeedbackList
-                feedbacks={track.feedbacks}
-                isOwner={isOwner}
-                onReply={onReply}
-                onUnlock={onUnlock}
-                trackId={track.id}
-            />
-        </div>
-    );
-};
 
 const ArtistPublicPage: React.FC = () => {
     const { handle } = useParams<{ handle: string }>();
@@ -519,158 +451,45 @@ const ArtistPublicPage: React.FC = () => {
                 </div>
             </div>
 
-            {/* --- Discography Overlay (New Logic) --- */}
-            <AnimatePresence>
-                {isOverlayOpen && (
-                    <motion.div
-                        initial={{ opacity: 0, y: '100%' }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: '100%' }}
-                        transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-                        className="fixed inset-0 z-[100] bg-slate-950 flex flex-col"
-                    >
-                        {/* Header */}
-                        <div className="flex items-center justify-between p-4 border-b border-white/10 bg-slate-900/50 backdrop-blur-md sticky top-0 z-10">
-                            {overlayView === 'detail' ? (
-                                <button onClick={handleBackToList} className="p-2 rounded-full hover:bg-white/10 transition-colors">
-                                    <ChevronLeft className="w-6 h-6 text-white" />
-                                </button>
-                            ) : (
-                                <div className="w-10" /> // Spacer
-                            )}
+            {/* --- Discography Overlay (Abstracted & Redesigned) --- */}
+            <TrackListOverlay
+                isOpen={isOverlayOpen}
+                view={overlayView}
+                tracks={tracks}
+                selectedTrack={selectedTrack}
+                isOwner={isOwner}
+                onClose={handleCloseOverlay}
+                onBackToList={handleBackToList}
+                onTrackClick={handleTrackClick}
+                onCopyLink={copyTrackLink}
+                onReply={handleReply}
+                onUnlock={handleUnlock}
+                artistName={profile?.display_name || profile?.handle || ""}
+                onSubmitFeedback={async (trackId, content) => {
+                    const { data, error } = await supabase.from('feedbacks').insert({
+                        track_id: trackId,
+                        content: content
+                    }).select().single();
 
-                            <h2 className="text-lg font-bold text-white">
-                                {overlayView === 'list' ? 'Discography' : 'Now Playing'}
-                            </h2>
+                    if (error) throw error;
 
-                            <button onClick={handleCloseOverlay} className="p-2 rounded-full hover:bg-white/10 transition-colors">
-                                <X className="w-6 h-6 text-white" />
-                            </button>
-                        </div>
+                    const newFeedback = { ...data, isAccessible: false };
 
-                        {/* Content */}
-                        <div className="flex-1 overflow-y-auto p-4">
-                            {overlayView === 'list' ? (
-                                // LIST VIEW
-                                <div className="max-w-xl mx-auto space-y-3">
-                                    {tracks.map((track) => {
-                                        let thumbnailUrl = '/placeholder-track.png';
-                                        if (track.platform === 'youtube') {
-                                            const videoId = track.url.split('v=')[1]?.split('&')[0] || track.url.split('/').pop();
-                                            if (videoId) thumbnailUrl = `https://img.youtube.com/vi/${videoId}/mqdefault.jpg`;
-                                        }
+                    // Update Tracks State
+                    setTracks(prev => prev.map(t => t.id === trackId ? {
+                        ...t, feedbacks: [newFeedback, ...(t.feedbacks || [])]
+                    } : t));
 
-                                        return (
-                                            <button
-                                                key={track.id}
-                                                onClick={() => handleTrackClick(track)}
-                                                className="w-full flex items-center gap-4 p-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/5 hover:border-white/20 transition-all text-left group"
-                                            >
-                                                <div className="relative w-16 h-16 rounded-lg overflow-hidden flex-shrink-0 bg-slate-800">
-                                                    <img src={thumbnailUrl} alt={track.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
-                                                    <div className="absolute inset-0 flex items-center justify-center bg-black/30 group-hover:bg-black/0 transition-colors">
-                                                        <Play className="w-6 h-6 text-white opacity-80 group-hover:opacity-100" />
-                                                    </div>
-                                                </div>
-                                                <div>
-                                                    <h3 className="font-bold text-white group-hover:text-indigo-300 transition-colors line-clamp-1">{track.title}</h3>
-                                                    <p className="text-xs text-white/40 uppercase tracking-wider mt-1">{track.platform}</p>
-                                                </div>
-                                                {/* Copy Link Button */}
-                                                <button
-                                                    onClick={(e) => copyTrackLink(track.id, e)}
-                                                    className="ml-auto p-2 rounded-full hover:bg-white/10 transition-colors opacity-50 group-hover:opacity-100"
-                                                    title="Copy track link"
-                                                >
-                                                    <LinkIcon className="w-4 h-4 text-white" />
-                                                </button>
-                                            </button>
-                                        );
-                                    })}
-                                    {tracks.length === 0 && <p className="text-center text-white/30 py-10">No tracks found.</p>}
-                                </div>
-                            ) : (
-                                // DETAIL VIEW
-                                selectedTrack && (
-                                    <div className="max-w-xl mx-auto space-y-6 animate-in slide-in-from-right duration-300">
-                                        {/* Player */}
-                                        <div className="aspect-video w-full rounded-2xl overflow-hidden bg-black shadow-2xl border border-white/10">
-                                            {selectedTrack.platform === 'youtube' ? (
-                                                <iframe
-                                                    src={`https://www.youtube.com/embed/${selectedTrack.url.split('v=')[1]?.split('&')[0]}?autoplay=1&playsinline=1&theme=dark&color=white`}
-                                                    className="w-full h-full"
-                                                    allow="autoplay; encrypted-media"
-                                                    allowFullScreen
-                                                />
-                                            ) : (
-                                                <iframe
-                                                    width="100%"
-                                                    height="100%"
-                                                    scrolling="no"
-                                                    frameBorder="no"
-                                                    allow="autoplay"
-                                                    src={`https://w.soundcloud.com/player/?url=${selectedTrack.url}&color=%23ff5500&auto_play=true&hide_related=false&show_comments=true&show_user=true&show_reposts=false&show_teaser=true&visual=true`}
-                                                />
-                                            )}
-                                        </div>
+                    // Update Selected Track State
+                    if (selectedTrack?.id === trackId) {
+                        setSelectedTrack(prev => prev ? {
+                            ...prev, feedbacks: [newFeedback, ...(prev.feedbacks || [])]
+                        } : null);
+                    }
 
-                                        <div className="space-y-2">
-                                            <div className="flex items-center justify-between gap-4">
-                                                <h1 className="text-2xl font-bold text-white flex-1 line-clamp-2">{selectedTrack.title}</h1>
-                                                <button
-                                                    onClick={() => copyTrackLink(selectedTrack.id)}
-                                                    className="p-2.5 rounded-full hover:bg-white/10 transition-colors flex-shrink-0"
-                                                    title="Copy track link"
-                                                >
-                                                    <LinkIcon className="w-5 h-5 text-white/70" />
-                                                </button>
-                                            </div>
-                                            <p className="text-sm text-white/40">{new Date(selectedTrack.created_at).toLocaleDateString()}</p>
-                                        </div>
-
-                                        <div className="h-px bg-white/10 w-full" />
-
-                                        {/* Feedback Section (Dual Mode) */}
-                                        <FeedbackSection
-                                            track={selectedTrack}
-                                            isOwner={isOwner}
-                                            onReply={handleReply}
-                                            onUnlock={handleUnlock}
-                                            onSubmitFeedback={async (trackId, content) => {
-                                                const { data, error } = await supabase.from('feedbacks').insert({
-                                                    track_id: trackId,
-                                                    content: content
-                                                }).select().single();
-
-                                                if (error) throw error;
-
-                                                const newFeedback = { ...data, isAccessible: false }; // Assume strictly new feedback is not accessible to public immediately if logic dictates, though for 'sent' it might be just hidden or waiting for reply. But typically list shows it.
-                                                // Actually Feedback type in this component usually has is_unlocked etc.
-                                                // Let's ensure data shape matches.
-
-                                                // Update Tracks State
-                                                setTracks(prev => prev.map(t => t.id === trackId ? {
-                                                    ...t, feedbacks: [newFeedback, ...(t.feedbacks || [])]
-                                                } : t));
-
-                                                // Update Selected Track State
-                                                if (selectedTrack?.id === trackId) {
-                                                    setSelectedTrack(prev => prev ? {
-                                                        ...prev, feedbacks: [newFeedback, ...(prev.feedbacks || [])]
-                                                    } : null);
-                                                }
-
-                                                showToast("Feedback sent!", "success");
-                                            }}
-                                        />
-                                    </div>
-                                )
-                            )}
-                        </div>
-                    </motion.div>
-                )}
-            </AnimatePresence>
-
+                    showToast("Feedback sent!", "success");
+                }}
+            />
 
         </div >
     );
