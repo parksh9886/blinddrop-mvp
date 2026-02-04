@@ -1,5 +1,5 @@
 import React from 'react';
-import { User, CheckCircle2, Lock } from 'lucide-react';
+import { User, Lock } from 'lucide-react';
 import { useFeedbackLogic } from '../hooks/useFeedbackLogic';
 import type { Feedback } from '../hooks/useFeedbackLogic';
 
@@ -28,70 +28,56 @@ const FeedbackItem = ({
     const shouldBlur = !isAccessible;
 
     return (
-        <div className={`p-4 rounded-xl border-b border-white/5 transition-all relative ${shouldBlur ? 'bg-black/20 overflow-hidden' : 'bg-transparent'}`}>
+        <div className={`p-5 rounded-2xl border-b border-white/5 transition-all relative ${shouldBlur ? 'bg-black/20 overflow-hidden' : 'bg-transparent'}`}>
             {/* Header */}
-            <div className="flex items-center gap-2 mb-2">
-                <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold ${!shouldBlur ? 'bg-white/10 text-white' : 'bg-white/5 text-white/20'}`}>
-                    <User className="w-3 h-3" />
+            <div className="flex items-center gap-3 mb-4">
+                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-bold ${!shouldBlur ? 'bg-gradient-to-br from-white/10 to-white/5 text-white shadow-inner border border-white/5' : 'bg-white/5 text-white/20'}`}>
+                    <User className="w-4 h-4" />
                 </div>
-                <span className={`text-xs font-bold ${shouldBlur ? 'text-white/30' : 'text-white/60'}`}>Anonymous</span>
-                <span className={`text-[10px] ml-auto ${shouldBlur ? 'text-white/20' : 'text-white/40'}`}>
-                    {new Date(created_at).toLocaleDateString()}
-                </span>
+                <div>
+                    <div className={`text-sm font-bold tracking-tight ${shouldBlur ? 'text-white/30' : 'text-white'}`}>Anonymous</div>
+                    <div className={`text-[10px] uppercase tracking-wider ${shouldBlur ? 'text-white/20' : 'text-white/30'}`}>
+                        {new Date(created_at).toLocaleDateString()}
+                    </div>
+                </div>
             </div>
 
-            {/* Content */}
-            <p className={`text-sm leading-relaxed mb-3 transition-all ${shouldBlur ? 'text-white/20 blur-sm select-none pointer-events-none' : 'text-white/80'}`}>
-                {content}
-            </p>
-
             {!shouldBlur && (
-                <div className="space-y-3 mb-2">
-                    {/* Situation Badges */}
+                <div className="bg-black/20 rounded-xl p-4 mb-4 border border-white/5">
+                    {/* Situation Tags (Minimal Chips) */}
                     {feedback.situations && feedback.situations.length > 0 && (
-                        <div className="flex flex-wrap gap-1.5">
+                        <div className="flex flex-wrap gap-2 mb-4">
                             {feedback.situations.map((s, i) => (
-                                <span key={i} className="text-[10px] bg-indigo-500/20 text-indigo-200 px-2 py-0.5 rounded-md font-bold border border-indigo-500/30">
+                                <span key={i} className="text-[10px] bg-white/5 text-white/70 px-2.5 py-1 rounded-full border border-white/10 transition-colors hover:bg-white/10 hover:border-white/20">
                                     {s}
                                 </span>
                             ))}
                         </div>
                     )}
 
-                    {/* Vibe Stats (Calculated) */}
+                    {/* Vibe Visualizer (Mini Progress Bar) */}
                     {(feedback.vibe_energy != null || feedback.vibe_mood != null || feedback.vibe_style != null) && (
-                        <div className="flex flex-wrap gap-3 p-3 bg-white/5 rounded-lg border border-white/5">
-                            {/* Helper to calculate and render vibe */}
+                        <div className="space-y-3 pt-1">
                             {[
-                                { val: feedback.vibe_energy, left: 'Calm', right: 'Exciting' },
+                                { val: feedback.vibe_energy, left: 'Calm', right: 'Hype' }, // Changed to Hype as in example
                                 { val: feedback.vibe_mood, left: 'Dark', right: 'Bright' },
                                 { val: feedback.vibe_style, left: 'Popular', right: 'Unique' }
                             ].map((v, idx) => {
                                 if (v.val == null) return null;
-                                const value = v.val;
-                                // Logic: 0-100. 50 is Neutral.
-                                // If < 50: Left Dominant. Intensity = (50 - val) * 2
-                                // If > 50: Right Dominant. Intensity = (val - 50) * 2
-                                // If 50: Balanced
-
-                                let label = 'Balanced';
-                                let percent = 0;
-                                let color = 'text-white/40';
-
-                                if (value < 45) {
-                                    label = v.left;
-                                    percent = Math.round((50 - value) * 2);
-                                    color = 'text-sky-300/80';
-                                } else if (value > 55) {
-                                    label = v.right;
-                                    percent = Math.round((value - 50) * 2);
-                                    color = 'text-rose-300/80';
-                                }
-
+                                // val is 0-100.
+                                // Rendering a track line and a dot at `val`%
                                 return (
-                                    <div key={idx} className="flex items-center gap-1.5 text-xs font-medium">
-                                        <span className={`${color}`}>{label}</span>
-                                        {percent > 0 && <span className="text-white/30 text-[10px]">{percent}%</span>}
+                                    <div key={idx} className="flex items-center gap-3">
+                                        <span className="text-[10px] text-gray-500 font-medium w-8 text-right">{v.left}</span>
+                                        <div className="flex-1 h-1.5 bg-white/5 rounded-full relative flex items-center">
+                                            {/* Track Line (optional decorative) - styling simplified as background */}
+                                            {/* Dot */}
+                                            <div
+                                                className="absolute h-2.5 w-2.5 bg-white rounded-full shadow-[0_0_8px_rgba(255,255,255,0.5)] border border-white/20"
+                                                style={{ left: `calc(${v.val}% - 5px)` }}
+                                            />
+                                        </div>
+                                        <span className="text-[10px] text-gray-500 font-medium w-8">{v.right}</span>
                                     </div>
                                 );
                             })}
@@ -100,22 +86,25 @@ const FeedbackItem = ({
                 </div>
             )}
 
+            {/* Content (Text Comment) */}
+            <p className={`text-sm leading-relaxed mb-4 pl-1 ${shouldBlur ? 'text-white/20 blur-sm select-none pointer-events-none' : 'text-white/80'}`}>
+                {content}
+            </p>
+
             {/* Action Area */}
             {reply ? (
-                // Has Reply (Always visible if isAccessible OR isOwner seeing their own reply history)
-                <div className="mt-3 pl-3 border-l-2 border-indigo-400 bg-indigo-500/10 rounded-r-lg p-3">
-                    <div className="flex items-center gap-1 mb-1">
-                        <CheckCircle2 className="w-3 h-3 text-indigo-400" />
-                        <p className="text-xs text-indigo-300 font-bold uppercase tracking-wider">Artist Reply</p>
+                // Has Reply
+                <div className="mt-2 pl-4 border-l-2 border-indigo-500/30 bg-indigo-500/5 rounded-r-xl p-3">
+                    <div className="flex items-center gap-2 mb-1">
+                        <div className="w-1.5 h-1.5 rounded-full bg-indigo-400 box-shadow-[0_0_8px_rgba(129,140,248,0.5)]" />
+                        <p className="text-[10px] text-indigo-300 font-bold uppercase tracking-widest">Artist Reply</p>
                     </div>
                     <p className="text-sm text-white/70 leading-relaxed">{reply}</p>
                 </div>
             ) : (
                 // No Reply
                 isOwner ? (
-                    // OWNER VIEW
                     isAccessible ? (
-                        // Accessible: Can Reply
                         <form
                             onSubmit={(e) => {
                                 e.preventDefault();
@@ -129,30 +118,29 @@ const FeedbackItem = ({
                             <input
                                 name="reply"
                                 type="text"
-                                placeholder="Reply to unlock for public..."
-                                className="flex-1 bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-xs text-white placeholder-white/30 focus:outline-none focus:ring-1 focus:ring-white/30 transition-all font-medium"
+                                placeholder="Write a reply..."
+                                className="flex-1 bg-black/20 border border-white/5 rounded-lg px-3 py-2 text-xs text-white placeholder-white/20 focus:outline-none focus:border-white/20 transition-all font-medium"
                                 required
                             />
-                            <button type="submit" className="bg-white/10 hover:bg-white/20 text-white px-4 py-1.5 rounded-lg text-xs font-bold transition-all border border-white/10 active:scale-95">
-                                Reply
+                            <button type="submit" className="bg-white/5 hover:bg-white/10 text-white px-4 py-1.5 rounded-lg text-xs font-bold transition-all border border-white/5 active:scale-95">
+                                Send
                             </button>
                         </form>
                     ) : (
-                        // Not Accessible: Unlock Button
                         <div className="absolute inset-0 z-10 flex items-center justify-center">
                             <button
                                 onClick={() => onUnlock(id, trackId)}
-                                className="flex items-center gap-2 bg-white/10 hover:bg-white/20 backdrop-blur-md text-white px-5 py-2.5 rounded-xl text-sm font-bold transition-all border border-white/10 shadow-2xl active:scale-95"
+                                className="flex items-center gap-2 bg-white/10 hover:bg-white/20 backdrop-blur-md text-white px-6 py-2.5 rounded-full text-sm font-bold transition-all border border-white/10 shadow-2xl active:scale-95 group"
                             >
-                                <Lock className="w-4 h-4" /> Unlock to View
+                                <Lock className="w-4 h-4 text-white/70 group-hover:text-white transition-colors" />
+                                <span>Unlock Feedback</span>
                             </button>
                         </div>
                     )
                 ) : (
-                    // VISITOR VIEW (Locked)
                     <div className="absolute inset-0 z-10 flex items-center justify-center">
-                        <div className="flex items-center gap-2 bg-black/40 backdrop-blur-md text-white/50 px-4 py-2 rounded-xl text-[10px] font-bold border border-white/5 uppercase tracking-widest">
-                            <Lock className="w-3 h-3" /> Waiting for response
+                        <div className="flex items-center gap-2 bg-black/60 backdrop-blur-md text-white/40 px-5 py-2 rounded-full text-[10px] font-bold border border-white/5 uppercase tracking-widest shadow-xl">
+                            <Lock className="w-3 h-3" /> Hidden Content
                         </div>
                     </div>
                 )
