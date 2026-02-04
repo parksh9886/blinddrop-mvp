@@ -197,8 +197,29 @@ const TrackListOverlay: React.FC<TrackListOverlayProps> = ({
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: '100%' }}
                     transition={{ type: 'spring', damping: 30, stiffness: 300 }}
-                    className="fixed inset-0 z-[100] bg-black flex flex-col overflow-hidden"
+                    className={`fixed inset-0 z-[100] flex flex-col overflow-hidden transition-colors duration-500 ${view === 'list' ? 'bg-black' : 'bg-neutral-950'}`}
                 >
+                    {/* Dynamic Background Layer */}
+                    <AnimatePresence>
+                        {view === 'detail' && selectedTrack && (
+                            <motion.div
+                                key={`bg-${selectedTrack.id}`}
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                exit={{ opacity: 0 }}
+                                transition={{ duration: 1 }}
+                                className="absolute inset-0 z-0 pointer-events-none overflow-hidden"
+                            >
+                                <ThumbnailImage
+                                    track={selectedTrack}
+                                    className="absolute inset-0 w-full h-full blur-[80px] md:blur-[120px] brightness-[0.35] scale-150 transition-opacity duration-1000"
+                                />
+                                {/* Optional: Subtle gradient overlay for extra depth */}
+                                <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-black/60" />
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
+
                     {/* Header */}
                     <div className="relative z-20 flex items-center justify-between p-4 bg-slate-900/50 border-b border-white/5 backdrop-blur-3xl">
                         {view === 'detail' ? (
