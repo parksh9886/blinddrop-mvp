@@ -119,8 +119,30 @@ const FeedbackSection = ({
                 <div className="space-y-6 bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-4 shadow-2xl">
                     {/* Review Controls - Vibe Sliders */}
                     <div className="space-y-4">
+                        {/* Situation Chips */}
+                        <div className="space-y-3">
+                            <h4 className="text-sm font-bold text-white/90">언제 듣기 좋은가요?</h4>
+                            <div className="flex flex-wrap gap-2">
+                                {situations.map((s) => {
+                                    const isSelected = selectedSituations.includes(s.label);
+                                    return (
+                                        <button
+                                            key={s.id}
+                                            onClick={() => toggleSituation(s.label)}
+                                            className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all border ${isSelected
+                                                ? 'bg-white text-black border-white shadow-[0_0_15px_rgba(255,255,255,0.3)]'
+                                                : 'bg-white/5 text-white/60 border-white/10 hover:bg-white/10'
+                                                }`}
+                                        >
+                                            {s.label}
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                        </div>
+
                         {/* Vibe Sliders */}
-                        <div className="space-y-6">
+                        <div className="space-y-6 pt-2">
                             <h4 className="text-sm font-bold text-white/90">이 곡의 분위기는?</h4>
                             <div className="grid grid-cols-1 gap-6">
                                 {[
@@ -159,28 +181,6 @@ const FeedbackSection = ({
                                         </div>
                                     </div>
                                 ))}
-                            </div>
-                        </div>
-
-                        {/* Situation Chips */}
-                        <div className="space-y-3 pt-2">
-                            <h4 className="text-sm font-bold text-white/90">언제 듣기 좋은가요?</h4>
-                            <div className="flex flex-wrap gap-2">
-                                {situations.map((s) => {
-                                    const isSelected = selectedSituations.includes(s.label);
-                                    return (
-                                        <button
-                                            key={s.id}
-                                            onClick={() => toggleSituation(s.label)}
-                                            className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all border ${isSelected
-                                                ? 'bg-white text-black border-white shadow-[0_0_15px_rgba(255,255,255,0.3)]'
-                                                : 'bg-white/5 text-white/60 border-white/10 hover:bg-white/10'
-                                                }`}
-                                        >
-                                            {s.label}
-                                        </button>
-                                    );
-                                })}
                             </div>
                         </div>
                     </div>
