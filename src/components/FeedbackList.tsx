@@ -46,41 +46,55 @@ const FeedbackItem = ({
             </p>
 
             {!shouldBlur && (
-                <div className="flex flex-wrap gap-1.5 mb-2">
-                    {/* Situation Tags */}
-                    {feedback.situations && feedback.situations.map((s, i) => (
-                        <span key={i} className="text-[10px] bg-white/10 text-white/70 px-2 py-0.5 rounded-full font-bold border border-white/5">
-                            #{s}
-                        </span>
-                    ))}
+                <div className="space-y-3 mb-2">
+                    {/* Situation Badges */}
+                    {feedback.situations && feedback.situations.length > 0 && (
+                        <div className="flex flex-wrap gap-1.5">
+                            {feedback.situations.map((s, i) => (
+                                <span key={i} className="text-[10px] bg-indigo-500/20 text-indigo-200 px-2 py-0.5 rounded-md font-bold border border-indigo-500/30">
+                                    {s}
+                                </span>
+                            ))}
+                        </div>
+                    )}
 
-                    {/* Vibe Indicators (Simplified) */}
+                    {/* Vibe Stats (Calculated) */}
                     {(feedback.vibe_energy !== undefined || feedback.vibe_mood !== undefined || feedback.vibe_style !== undefined) && (
-                        <div className="flex gap-2 items-center ml-1">
-                            {feedback.vibe_energy !== undefined && (
-                                <div className="flex items-center gap-1" title="Energy">
-                                    <div className="w-8 h-1 bg-white/5 rounded-full overflow-hidden">
-                                        <div className="h-full bg-white/40" style={{ width: `${feedback.vibe_energy}%` }} />
+                        <div className="flex flex-wrap gap-3 p-3 bg-white/5 rounded-lg border border-white/5">
+                            {/* Helper to calculate and render vibe */}
+                            {[
+                                { val: feedback.vibe_energy, left: 'Calm', right: 'Exciting' },
+                                { val: feedback.vibe_mood, left: 'Dark', right: 'Bright' },
+                                { val: feedback.vibe_style, left: 'Popular', right: 'Unique' }
+                            ].map((v, idx) => {
+                                if (v.val === undefined) return null;
+                                const value = v.val;
+                                // Logic: 0-100. 50 is Neutral.
+                                // If < 50: Left Dominant. Intensity = (50 - val) * 2
+                                // If > 50: Right Dominant. Intensity = (val - 50) * 2
+                                // If 50: Balanced
+
+                                let label = 'Balanced';
+                                let percent = 0;
+                                let color = 'text-white/40';
+
+                                if (value < 45) {
+                                    label = v.left;
+                                    percent = Math.round((50 - value) * 2);
+                                    color = 'text-sky-300/80';
+                                } else if (value > 55) {
+                                    label = v.right;
+                                    percent = Math.round((value - 50) * 2);
+                                    color = 'text-rose-300/80';
+                                }
+
+                                return (
+                                    <div key={idx} className="flex items-center gap-1.5 text-xs font-medium">
+                                        <span className={`${color}`}>{label}</span>
+                                        {percent > 0 && <span className="text-white/30 text-[10px]">{percent}%</span>}
                                     </div>
-                                    <span className="text-[8px] text-white/30 font-black">E</span>
-                                </div>
-                            )}
-                            {feedback.vibe_mood !== undefined && (
-                                <div className="flex items-center gap-1" title="Mood">
-                                    <div className="w-8 h-1 bg-white/5 rounded-full overflow-hidden">
-                                        <div className="h-full bg-white/40" style={{ width: `${feedback.vibe_mood}%` }} />
-                                    </div>
-                                    <span className="text-[8px] text-white/30 font-black">M</span>
-                                </div>
-                            )}
-                            {feedback.vibe_style !== undefined && (
-                                <div className="flex items-center gap-1" title="Style">
-                                    <div className="w-8 h-1 bg-white/5 rounded-full overflow-hidden">
-                                        <div className="h-full bg-white/40" style={{ width: `${feedback.vibe_style}%` }} />
-                                    </div>
-                                    <span className="text-[8px] text-white/30 font-black">S</span>
-                                </div>
-                            )}
+                                );
+                            })}
                         </div>
                     )}
                 </div>

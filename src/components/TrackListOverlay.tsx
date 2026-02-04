@@ -119,51 +119,69 @@ const FeedbackSection = ({
                 <div className="space-y-6 bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-4 shadow-2xl">
                     {/* Review Controls - Vibe Sliders */}
                     <div className="space-y-4">
-                        <div className="grid grid-cols-1 gap-4">
-                            {[
-                                { label: 'Energy', left: 'Calm', right: 'Exciting', val: vibe_energy, set: setVibeEnergy },
-                                { label: 'Mood', left: 'Dark', right: 'Bright', val: vibe_mood, set: setVibeMood },
-                                { label: 'Style', left: 'Pop', right: 'Unique', val: vibe_style, set: setVibeStyle }
-                            ].map((s) => (
-                                <div key={s.label} className="space-y-1.5">
-                                    <div className="flex justify-between text-[10px] font-bold uppercase tracking-widest text-white/40 px-1">
-                                        <span>{s.left}</span>
-                                        <span>{s.right}</span>
+                        {/* Vibe Sliders */}
+                        <div className="space-y-6">
+                            <h4 className="text-sm font-bold text-white/90">이 곡의 분위기는?</h4>
+                            <div className="grid grid-cols-1 gap-6">
+                                {[
+                                    { label: 'Energy', left: 'Calm', right: 'Exciting', val: vibe_energy, set: setVibeEnergy },
+                                    { label: 'Mood', left: 'Dark', right: 'Bright', val: vibe_mood, set: setVibeMood },
+                                    { label: 'Style', left: 'Popular', right: 'Unique', val: vibe_style, set: setVibeStyle }
+                                ].map((s) => (
+                                    <div key={s.label} className="space-y-2">
+                                        <div className="flex justify-between text-[11px] font-bold uppercase tracking-wider text-white/40 px-1">
+                                            <span>{s.left}</span>
+                                            <span>{s.right}</span>
+                                        </div>
+                                        <div className="relative flex items-center h-4 group">
+                                            {/* Track Background */}
+                                            <div className="absolute w-full h-1 bg-white/10 rounded-full overflow-hidden">
+                                                {/* Center Marker */}
+                                                <div className="absolute left-1/2 top-0 bottom-0 w-0.5 bg-white/20 -translate-x-1/2" />
+                                            </div>
+
+                                            <input
+                                                type="range"
+                                                min="0"
+                                                max="100"
+                                                value={s.val}
+                                                onChange={(e) => s.set(parseInt(e.target.value))}
+                                                className="relative w-full h-4 opacity-0 cursor-pointer z-10"
+                                            />
+
+                                            {/* Custom Thumb */}
+                                            <div
+                                                className="absolute top-1/2 -translate-y-1/2 w-4 h-4 bg-white rounded-full shadow-[0_0_10px_rgba(255,255,255,0.5)] pointer-events-none transition-all duration-75"
+                                                style={{ left: `calc(${s.val}% - 8px)` }}
+                                            >
+                                                <div className="absolute inset-0 rounded-full ring-2 ring-white/20" />
+                                            </div>
+                                        </div>
                                     </div>
-                                    <div className="relative flex items-center group">
-                                        <input
-                                            type="range"
-                                            min="0"
-                                            max="100"
-                                            value={s.val}
-                                            onChange={(e) => s.set(parseInt(e.target.value))}
-                                            className="w-full h-1 bg-white/10 rounded-full appearance-none cursor-pointer accent-white hover:accent-indigo-400 transition-all"
-                                            style={{
-                                                background: `linear-gradient(to right, rgba(255,255,255,0.4) 0%, rgba(255,255,255,0.4) ${s.val}%, rgba(255,255,255,0.1) ${s.val}%, rgba(255,255,255,0.1) 100%)`
-                                            }}
-                                        />
-                                    </div>
-                                </div>
-                            ))}
+                                ))}
+                            </div>
                         </div>
 
                         {/* Situation Chips */}
-                        <div className="flex flex-wrap gap-2 pt-2">
-                            {situations.map((s) => {
-                                const isSelected = selectedSituations.includes(s.label);
-                                return (
-                                    <button
-                                        key={s.id}
-                                        onClick={() => toggleSituation(s.label)}
-                                        className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all border ${isSelected
-                                            ? 'bg-white text-black border-white shadow-[0_0_15px_rgba(255,255,255,0.3)]'
-                                            : 'bg-white/5 text-white/60 border-white/10 hover:bg-white/10'
-                                            }`}
-                                    >
-                                        {s.label}
-                                    </button>
-                                );
-                            })}
+                        <div className="space-y-3 pt-2">
+                            <h4 className="text-sm font-bold text-white/90">언제 듣기 좋은가요?</h4>
+                            <div className="flex flex-wrap gap-2">
+                                {situations.map((s) => {
+                                    const isSelected = selectedSituations.includes(s.label);
+                                    return (
+                                        <button
+                                            key={s.id}
+                                            onClick={() => toggleSituation(s.label)}
+                                            className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all border ${isSelected
+                                                ? 'bg-white text-black border-white shadow-[0_0_15px_rgba(255,255,255,0.3)]'
+                                                : 'bg-white/5 text-white/60 border-white/10 hover:bg-white/10'
+                                                }`}
+                                        >
+                                            {s.label}
+                                        </button>
+                                    );
+                                })}
+                            </div>
                         </div>
                     </div>
 
