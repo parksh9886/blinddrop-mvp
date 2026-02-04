@@ -39,6 +39,7 @@ interface Track {
     created_at: string;
     order_index?: number;
     feedbacks?: Feedback[];
+    thumbnail_url?: string;
 }
 
 interface ArtistLink {

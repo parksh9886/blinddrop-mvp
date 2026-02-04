@@ -20,6 +20,7 @@ interface Track {
     created_at: string;
     order_index?: number;
     feedbacks?: Feedback[];
+    thumbnail_url?: string; // For SoundCloud/Custom artwork
 }
 
 interface TrackListOverlayProps {
@@ -107,6 +108,55 @@ const FeedbackSection = ({
     );
 };
 
+// --- High-Res Thumbnail Enforcer Component ---
+const ThumbnailImage: React.FC<{
+    track: Track;
+    className?: string;
+}> = ({ track, className }) => {
+    const [hasError, setHasError] = useState(false);
+
+    // YouTube / SoundCloud Upgrade Logic
+    const getHighResThumbnail = (t: Track) => {
+        // YouTube: Attempt maxresdefault (High Res)
+        if (t.platform === 'youtube') {
+            const videoId = t.url.split('v=')[1]?.split('&')[0] || t.url.split('/').pop();
+            if (videoId) {
+                // Return maxresdefault by default. Fallback to hqdefault on error.
+                return !hasError
+                    ? `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`
+                    : `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
+            }
+        }
+
+        // SoundCloud: Replace -large.jpg with -t500x500.jpg for high-res
+        const thumbUrl = t.thumbnail_url;
+        if (t.platform === 'soundcloud' && thumbUrl) {
+            return thumbUrl.replace('-large.jpg', '-t500x500.jpg');
+        }
+
+        return thumbUrl || null;
+    };
+
+    const src = getHighResThumbnail(track);
+
+    if (!src) return null;
+
+    return (
+        <img
+            src={src}
+            alt={track.title}
+            className={`${className} object-cover`}
+            loading="lazy"
+            onError={() => {
+                // If maxres fails on YouTube, fallback to lower res
+                if (!hasError && track.platform === 'youtube') {
+                    setHasError(true);
+                }
+            }}
+        />
+    );
+};
+
 const TrackListOverlay: React.FC<TrackListOverlayProps> = ({
     isOpen,
     view,
@@ -123,14 +173,6 @@ const TrackListOverlay: React.FC<TrackListOverlayProps> = ({
     artistName
 }) => {
     const [tapSelectedId, setTapSelectedId] = useState<string | null>(null);
-
-    const getThumbnailUrl = (track: Track) => {
-        if (track.platform === 'youtube') {
-            const videoId = track.url.split('v=')[1]?.split('&')[0] || track.url.split('/').pop();
-            if (videoId) return `https://img.youtube.com/vi/${videoId}/mqdefault.jpg`;
-        }
-        return null;
-    };
 
     const handleItemTap = (trackId: string) => {
         setTapSelectedId(prev => (prev === trackId ? null : trackId));
@@ -181,21 +223,20 @@ const TrackListOverlay: React.FC<TrackListOverlayProps> = ({
                         {view === 'list' ? (
                             <div className="grid grid-cols-2 gap-1.5 md:gap-3 max-w-4xl mx-auto">
                                 {sortedTracks.map((track, index) => {
-                                    const thumb = getThumbnailUrl(track);
                                     const isSelected = tapSelectedId === track.id;
                                     const fallbackGradient = fallbacks[index % fallbacks.length];
+                                    const hasThumb = track.platform === 'youtube' || track.thumbnail_url;
 
                                     return (
                                         <div
                                             key={track.id}
                                             onClick={() => handleItemTap(track.id)}
-                                            className="relative aspect-square rounded-2xl overflow-hidden cursor-pointer group shadow-lg ring-1 ring-white/5 active:scale-95 transition-all duration-300"
+                                            className="relative aspect-square rounded-2xl overflow-hidden cursor-pointer group shadow-lg ring-1 ring-white/5 active:scale-95 transition-all duration-300 bg-neutral-900"
                                         >
-                                            {thumb ? (
-                                                <img
-                                                    src={thumb}
-                                                    alt={track.title}
-                                                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                                            {hasThumb ? (
+                                                <ThumbnailImage
+                                                    track={track}
+                                                    className="w-full h-full transition-transform duration-700 group-hover:scale-105"
                                                 />
                                             ) : (
                                                 <div className={`w-full h-full bg-gradient-to-br ${fallbackGradient} flex items-center justify-center p-4 relative`}>
