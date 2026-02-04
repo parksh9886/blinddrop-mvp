@@ -83,7 +83,7 @@ const FeedbackSection = ({
                         value={comment}
                         onChange={(e) => setComment(e.target.value)}
                         placeholder="Send anonymous feedback..."
-                        className="flex-1 bg-white/10 backdrop-blur-md border border-white/10 rounded-xl px-4 py-3 text-white placeholder-white/30 focus:outline-none focus:border-white/30 transition-all font-medium"
+                        className="flex-1 bg-white/5 backdrop-blur-md border border-white/10 rounded-xl px-4 py-3 text-white placeholder-white/40 focus:outline-none focus:ring-1 focus:ring-white/30 transition-all font-medium"
                         required
                     />
                     <button
@@ -95,7 +95,7 @@ const FeedbackSection = ({
                 </form>
             )}
 
-            <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl p-4">
+            <div className="bg-black/30 backdrop-blur-md border border-white/10 rounded-2xl p-4">
                 <FeedbackList
                     feedbacks={track.feedbacks}
                     isOwner={isOwner}
