@@ -465,7 +465,7 @@ const ArtistPublicPage: React.FC = () => {
                 onReply={handleReply}
                 onUnlock={handleUnlock}
                 artistName={profile?.display_name || profile?.handle || ""}
-                onSubmitFeedback={async (trackId, content) => {
+                onSubmitFeedback={async (trackId: string, content: string) => {
                     const { data, error } = await supabase.from('feedbacks').insert({
                         track_id: trackId,
                         content: content
@@ -476,7 +476,7 @@ const ArtistPublicPage: React.FC = () => {
                     const newFeedback = { ...data, isAccessible: false };
 
                     // Update Tracks State
-                    setTracks(prev => prev.map(t => t.id === trackId ? {
+                    setTracks((prev: Track[]) => prev.map(t => t.id === trackId ? {
                         ...t, feedbacks: [newFeedback, ...(t.feedbacks || [])]
                     } : t));
 
