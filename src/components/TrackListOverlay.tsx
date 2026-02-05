@@ -149,38 +149,47 @@ const FeedbackSection = ({
                                     { label: 'Energy', left: 'Calm', right: 'Exciting', val: vibe_energy, set: setVibeEnergy },
                                     { label: 'Mood', left: 'Dark', right: 'Bright', val: vibe_mood, set: setVibeMood },
                                     { label: 'Style', left: 'Popular', right: 'Unique', val: vibe_style, set: setVibeStyle }
-                                ].map((s) => (
-                                    <div key={s.label} className="space-y-2">
-                                        <div className="flex justify-between text-[11px] font-bold uppercase tracking-wider text-white/40 px-1">
-                                            <span>{s.left}</span>
-                                            <span>{s.right}</span>
-                                        </div>
-                                        <div className="relative flex items-center h-4 group">
-                                            {/* Track Background */}
-                                            <div className="absolute w-full h-1 bg-white/10 rounded-full overflow-hidden">
-                                                {/* Center Marker */}
-                                                <div className="absolute left-1/2 top-0 bottom-0 w-0.5 bg-white/20 -translate-x-1/2" />
-                                            </div>
+                                ].map((s) => {
+                                    // Dynamic Opacity Logic
+                                    // Base: 0.4 (text-white/40)
+                                    // Max: 1.0 (text-white)
+                                    // Range: 50 -> 0 (Left), 50 -> 100 (Right)
+                                    const leftOpacity = s.val <= 50 ? 0.4 + (0.6 * (50 - s.val) / 50) : 0.4;
+                                    const rightOpacity = s.val >= 50 ? 0.4 + (0.6 * (s.val - 50) / 50) : 0.4;
 
-                                            <input
-                                                type="range"
-                                                min="0"
-                                                max="100"
-                                                value={s.val}
-                                                onChange={(e) => s.set(parseInt(e.target.value))}
-                                                className="relative w-full h-4 opacity-0 cursor-pointer z-10"
-                                            />
+                                    return (
+                                        <div key={s.label} className="space-y-2">
+                                            <div className="flex justify-between text-[11px] font-bold uppercase tracking-wider px-1">
+                                                <span style={{ color: `rgba(255, 255, 255, ${leftOpacity})`, transition: 'color 0.2s' }}>{s.left}</span>
+                                                <span style={{ color: `rgba(255, 255, 255, ${rightOpacity})`, transition: 'color 0.2s' }}>{s.right}</span>
+                                            </div>
+                                            <div className="relative flex items-center h-4 group">
+                                                {/* Track Background */}
+                                                <div className="absolute w-full h-1 bg-white/10 rounded-full overflow-hidden">
+                                                    {/* Center Marker */}
+                                                    <div className="absolute left-1/2 top-0 bottom-0 w-0.5 bg-white/20 -translate-x-1/2" />
+                                                </div>
 
-                                            {/* Custom Thumb */}
-                                            <div
-                                                className="absolute top-1/2 -translate-y-1/2 w-4 h-4 bg-white rounded-full shadow-[0_0_10px_rgba(255,255,255,0.5)] pointer-events-none transition-all duration-75"
-                                                style={{ left: `calc(${s.val}% - 8px)` }}
-                                            >
-                                                <div className="absolute inset-0 rounded-full ring-2 ring-white/20" />
+                                                <input
+                                                    type="range"
+                                                    min="0"
+                                                    max="100"
+                                                    value={s.val}
+                                                    onChange={(e) => s.set(parseInt(e.target.value))}
+                                                    className="relative w-full h-4 opacity-0 cursor-pointer z-10"
+                                                />
+
+                                                {/* Custom Thumb */}
+                                                <div
+                                                    className="absolute top-1/2 -translate-y-1/2 w-4 h-4 bg-white rounded-full shadow-[0_0_10px_rgba(255,255,255,0.5)] pointer-events-none transition-all duration-75"
+                                                    style={{ left: `calc(${s.val}% - 8px)` }}
+                                                >
+                                                    <div className="absolute inset-0 rounded-full ring-2 ring-white/20" />
+                                                </div>
                                             </div>
                                         </div>
-                                    </div>
-                                ))}
+                                    );
+                                })}
                             </div>
                         </div>
                     </div>
