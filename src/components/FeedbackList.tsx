@@ -173,11 +173,41 @@ export const FeedbackList: React.FC<FeedbackListProps> = ({
     trackId
 }) => {
     const { displayFeedbacks } = useFeedbackLogic(feedbacks, isOwner);
+    const [filter, setFilter] = React.useState<'all' | 'unreplied'>('all');
+
+    const filteredFeedbacks = displayFeedbacks.filter(fb => {
+        if (filter === 'unreplied') return !fb.reply;
+        return true;
+    });
 
     return (
         <div className="space-y-4">
-            {displayFeedbacks.length > 0 ? (
-                displayFeedbacks.map((fb) => (
+            {/* Filter Tabs (Owner Only) */}
+            {isOwner && (
+                <div className="flex gap-2 mb-2">
+                    <button
+                        onClick={() => setFilter('all')}
+                        className={`px-3 py-1 text-[10px] font-bold rounded-full transition-all uppercase tracking-wider ${filter === 'all'
+                            ? 'bg-white text-black'
+                            : 'bg-white/5 text-white/40 hover:bg-white/10'
+                            }`}
+                    >
+                        All
+                    </button>
+                    <button
+                        onClick={() => setFilter('unreplied')}
+                        className={`px-3 py-1 text-[10px] font-bold rounded-full transition-all uppercase tracking-wider ${filter === 'unreplied'
+                            ? 'bg-indigo-500 text-white shadow-[0_0_10px_rgba(99,102,241,0.5)]'
+                            : 'bg-white/5 text-white/40 hover:bg-white/10'
+                            }`}
+                    >
+                        Unreplied
+                    </button>
+                </div>
+            )}
+
+            {filteredFeedbacks.length > 0 ? (
+                filteredFeedbacks.map((fb) => (
                     <FeedbackItem
                         key={fb.id}
                         feedback={fb}
@@ -189,7 +219,7 @@ export const FeedbackList: React.FC<FeedbackListProps> = ({
                 ))
             ) : (
                 <div className="text-center py-8 text-white/20 text-xs font-medium border border-dashed border-white/5 rounded-xl bg-white/5 uppercase tracking-widest">
-                    {isOwner ? "No feedback yet." : "Be the first to share your thoughts"}
+                    {filter === 'unreplied' ? "All caught up! No unreplied feedback." : (isOwner ? "No feedback yet." : "Be the first to share your thoughts")}
                 </div>
             )}
         </div>

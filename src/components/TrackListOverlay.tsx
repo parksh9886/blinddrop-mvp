@@ -178,7 +178,12 @@ const FeedbackSection = ({
                                                     min="0"
                                                     max="100"
                                                     value={s.val}
-                                                    onChange={(e) => s.set(parseInt(e.target.value))}
+                                                    onChange={(e) => {
+                                                        let val = parseInt(e.target.value);
+                                                        // Magnetism: Snap to 50 if within 45-55
+                                                        if (val > 45 && val < 55) val = 50;
+                                                        s.set(val);
+                                                    }}
                                                     className="relative w-full h-4 opacity-0 cursor-pointer z-10"
                                                 />
 
