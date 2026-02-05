@@ -296,7 +296,7 @@ const TracksPage: React.FC = () => {
                 const trackIds = tracksData.map((t: Track) => t.id);
                 // Fetch Feedbacks
                 const { data: feedbacksData, error: feedbacksError } = await supabase
-                    .from('feedbacks_secure_view')
+                    .from('feedbacks')
                     .select('*')
                     .in('track_id', trackIds)
                     .order('created_at', { ascending: false });
