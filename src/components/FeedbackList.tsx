@@ -59,25 +59,38 @@ const FeedbackItem = ({
                     {(feedback.vibe_energy != null || feedback.vibe_mood != null || feedback.vibe_style != null) && (
                         <div className="space-y-3 pt-1">
                             {[
-                                { val: feedback.vibe_energy, left: 'Calm', right: 'Hype' }, // Changed to Hype as in example
+                                { val: feedback.vibe_energy, left: 'Calm', right: 'Hype' },
                                 { val: feedback.vibe_mood, left: 'Dark', right: 'Bright' },
                                 { val: feedback.vibe_style, left: 'Popular', right: 'Unique' }
                             ].map((v, idx) => {
                                 if (v.val == null) return null;
-                                // val is 0-100.
-                                // Rendering a track line and a dot at `val`%
+
+                                // Dynamic Opacity Logic matches TrackListOverlay
+                                const value = v.val;
+                                const leftOpacity = value <= 50 ? 0.4 + (0.6 * (50 - value) / 50) : 0.4;
+                                const rightOpacity = value >= 50 ? 0.4 + (0.6 * (value - 50) / 50) : 0.4;
+
                                 return (
                                     <div key={idx} className="flex items-center gap-3">
-                                        <span className="text-[10px] text-gray-500 font-medium w-8 text-right">{v.left}</span>
+                                        <span
+                                            className="text-[10px] font-medium w-8 text-right transition-colors duration-200"
+                                            style={{ color: `rgba(255, 255, 255, ${leftOpacity})` }}
+                                        >
+                                            {v.left}
+                                        </span>
                                         <div className="flex-1 h-1.5 bg-white/5 rounded-full relative flex items-center">
-                                            {/* Track Line (optional decorative) - styling simplified as background */}
                                             {/* Dot */}
                                             <div
                                                 className="absolute h-2.5 w-2.5 bg-white rounded-full shadow-[0_0_8px_rgba(255,255,255,0.5)] border border-white/20"
                                                 style={{ left: `calc(${v.val}% - 5px)` }}
                                             />
                                         </div>
-                                        <span className="text-[10px] text-gray-500 font-medium w-8">{v.right}</span>
+                                        <span
+                                            className="text-[10px] font-medium w-8 transition-colors duration-200"
+                                            style={{ color: `rgba(255, 255, 255, ${rightOpacity})` }}
+                                        >
+                                            {v.right}
+                                        </span>
                                     </div>
                                 );
                             })}
