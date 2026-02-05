@@ -164,10 +164,13 @@ const FeedbackSection = ({
                                                 <span style={{ color: `rgba(255, 255, 255, ${rightOpacity})`, transition: 'color 0.2s' }}>{s.right}</span>
                                             </div>
                                             <div className="relative flex items-center h-4 group">
+                                                {/* Center Marker - Visible Tick */}
+                                                <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-0.5 h-2.5 bg-white/40 rounded-full z-0" />
+
                                                 {/* Track Background */}
                                                 <div className="absolute w-full h-1 bg-white/10 rounded-full overflow-hidden">
-                                                    {/* Center Marker */}
-                                                    <div className="absolute left-1/2 top-0 bottom-0 w-0.5 bg-white/20 -translate-x-1/2" />
+                                                    {/* Center Marker inside track (optional, helpful for filled track logic if used later) */}
+                                                    <div className="absolute left-1/2 top-0 bottom-0 w-px bg-black/20 -translate-x-1/2" />
                                                 </div>
 
                                                 <input

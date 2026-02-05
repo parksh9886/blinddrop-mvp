@@ -79,9 +79,12 @@ const FeedbackItem = ({
                                             {v.left}
                                         </span>
                                         <div className="flex-1 h-1.5 bg-white/5 rounded-full relative flex items-center">
+                                            {/* Center Marker */}
+                                            <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-0.5 h-2.5 bg-white/40 rounded-full" />
+
                                             {/* Dot */}
                                             <div
-                                                className="absolute h-2.5 w-2.5 bg-white rounded-full shadow-[0_0_8px_rgba(255,255,255,0.5)] border border-white/20"
+                                                className="absolute h-2.5 w-2.5 bg-white rounded-full shadow-[0_0_8px_rgba(255,255,255,0.5)] border border-white/20 z-10"
                                                 style={{ left: `calc(${v.val}% - 5px)` }}
                                             />
                                         </div>
