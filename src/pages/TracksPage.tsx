@@ -28,14 +28,8 @@ import {
 import { CSS } from '@dnd-kit/utilities';
 import { FeedbackList } from '../components/FeedbackList';
 
-interface Feedback {
-    id: string;
-    content: string;
-    created_at: string;
-    reply: string | null;
-    is_unlocked: boolean;
-    track_id: string;
-}
+import type { Feedback } from '../hooks/useFeedbackLogic';
+// Local Feedback interface removed in favor of shared type
 
 interface Track {
     id: string;
