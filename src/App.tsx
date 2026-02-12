@@ -8,6 +8,7 @@ import DashboardPage from './pages/DashboardPage';
 import TracksPage from './pages/TracksPage';
 import ProfilePage from './pages/ProfilePage';
 import ArtistPublicPage from './pages/ArtistPublicPage';
+import DesignSandboxPage from './pages/DesignSandboxPage';
 // import PublicFeedbackPage from './pages/PublicFeedbackPage';
 
 function App() {
@@ -22,6 +23,7 @@ function App() {
 
             <Route path="/" element={<LandingPage />} />
             <Route path="/login" element={<LoginPage />} />
+            <Route path="/design-sandbox" element={<DesignSandboxPage />} />
 
             {/* Protected Routes */}
             <Route path="/dashboard" element={<DashboardPage />} />
