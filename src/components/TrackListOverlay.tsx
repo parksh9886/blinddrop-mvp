@@ -213,7 +213,8 @@ const FeedbackSection = ({
                                                     value={s.val}
                                                     onChange={(e) => {
                                                         let val = parseInt(e.target.value);
-                                                        if (val > 45 && val < 55) val = 50;
+                                                        // Magnetism: Snap to 50 if within range (reduced strength)
+                                                        if (val > 48 && val < 52) val = 50;
                                                         s.set(val);
                                                     }}
                                                     className="absolute inset-0 w-full h-full opacity-0 z-20 cursor-grab active:cursor-grabbing"

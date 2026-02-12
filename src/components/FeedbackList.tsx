@@ -296,7 +296,7 @@ const FeedbackItem = ({
     );
 };
 
-export const FeedbackList: React.FC<FeedbackListProps> = ({
+export const FeedbackList = React.memo<FeedbackListProps>(({
     feedbacks,
     isOwner,
     onReply,
@@ -361,5 +361,5 @@ export const FeedbackList: React.FC<FeedbackListProps> = ({
             )}
         </div>
     );
-};
+});
 
