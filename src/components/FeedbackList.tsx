@@ -9,6 +9,7 @@ interface FeedbackListProps {
     onReply: (feedbackId: string, trackId: string, content: string) => void;
     onUnlock: (feedbackId: string, trackId: string) => void;
     trackId: string;
+    artistProfileImage?: string | null;
 }
 
 // --- HELPERS from DesignSandbox ---
@@ -40,16 +41,18 @@ const VibeSlider = ({ value, leftLabel, rightLabel, leftColor, rightColor }: { v
             <div className="flex justify-between text-[10px] font-bold tracking-wider uppercase transition-all duration-300">
                 <span style={{
                     color: isLeft ? leftColor : '#64748b',
-                    opacity: isLeft ? 0.5 + (0.5 * intensity) : 0.4,
-                    textShadow: (isLeft && intensity > 0.6) ? `0 0 8px ${leftColor}` : 'none'
-                }}>
+                    opacity: isLeft ? 0.4 + (0.6 * intensity) : 0.4,
+                    textShadow: isLeft ? `0 0 ${intensity * 10}px ${leftColor}` : 'none',
+                    transform: isLeft ? `scale(${1 + intensity * 0.1})` : 'scale(1)'
+                }} className="transition-all duration-300">
                     {leftLabel}
                 </span>
                 <span style={{
                     color: isRight ? rightColor : '#64748b',
-                    opacity: isRight ? 0.5 + (0.5 * intensity) : 0.4,
-                    textShadow: (isRight && intensity > 0.6) ? `0 0 8px ${rightColor}` : 'none'
-                }}>
+                    opacity: isRight ? 0.4 + (0.6 * intensity) : 0.4,
+                    textShadow: isRight ? `0 0 ${intensity * 10}px ${rightColor}` : 'none',
+                    transform: isRight ? `scale(${1 + intensity * 0.1})` : 'scale(1)'
+                }} className="transition-all duration-300">
                     {rightLabel}
                 </span>
             </div>
@@ -78,13 +81,15 @@ const FeedbackItem = ({
     isOwner,
     onReply,
     onUnlock,
-    trackId
+    trackId,
+    artistProfileImage
 }: {
     feedback: Feedback & { isAccessible: boolean };
     isOwner: boolean;
     onReply: (fid: string, tid: string, content: string) => void;
     onUnlock: (fid: string, tid: string) => void;
     trackId: string;
+    artistProfileImage?: string | null;
 }) => {
     const { isAccessible, content, created_at, reply, id, situations, vibe_energy, vibe_mood, vibe_style } = feedback;
     const shouldBlur = !isAccessible;
@@ -212,9 +217,17 @@ const FeedbackItem = ({
                 <div className="relative mt-2 ml-auto w-[90%] md:w-[85%] animate-in fade-in slide-in-from-bottom-2">
                     <div className="relative bg-[#1e293b] p-5 rounded-3xl rounded-tr-none border border-slate-700/50 shadow-lg">
                         <div className="flex items-center justify-start gap-3 mb-2">
-                            <div className="w-6 h-6 rounded-full bg-indigo-500 flex items-center justify-center text-[10px] font-bold text-white shadow-[0_0_10px_rgba(99,102,241,0.5)]">
-                                You
-                            </div>
+                            {artistProfileImage ? (
+                                <img
+                                    src={artistProfileImage}
+                                    alt="Artist"
+                                    className="w-6 h-6 rounded-full object-cover shadow-[0_0_10px_rgba(99,102,241,0.5)] border border-white/10"
+                                />
+                            ) : (
+                                <div className="w-6 h-6 rounded-full bg-indigo-500 flex items-center justify-center text-[10px] font-bold text-white shadow-[0_0_10px_rgba(99,102,241,0.5)]">
+                                    You
+                                </div>
+                            )}
                             <span className="text-[10px] uppercase font-bold text-indigo-400 tracking-wider">Artist Reply</span>
                         </div>
                         <p className="text-sm text-slate-300 leading-relaxed text-left pl-1">
@@ -237,9 +250,17 @@ const FeedbackItem = ({
                         >
                             {/* Avatar (You) */}
                             <div className="pl-2">
-                                <div className="w-8 h-8 rounded-full bg-indigo-500 flex items-center justify-center text-[10px] font-bold text-white shadow-lg">
-                                    You
-                                </div>
+                                {artistProfileImage ? (
+                                    <img
+                                        src={artistProfileImage}
+                                        alt="You"
+                                        className="w-8 h-8 rounded-full object-cover shadow-lg border border-white/10"
+                                    />
+                                ) : (
+                                    <div className="w-8 h-8 rounded-full bg-indigo-500 flex items-center justify-center text-[10px] font-bold text-white shadow-lg">
+                                        You
+                                    </div>
+                                )}
                             </div>
 
                             {/* Input Field */}
@@ -280,7 +301,8 @@ export const FeedbackList: React.FC<FeedbackListProps> = ({
     isOwner,
     onReply,
     onUnlock,
-    trackId
+    trackId,
+    artistProfileImage
 }) => {
     const { displayFeedbacks } = useFeedbackLogic(feedbacks, isOwner);
     const [filter, setFilter] = React.useState<'all' | 'unreplied'>('all');
@@ -326,6 +348,7 @@ export const FeedbackList: React.FC<FeedbackListProps> = ({
                         onReply={onReply}
                         onUnlock={onUnlock}
                         trackId={trackId}
+                        artistProfileImage={artistProfileImage}
                     />
                 ))
             ) : (

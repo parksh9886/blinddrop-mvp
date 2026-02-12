@@ -41,6 +41,7 @@ interface TrackListOverlayProps {
     onUnlock: (fid: string, tid: string) => void;
     onSubmitFeedback: (trackId: string, content: string, vibes?: { energy: number; mood: number; style: number }, situations?: string[]) => Promise<void>;
     artistName?: string;
+    artistProfileImage?: string | null;
 }
 
 const FeedbackSection = ({
@@ -48,13 +49,15 @@ const FeedbackSection = ({
     isOwner,
     onReply,
     onUnlock,
-    onSubmitFeedback
+    onSubmitFeedback,
+    artistProfileImage
 }: {
     track: Track;
     isOwner: boolean;
     onReply: (fid: string, tid: string, content: string) => void;
     onUnlock: (fid: string, tid: string) => void;
     onSubmitFeedback: (trackId: string, content: string, vibes?: { energy: number; mood: number; style: number }, situations?: string[]) => Promise<void>;
+    artistProfileImage?: string | null;
 }) => {
     const [comment, setComment] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -168,16 +171,16 @@ const FeedbackSection = ({
                                             <div className="flex justify-between text-[10px] font-bold tracking-wider uppercase transition-all duration-300 px-1">
                                                 <span style={{
                                                     color: isLeft ? s.lCol : '#64748b',
-                                                    opacity: isLeft ? 0.5 + (0.5 * intensity) : 0.4,
-                                                    textShadow: (isLeft && intensity > 0.6) ? `0 0 10px ${s.lCol}` : 'none',
+                                                    opacity: isLeft ? 0.4 + (0.6 * intensity) : 0.4,
+                                                    textShadow: isLeft ? `0 0 ${intensity * 10}px ${s.lCol}` : 'none',
                                                     transform: isLeft ? `scale(${1 + intensity * 0.1})` : 'scale(1)'
                                                 }} className="transition-transform duration-300">
                                                     {s.left}
                                                 </span>
                                                 <span style={{
                                                     color: isRight ? s.rCol : '#64748b',
-                                                    opacity: isRight ? 0.5 + (0.5 * intensity) : 0.4,
-                                                    textShadow: (isRight && intensity > 0.6) ? `0 0 10px ${s.rCol}` : 'none',
+                                                    opacity: isRight ? 0.4 + (0.6 * intensity) : 0.4,
+                                                    textShadow: isRight ? `0 0 ${intensity * 10}px ${s.rCol}` : 'none',
                                                     transform: isRight ? `scale(${1 + intensity * 0.1})` : 'scale(1)'
                                                 }} className="transition-transform duration-300">
                                                     {s.right}
@@ -280,6 +283,7 @@ const FeedbackSection = ({
                     onReply={onReply}
                     onUnlock={onUnlock}
                     trackId={track.id}
+                    artistProfileImage={artistProfileImage}
                 />
             </div>
         </div>
@@ -348,7 +352,8 @@ const TrackListOverlay: React.FC<TrackListOverlayProps> = ({
     onReply,
     onUnlock,
     onSubmitFeedback,
-    artistName
+    artistName,
+    artistProfileImage
 }) => {
     const [tapSelectedId, setTapSelectedId] = useState<string | null>(null);
 
@@ -550,6 +555,7 @@ const TrackListOverlay: React.FC<TrackListOverlayProps> = ({
                                             onReply={onReply}
                                             onUnlock={onUnlock}
                                             onSubmitFeedback={onSubmitFeedback}
+                                            artistProfileImage={artistProfileImage}
                                         />
                                     </div>
                                 </motion.div>

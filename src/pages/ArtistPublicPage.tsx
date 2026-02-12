@@ -470,6 +470,7 @@ const ArtistPublicPage: React.FC = () => {
                 onReply={handleReply}
                 onUnlock={handleUnlock}
                 artistName={profile?.display_name || profile?.handle || ""}
+                artistProfileImage={profile?.avatar_url}
                 onSubmitFeedback={async (trackId: string, content: string, vibes?: { energy: number; mood: number; style: number }, situations?: string[]) => {
                     const { data, error } = await supabase.from('feedbacks').insert({
                         track_id: trackId,
