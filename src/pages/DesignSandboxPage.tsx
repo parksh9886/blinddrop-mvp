@@ -1,6 +1,6 @@
 
-import React, { useState } from 'react';
-import { User, Lock, MessageCircle, Send, Sparkles } from 'lucide-react';
+import { useState } from 'react';
+import { User, Lock, Send } from 'lucide-react';
 import Layout from '../components/Layout';
 
 // --- MOCK DATA ---
