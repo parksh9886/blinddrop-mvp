@@ -87,7 +87,8 @@ const FeedbackSection = ({
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!comment.trim() && selectedSituations.length === 0 && vibe_energy === 50 && vibe_mood === 50 && vibe_style === 50) return;
+        // Strict validation: Text input is mandatory
+        if (!comment.trim()) return;
 
         setIsSubmitting(true);
         try {
@@ -109,7 +110,8 @@ const FeedbackSection = ({
         }
     };
 
-    const hasContent = comment.length > 0 || selectedSituations.length > 0 || vibe_energy !== 50 || vibe_mood !== 50 || vibe_style !== 50;
+    // Button is disabled if there is no text, regardless of other inputs
+    const isValid = comment.trim().length > 0;
 
     return (
         <div className="space-y-8">
@@ -250,10 +252,10 @@ const FeedbackSection = ({
                                 />
                                 <button
                                     onClick={handleSubmit}
-                                    disabled={!hasContent || isSubmitting}
+                                    disabled={!isValid || isSubmitting}
                                     className={`
                                         mb-1 mr-1 p-2.5 rounded-xl flex items-center justify-center transition-all duration-300
-                                        ${hasContent
+                                        ${isValid
                                             ? 'bg-indigo-500 text-white shadow-[0_0_15px_rgba(99,102,241,0.5)] hover:scale-105 active:scale-95'
                                             : 'bg-white/5 text-slate-600'
                                         }
