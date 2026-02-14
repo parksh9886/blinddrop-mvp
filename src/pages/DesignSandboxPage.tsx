@@ -70,7 +70,7 @@ const PrototypeFeedbackItem = ({ feedback }: { feedback: any }) => {
                 {/* LEFT: Avatar Column */}
                 <div className="flex-shrink-0 relative z-10">
                     <div className={`
-                        w-9 h-9 rounded-full flex items-center justify-center 
+                        w-9 h-9 rounded-full flex items-center justify-center
                         bg-white/5 border border-white/10 shadow-sm backdrop-blur-sm
                     `}>
                         <User className="w-4 h-4 text-white/50" />
@@ -103,9 +103,9 @@ const PrototypeFeedbackItem = ({ feedback }: { feedback: any }) => {
                         )}
                     </div>
 
-                    {/* Main Content Text */}
+                    {/* Main Content Text (Highlighted) */}
                     <div className="relative">
-                        <p className={`text-sm leading-relaxed text-slate-300 ${shouldBlur ? 'blur-sm select-none' : ''}`}>
+                        <p className={`text-sm font-medium leading-relaxed text-gray-100 ${shouldBlur ? 'blur-sm select-none' : ''}`}>
                             {content}
                         </p>
 
@@ -128,23 +128,21 @@ const PrototypeFeedbackItem = ({ feedback }: { feedback: any }) => {
 
                     {/* NESTED: Artist Reply or Input */}
                     {hasReplyOrInput && (
-                        <div className="mt-4 animate-in fade-in slide-in-from-top-2 duration-300">
+                        <div className="mt-3 animate-in fade-in slide-in-from-top-2 duration-300 pl-4">
                             {reply ? (
-                                /* ARTIST REPLY UI */
-                                <div className="relative pl-4 border-l-2 border-indigo-500/50">
-                                    <div className="bg-indigo-500/5 p-3 rounded-r-xl rounded-bl-sm">
-                                        {/* Header */}
-                                        <div className="flex items-center gap-2 mb-1.5">
-                                            <div className="w-4 h-4 rounded-full bg-indigo-500 flex items-center justify-center">
-                                                <span className="text-[8px] text-white font-bold">A</span>
-                                            </div>
-                                            <span className="text-[10px] font-bold text-indigo-200 uppercase tracking-wider">Artist Reply</span>
+                                /* ARTIST REPLY UI (Subtle) */
+                                <div className="relative">
+                                    {/* Header */}
+                                    <div className="flex items-center gap-2 mb-1">
+                                        <div className="w-4 h-4 rounded-full bg-indigo-500 flex items-center justify-center">
+                                            <span className="text-[8px] text-white font-bold">A</span>
                                         </div>
-                                        {/* Reply Text */}
-                                        <p className="text-sm text-indigo-50/90 leading-relaxed">
-                                            {reply}
-                                        </p>
+                                        <span className="text-[10px] font-bold text-indigo-300/80 uppercase tracking-wider">Artist Reply</span>
                                     </div>
+                                    {/* Reply Text (De-emphasized) */}
+                                    <p className="text-xs md:text-sm text-slate-400 leading-relaxed">
+                                        {reply}
+                                    </p>
                                 </div>
                             ) : (
                                 /* INPUT FIELD UI (Line Style) */
@@ -175,7 +173,7 @@ const PrototypeFeedbackItem = ({ feedback }: { feedback: any }) => {
                                         type="submit"
                                         disabled={!inputValue.trim()}
                                         className={`
-                                            p-2 rounded-full transition-all duration-300 
+                                            p-2 rounded-full transition-all duration-300
                                             ${inputValue.trim()
                                                 ? 'text-indigo-400 hover:text-white hover:bg-indigo-500'
                                                 : 'text-white/10 cursor-not-allowed'
