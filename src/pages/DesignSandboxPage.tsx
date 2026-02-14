@@ -46,70 +46,11 @@ const MOCK_FEEDBACKS = [
 ];
 
 // --- HELPERS ---
-const getSituationEmoji = (situation: string) => {
-    const map: Record<string, string> = {
-        'Driving': '🚗',
-        'Gym': '💪',
-        'Party': '🎉',
-        'Study': '📚',
-        'Chill': '☕',
-        'Work': '💼',
-        'Dance': '💃',
-        'Running': '🏃',
-        'Gaming': '🎮',
-        'Sleep': '💤',
-        'Morning': '🌅',
-        'Late Night': '🌙',
-    };
-    return map[situation] || '🏷️';
-};
 
-const VibeSlider = ({ value, leftLabel, rightLabel, leftColor, rightColor }: { value: number, leftLabel: string, rightLabel: string, leftColor: string, rightColor: string }) => {
-    const isLeft = value < 50;
-    const isRight = value > 50;
-    const intensity = Math.abs(value - 50) / 50;
-
-    return (
-        <div className="flex flex-col gap-1 w-full">
-            <div className="flex justify-between text-[10px] font-bold tracking-wider uppercase transition-all duration-300">
-                <span style={{
-                    color: isLeft ? leftColor : '#64748b',
-                    opacity: isLeft ? 0.5 + (0.5 * intensity) : 0.4,
-                    textShadow: (isLeft && intensity > 0.6) ? `0 0 8px ${leftColor}` : 'none'
-                }}>
-                    {leftLabel}
-                </span>
-                <span style={{
-                    color: isRight ? rightColor : '#64748b',
-                    opacity: isRight ? 0.5 + (0.5 * intensity) : 0.4,
-                    textShadow: (isRight && intensity > 0.6) ? `0 0 8px ${rightColor}` : 'none'
-                }}>
-                    {rightLabel}
-                </span>
-            </div>
-            <div className="relative h-2 bg-slate-800/80 rounded-full overflow-hidden border border-white/5">
-                <div
-                    className="absolute inset-0 opacity-80"
-                    style={{
-                        background: `linear-gradient(to right, 
-                            ${isLeft ? leftColor : 'transparent'} 0%, 
-                            transparent 50%, 
-                            ${isRight ? rightColor : 'transparent'} 100%)`
-                    }}
-                />
-                <div className="absolute left-1/2 top-0 bottom-0 w-0.5 bg-white/20 -translate-x-1/2" />
-                <div
-                    className="absolute top-1/2 -translate-y-1/2 w-2.5 h-2.5 bg-white rounded-full shadow-[0_0_8px_rgba(255,255,255,0.8)] z-10 transition-all duration-500 ease-out"
-                    style={{ left: `calc(${value}% - 5px)` }}
-                />
-            </div>
-        </div>
-    );
-};
 
 // --- PROTOTYPE COMPONENT ---
 const PrototypeFeedbackItem = ({ feedback }: { feedback: any }) => {
-    const { isAccessible, content, created_at, reply, situations, vibe_energy, vibe_mood, vibe_style, mockIsOwner, is_unlocked } = feedback;
+    const { isAccessible, content, created_at, reply, mockIsOwner, is_unlocked } = feedback;
     const shouldBlur = !isAccessible;
 
     // Simulate input state for demo
@@ -142,27 +83,7 @@ const PrototypeFeedbackItem = ({ feedback }: { feedback: any }) => {
                 </div>
 
                 {/* Content */}
-                {!shouldBlur && (
-                    <div className="mb-5 space-y-4">
-                        {situations && situations.length > 0 && (
-                            <div className="flex flex-wrap gap-2">
-                                {situations.map((s: string, i: number) => (
-                                    <span key={i} className="text-[11px] font-medium px-3 py-1.5 rounded-full bg-white/5 text-white/80 border border-white/10 flex items-center gap-1.5 hover:bg-white/10 transition-colors cursor-default">
-                                        <span>{getSituationEmoji(s)}</span>
-                                        <span>{s}</span>
-                                    </span>
-                                ))}
-                            </div>
-                        )}
-                        {(vibe_energy !== undefined) && (
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 bg-black/20 p-4 rounded-2xl border border-white/5">
-                                <VibeSlider value={vibe_energy} leftLabel="Calm" rightLabel="Hype" leftColor="#2dd4bf" rightColor="#f43f5e" />
-                                <VibeSlider value={vibe_mood} leftLabel="Dark" rightLabel="Bright" leftColor="#8b5cf6" rightColor="#fbbf24" />
-                                <VibeSlider value={vibe_style} leftLabel="Popular" rightLabel="Unique" leftColor="#3b82f6" rightColor="#d946ef" />
-                            </div>
-                        )}
-                    </div>
-                )}
+
 
                 <div className={`text-sm leading-relaxed text-white/90 pl-1 ${shouldBlur ? 'blur-sm select-none grayscale opacity-50' : ''}`}>
                     {content}

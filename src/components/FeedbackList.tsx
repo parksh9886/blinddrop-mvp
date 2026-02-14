@@ -12,69 +12,7 @@ interface FeedbackListProps {
     artistProfileImage?: string | null;
 }
 
-// --- HELPERS from DesignSandbox ---
-const getSituationEmoji = (situation: string) => {
-    const map: Record<string, string> = {
-        'Driving': '🚗',
-        'Gym': '💪',
-        'Party': '🎉',
-        'Study': '📚',
-        'Chill': '☕',
-        'Work': '💼',
-        'Dance': '💃',
-        'Running': '🏃',
-        'Gaming': '🎮',
-        'Sleep': '💤',
-        'Morning': '🌅',
-        'Late Night': '🌙',
-    };
-    return map[situation] || '🏷️';
-};
 
-const VibeSlider = ({ value, leftLabel, rightLabel, leftColor, rightColor }: { value: number, leftLabel: string, rightLabel: string, leftColor: string, rightColor: string }) => {
-    const isLeft = value < 50;
-    const isRight = value > 50;
-    const intensity = Math.abs(value - 50) / 50;
-
-    return (
-        <div className="flex flex-col gap-1 w-full">
-            <div className="flex justify-between text-[10px] font-bold tracking-wider uppercase transition-all duration-300">
-                <span style={{
-                    color: isLeft ? leftColor : '#64748b',
-                    opacity: isLeft ? 0.4 + (0.6 * intensity) : 0.4,
-                    textShadow: isLeft ? `0 0 ${intensity * 10}px ${leftColor}` : 'none',
-                    transform: isLeft ? `scale(${1 + intensity * 0.1})` : 'scale(1)'
-                }} className="transition-all duration-300">
-                    {leftLabel}
-                </span>
-                <span style={{
-                    color: isRight ? rightColor : '#64748b',
-                    opacity: isRight ? 0.4 + (0.6 * intensity) : 0.4,
-                    textShadow: isRight ? `0 0 ${intensity * 10}px ${rightColor}` : 'none',
-                    transform: isRight ? `scale(${1 + intensity * 0.1})` : 'scale(1)'
-                }} className="transition-all duration-300">
-                    {rightLabel}
-                </span>
-            </div>
-            <div className="relative h-2 bg-slate-800/80 rounded-full overflow-hidden border border-white/5">
-                <div
-                    className="absolute inset-0 opacity-80"
-                    style={{
-                        background: `linear-gradient(to right, 
-                            ${isLeft ? leftColor : 'transparent'} 0%, 
-                            transparent 50%, 
-                            ${isRight ? rightColor : 'transparent'} 100%)`
-                    }}
-                />
-                <div className="absolute left-1/2 top-0 bottom-0 w-0.5 bg-white/20 -translate-x-1/2" />
-                <div
-                    className="absolute top-1/2 -translate-y-1/2 w-2.5 h-2.5 bg-white rounded-full shadow-[0_0_8px_rgba(255,255,255,0.8)] z-10 transition-all duration-500 ease-out"
-                    style={{ left: `calc(${value}% - 5px)` }}
-                />
-            </div>
-        </div>
-    );
-};
 
 const FeedbackItem = ({
     feedback,
@@ -91,7 +29,7 @@ const FeedbackItem = ({
     trackId: string;
     artistProfileImage?: string | null;
 }) => {
-    const { isAccessible, content, created_at, reply, id, situations, vibe_energy, vibe_mood, vibe_style } = feedback;
+    const { isAccessible, content, created_at, reply, id } = feedback;
     const shouldBlur = !isAccessible;
     const [inputValue, setInputValue] = useState("");
 
@@ -133,51 +71,7 @@ const FeedbackItem = ({
                 </div>
 
                 {/* Vibe & Situations - Only Visible if NOT Blurred */}
-                {!shouldBlur && (
-                    <div className="mb-5 space-y-4">
-                        {/* 1. Situation Tags with Emojis */}
-                        {situations && situations.length > 0 && (
-                            <div className="flex flex-wrap gap-2">
-                                {situations.map((s, i) => (
-                                    <span key={i} className="text-[11px] font-medium px-3 py-1.5 rounded-full bg-white/5 text-white/80 border border-white/10 flex items-center gap-1.5 hover:bg-white/10 transition-colors cursor-default">
-                                        <span>{getSituationEmoji(s)}</span>
-                                        <span>{s}</span>
-                                    </span>
-                                ))}
-                            </div>
-                        )}
 
-                        {/* 2. Bidirectional Gradient Sliders */}
-                        {(vibe_energy != null || vibe_mood != null || vibe_style != null) && (
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 bg-black/20 p-4 rounded-2xl border border-white/5">
-                                {vibe_energy != null && (
-                                    <VibeSlider
-                                        value={vibe_energy}
-                                        leftLabel="Calm" rightLabel="Hype"
-                                        leftColor="#2dd4bf"
-                                        rightColor="#f43f5e"
-                                    />
-                                )}
-                                {vibe_mood != null && (
-                                    <VibeSlider
-                                        value={vibe_mood}
-                                        leftLabel="Dark" rightLabel="Bright"
-                                        leftColor="#8b5cf6"
-                                        rightColor="#fbbf24"
-                                    />
-                                )}
-                                {vibe_style != null && (
-                                    <VibeSlider
-                                        value={vibe_style}
-                                        leftLabel="Popular" rightLabel="Unique"
-                                        leftColor="#3b82f6"
-                                        rightColor="#d946ef"
-                                    />
-                                )}
-                            </div>
-                        )}
-                    </div>
-                )}
 
                 {/* Main Content */}
                 <div className={`

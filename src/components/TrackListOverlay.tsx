@@ -61,29 +61,7 @@ const FeedbackSection = ({
 }) => {
     const [comment, setComment] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const [vibe_energy, setVibeEnergy] = useState(50);
-    const [vibe_mood, setVibeMood] = useState(50);
-    const [vibe_style, setVibeStyle] = useState(50);
-    const [selectedSituations, setSelectedSituations] = useState<string[]>([]);
 
-    const situations = [
-        { id: 'focus', label: '🏠집중' },
-        { id: 'workout', label: '💪운동' },
-        { id: 'mood', label: '🌃감성' },
-        { id: 'drive', label: '🚗드라이브' },
-        { id: 'commute', label: '🚃출퇴근' },
-        { id: 'chill', label: '☕휴식' },
-        { id: 'party', label: '🎉파티' },
-        { id: 'comfort', label: '🩹위로' }
-    ];
-
-    const toggleSituation = (label: string) => {
-        setSelectedSituations(prev =>
-            prev.includes(label)
-                ? prev.filter(s => s !== label)
-                : [...prev, label]
-        );
-    };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -95,14 +73,10 @@ const FeedbackSection = ({
             await onSubmitFeedback(
                 track.id,
                 comment,
-                { energy: vibe_energy, mood: vibe_mood, style: vibe_style },
-                selectedSituations
+                undefined,
+                undefined
             );
             setComment('');
-            setVibeEnergy(50);
-            setVibeMood(50);
-            setVibeStyle(50);
-            setSelectedSituations([]);
         } catch (err) {
             console.error(err);
         } finally {
@@ -126,115 +100,7 @@ const FeedbackSection = ({
                     <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/10 rounded-full blur-[80px] pointer-events-none -translate-y-1/2 translate-x-1/2" />
 
                     <div className="space-y-8 relative z-10">
-                        {/* 1. Situation Tags */}
-                        <div className="space-y-3">
-                            <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1">When to listen?</h4>
-                            <div className="flex flex-wrap gap-2">
-                                {situations.map((s) => {
-                                    const isSelected = selectedSituations.includes(s.label);
-                                    // Extract just text for cleaner look if needed, or keep full label
-                                    return (
-                                        <button
-                                            key={s.id}
-                                            onClick={() => toggleSituation(s.label)}
-                                            className={`
-                                                pl-3 pr-4 py-2 rounded-full text-xs font-bold flex items-center gap-2 transition-all duration-300 border
-                                                ${isSelected
-                                                    ? 'bg-white text-black border-white shadow-[0_0_15px_rgba(255,255,255,0.4)] scale-105'
-                                                    : 'bg-white/5 text-white/40 border-white/5 hover:bg-white/10 hover:border-white/10 hover:text-white/60'
-                                                }
-                                            `}
-                                        >
-                                            {/* s.label already has emoji, but effectively we could split it if we wanted specific styling. 
-                                                For now using s.label as is. */}
-                                            <span>{s.label}</span>
-                                        </button>
-                                    );
-                                })}
-                            </div>
-                        </div>
-
-                        {/* 2. Vibe Sliders */}
-                        <div className="space-y-4 pt-2">
-                            <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1">Vibe Check</h4>
-                            <div className="space-y-5 bg-black/20 p-5 rounded-3xl border border-white/5">
-                                {[
-                                    { label: 'Energy', left: 'Calm', right: 'Hype', val: vibe_energy, set: setVibeEnergy, lCol: '#2dd4bf', rCol: '#f43f5e' },
-                                    { label: 'Mood', left: 'Dark', right: 'Bright', val: vibe_mood, set: setVibeMood, lCol: '#8b5cf6', rCol: '#fbbf24' },
-                                    { label: 'Style', left: 'Popular', right: 'Unique', val: vibe_style, set: setVibeStyle, lCol: '#3b82f6', rCol: '#d946ef' }
-                                ].map((s) => {
-                                    const isLeft = s.val < 50;
-                                    const isRight = s.val > 50;
-                                    const intensity = Math.abs(s.val - 50) / 50;
-
-                                    return (
-                                        <div key={s.label} className="flex flex-col gap-2 w-full select-none group">
-                                            {/* Labels */}
-                                            <div className="flex justify-between text-[10px] font-bold tracking-wider uppercase transition-all duration-300 px-1">
-                                                <span style={{
-                                                    color: isLeft ? s.lCol : '#64748b',
-                                                    opacity: isLeft ? 0.4 + (0.6 * intensity) : 0.4,
-                                                    textShadow: isLeft ? `0 0 ${intensity * 10}px ${s.lCol}` : 'none',
-                                                    transform: isLeft ? `scale(${1 + intensity * 0.1})` : 'scale(1)'
-                                                }} className="transition-transform duration-300">
-                                                    {s.left}
-                                                </span>
-                                                <span style={{
-                                                    color: isRight ? s.rCol : '#64748b',
-                                                    opacity: isRight ? 0.4 + (0.6 * intensity) : 0.4,
-                                                    textShadow: isRight ? `0 0 ${intensity * 10}px ${s.rCol}` : 'none',
-                                                    transform: isRight ? `scale(${1 + intensity * 0.1})` : 'scale(1)'
-                                                }} className="transition-transform duration-300">
-                                                    {s.right}
-                                                </span>
-                                            </div>
-
-                                            {/* Slider Track */}
-                                            <div className="relative h-6 flex items-center cursor-pointer touch-none">
-                                                {/* Background Track */}
-                                                <div className="absolute inset-x-0 h-2 bg-slate-800/80 rounded-full overflow-hidden border border-white/5">
-                                                    <div
-                                                        className="absolute inset-0 opacity-80"
-                                                        style={{
-                                                            background: `linear-gradient(to right, 
-                                                                ${isLeft ? s.lCol : 'transparent'} 0%, 
-                                                                transparent 50%, 
-                                                                ${isRight ? s.rCol : 'transparent'} 100%)`
-                                                        }}
-                                                    />
-                                                    <div className="absolute left-1/2 top-0 bottom-0 w-0.5 bg-white/20 -translate-x-1/2" />
-                                                </div>
-
-                                                {/* Input */}
-                                                <input
-                                                    type="range"
-                                                    min="0"
-                                                    max="100"
-                                                    value={s.val}
-                                                    onChange={(e) => {
-                                                        let val = parseInt(e.target.value);
-                                                        // Magnetism: Snap to 50 if within range (reduced strength)
-                                                        if (val > 48 && val < 52) val = 50;
-                                                        s.set(val);
-                                                    }}
-                                                    className="absolute inset-0 w-full h-full opacity-0 z-20 cursor-grab active:cursor-grabbing"
-                                                />
-
-                                                {/* Thumb */}
-                                                <div
-                                                    className="absolute h-4 w-4 bg-white rounded-full shadow-[0_0_10px_rgba(255,255,255,0.8)] z-10 pointer-events-none transition-all duration-75 ease-out flex items-center justify-center"
-                                                    style={{ left: `calc(${s.val}% - 8px)` }}
-                                                >
-                                                    <div className="w-1.5 h-1.5 rounded-full bg-slate-900/20" />
-                                                </div>
-                                            </div>
-                                        </div>
-                                    );
-                                })}
-                            </div>
-                        </div>
-
-                        {/* 3. Message Input */}
+                        {/* Message Input */}
                         <div className="relative group/input">
                             <div className={`absolute inset-0 bg-gradient-to-r from-indigo-500/20 to-purple-500/20 rounded-2xl blur-lg transition-opacity duration-500 ${comment ? 'opacity-100' : 'opacity-0'}`} />
                             <div className="relative bg-black/40 backdrop-blur-xl border border-white/10 rounded-2xl flex items-end p-2 transition-colors focus-within:border-white/20 focus-within:bg-black/60">
