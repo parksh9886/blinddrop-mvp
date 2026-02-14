@@ -1,6 +1,6 @@
 
 import { useState } from 'react';
-import { User, Lock, Send, MessageCircle } from 'lucide-react';
+import { User, Lock, Send } from 'lucide-react';
 import Layout from '../components/Layout';
 
 // --- MOCK DATA ---
