@@ -41,7 +41,7 @@ const FeedbackItem = ({
             {/* THREAD CONNECTOR LINE (Reddit Style: Avatar-to-Avatar) */}
             {hasReplyOrInput && (
                 <div
-                    className="absolute left-[1.125rem] top-9 bottom-[2.25rem] w-9 border-l border-b border-white/5 rounded-bl-2xl pointer-events-none"
+                    className="absolute left-[1.125rem] top-9 bottom-[1.625rem] w-9 border-l border-b border-white/5 rounded-bl-2xl pointer-events-none"
                     aria-hidden="true"
                 />
             )}
@@ -106,7 +106,7 @@ const FeedbackItem = ({
                                         {artistProfileImage ? (
                                             <img
                                                 src={artistProfileImage}
-                                                alt="Artist"
+                                                alt={artistName || "Artist"}
                                                 className="w-9 h-9 rounded-full object-cover ring-1 ring-white/10 shadow-sm"
                                             />
                                         ) : (
@@ -141,11 +141,21 @@ const FeedbackItem = ({
                                     }}
                                     className="flex items-start gap-4"
                                 >
-                                    {/* Input Avatar (You) */}
-                                    <div className="flex-shrink-0">
-                                        <div className="w-9 h-9 rounded-full bg-indigo-500/20 flex items-center justify-center border border-indigo-500/30">
-                                            <div className="w-2 h-2 bg-indigo-400 rounded-full" />
-                                        </div>
+                                    {/* Input Avatar (Now uses Artist Avatar logic) */}
+                                    <div className="flex-shrink-0 relative z-10">
+                                        {artistProfileImage ? (
+                                            <img
+                                                src={artistProfileImage}
+                                                alt={artistName || "Artist"}
+                                                className="w-9 h-9 rounded-full object-cover ring-1 ring-white/10 shadow-sm grayscale opacity-70"
+                                            />
+                                        ) : (
+                                            <div className="w-9 h-9 rounded-full bg-indigo-500/20 flex items-center justify-center border border-indigo-500/30">
+                                                <span className="text-[10px] text-indigo-300 font-bold">
+                                                    {artistName ? artistName.charAt(0).toUpperCase() : "A"}
+                                                </span>
+                                            </div>
+                                        )}
                                     </div>
 
                                     <div className="flex-1 relative group/input pt-1">
@@ -153,7 +163,7 @@ const FeedbackItem = ({
                                             type="text"
                                             value={inputValue}
                                             onChange={(e) => setInputValue(e.target.value)}
-                                            placeholder="Write a reply..."
+                                            placeholder={`Reply as ${artistName || 'Artist'}...`}
                                             className="w-full bg-transparent border-b border-white/20 py-1.5 text-sm text-white placeholder-white/20 focus:outline-none focus:border-indigo-400/50 transition-colors"
                                         />
                                         <div className="absolute bottom-0 left-0 h-[1px] w-0 bg-indigo-500 transition-all duration-300 group-focus-within/input:w-full" />

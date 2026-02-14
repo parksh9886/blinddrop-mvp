@@ -61,7 +61,7 @@ const PrototypeFeedbackItem = ({ feedback }: { feedback: any }) => {
             {/* THREAD CONNECTOR LINE (Reddit Style: Avatar-to-Avatar) */}
             {hasReplyOrInput && (
                 <div
-                    className="absolute left-[1.125rem] top-9 bottom-[2.25rem] w-9 border-l border-b border-white/5 rounded-bl-2xl pointer-events-none"
+                    className="absolute left-[1.125rem] top-9 bottom-[1.625rem] w-9 border-l border-b border-white/5 rounded-bl-2xl pointer-events-none"
                     aria-hidden="true"
                 />
             )}
@@ -146,10 +146,10 @@ const PrototypeFeedbackItem = ({ feedback }: { feedback: any }) => {
                                     }}
                                     className="flex items-start gap-4"
                                 >
-                                    {/* Input Avatar (You) */}
-                                    <div className="flex-shrink-0">
+                                    {/* Input Avatar (Now uses Artist Avatar logic) */}
+                                    <div className="flex-shrink-0 relative z-10">
                                         <div className="w-9 h-9 rounded-full bg-indigo-500/20 flex items-center justify-center border border-indigo-500/30">
-                                            <div className="w-2 h-2 bg-indigo-400 rounded-full" />
+                                            <span className="text-[10px] text-indigo-300 font-bold">P</span>
                                         </div>
                                     </div>
 
@@ -158,7 +158,7 @@ const PrototypeFeedbackItem = ({ feedback }: { feedback: any }) => {
                                             type="text"
                                             value={inputValue}
                                             onChange={(e) => setInputValue(e.target.value)}
-                                            placeholder="Write a reply..."
+                                            placeholder="Reply as Park Se-hyeon..."
                                             className="w-full bg-transparent border-b border-white/20 py-1.5 text-sm text-white placeholder-white/20 focus:outline-none focus:border-indigo-400/50 transition-colors"
                                         />
                                         <div className="absolute bottom-0 left-0 h-[1px] w-0 bg-indigo-500 transition-all duration-300 group-focus-within/input:w-full" />
