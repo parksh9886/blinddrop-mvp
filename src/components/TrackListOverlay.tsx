@@ -93,59 +93,43 @@ const FeedbackSection = ({
                 <MessageSquare className="w-5 h-5" /> Secret Feedback
             </h3>
 
-            {/* SUbmit Form (Public Only) */}
+            {/* Submit Form (Public Only) - Glass Pill Design */}
             {!isOwner && (
-                <div className="w-full bg-[#0f172a] p-6 rounded-[2rem] border border-white/5 shadow-2xl relative overflow-hidden group">
-                    {/* Ambient Background Glow */}
-                    <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/10 rounded-full blur-[80px] pointer-events-none -translate-y-1/2 translate-x-1/2" />
+                <div className="relative w-full group/input">
+                    <form onSubmit={handleSubmit} className="relative flex items-center">
+                        <input
+                            type="text"
+                            value={comment}
+                            onChange={(e) => setComment(e.target.value)}
+                            placeholder="Send a secret message..."
+                            className="w-full bg-white/5 backdrop-blur-md rounded-full border border-white/10 py-3.5 pl-6 pr-14 text-sm text-white placeholder-white/40 focus:outline-none focus:ring-1 focus:ring-white/30 transition-all shadow-[0_4px_20px_-5px_rgba(0,0,0,0.3)] hover:bg-white/10"
+                        />
 
-                    <div className="space-y-8 relative z-10">
-                        {/* Message Input */}
-                        <div className="relative group/input">
-                            <div className={`absolute inset-0 bg-gradient-to-r from-indigo-500/20 to-purple-500/20 rounded-2xl blur-lg transition-opacity duration-500 ${comment ? 'opacity-100' : 'opacity-0'}`} />
-                            <div className="relative bg-black/40 backdrop-blur-xl border border-white/10 rounded-2xl flex items-end p-2 transition-colors focus-within:border-white/20 focus-within:bg-black/60">
-                                <textarea
-                                    value={comment}
-                                    onChange={(e) => setComment(e.target.value)}
-                                    placeholder="Add a secret message..."
-                                    className="w-full bg-transparent border-none text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-0 resize-none p-3 max-h-32 min-h-[50px]"
-                                    rows={1}
-                                    style={{ height: 'auto' }}
-                                    onInput={(e) => {
-                                        const target = e.target as HTMLTextAreaElement;
-                                        target.style.height = 'auto';
-                                        target.style.height = target.scrollHeight + 'px';
-                                    }}
-                                />
-                                <button
-                                    onClick={handleSubmit}
-                                    disabled={!isValid || isSubmitting}
-                                    className={`
-                                        mb-1 mr-1 p-2.5 rounded-xl flex items-center justify-center transition-all duration-300
-                                        ${isValid
-                                            ? 'bg-indigo-500 text-white shadow-[0_0_15px_rgba(99,102,241,0.5)] hover:scale-105 active:scale-95'
-                                            : 'bg-white/5 text-slate-600'
-                                        }
-                                    `}
-                                >
-                                    {isSubmitting ? (
-                                        <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                                    ) : (
-                                        <div className="w-4 h-4 flex items-center justify-center">
-                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                                <line x1="22" y1="2" x2="11" y2="13"></line>
-                                                <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
-                                            </svg>
-                                        </div>
-                                    )}
-                                </button>
-                            </div>
-                        </div>
-                    </div>
+                        <button
+                            type="submit"
+                            disabled={!isValid || isSubmitting}
+                            className={`
+                                absolute right-2 p-2 rounded-full transition-all duration-300 flex items-center justify-center
+                                ${isValid
+                                    ? 'bg-white/10 text-indigo-400 hover:bg-white/20 active:scale-95 opacity-100'
+                                    : 'text-white/30 opacity-0 scale-90 cursor-not-allowed'
+                                }
+                            `}
+                        >
+                            {isSubmitting ? (
+                                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                            ) : (
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                    <line x1="22" y1="2" x2="11" y2="13"></line>
+                                    <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                                </svg>
+                            )}
+                        </button>
+                    </form>
                 </div>
             )}
 
-            <div className="bg-black/30 backdrop-blur-md border border-white/10 rounded-2xl p-4">
+            <div className="bg-black/20 backdrop-blur-md border border-white/5 rounded-3xl p-2 md:p-4">
                 <FeedbackList
                     feedbacks={track.feedbacks}
                     isOwner={isOwner}
