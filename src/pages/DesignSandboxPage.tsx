@@ -148,8 +148,8 @@ const PrototypeFeedbackItem = ({ feedback }: { feedback: any }) => {
                                 >
                                     {/* Input Avatar (Now uses Artist Avatar logic) */}
                                     <div className="flex-shrink-0 relative z-10">
-                                        <div className="w-9 h-9 rounded-full bg-indigo-500/20 flex items-center justify-center border border-indigo-500/30">
-                                            <span className="text-[10px] text-indigo-300 font-bold">P</span>
+                                        <div className="w-9 h-9 rounded-full bg-indigo-500/80 flex items-center justify-center shadow-lg shadow-indigo-500/20">
+                                            <span className="text-[10px] text-white font-bold">P</span>
                                         </div>
                                     </div>
 

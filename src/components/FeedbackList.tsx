@@ -147,11 +147,11 @@ const FeedbackItem = ({
                                             <img
                                                 src={artistProfileImage}
                                                 alt={artistName || "Artist"}
-                                                className="w-9 h-9 rounded-full object-cover ring-1 ring-white/10 shadow-sm grayscale opacity-70"
+                                                className="w-9 h-9 rounded-full object-cover ring-1 ring-white/10 shadow-sm"
                                             />
                                         ) : (
-                                            <div className="w-9 h-9 rounded-full bg-indigo-500/20 flex items-center justify-center border border-indigo-500/30">
-                                                <span className="text-[10px] text-indigo-300 font-bold">
+                                            <div className="w-9 h-9 rounded-full bg-indigo-500/80 flex items-center justify-center shadow-lg shadow-indigo-500/20">
+                                                <span className="text-[10px] text-white font-bold">
                                                     {artistName ? artistName.charAt(0).toUpperCase() : "A"}
                                                 </span>
                                             </div>
