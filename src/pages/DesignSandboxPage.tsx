@@ -61,7 +61,7 @@ const PrototypeFeedbackItem = ({ feedback }: { feedback: any }) => {
             {/* THREAD CONNECTOR LINE (Reddit Style: Avatar-to-Avatar) */}
             {hasReplyOrInput && (
                 <div
-                    className="absolute left-[1.125rem] top-9 bottom-[1.75rem] w-8 border-l-2 border-b-2 border-white/10 rounded-bl-2xl pointer-events-none"
+                    className="absolute left-[1.125rem] top-9 bottom-[2.25rem] w-9 border-l border-b border-white/5 rounded-bl-2xl pointer-events-none"
                     aria-hidden="true"
                 />
             )}
@@ -70,7 +70,7 @@ const PrototypeFeedbackItem = ({ feedback }: { feedback: any }) => {
                 {/* LEFT: Parent Avatar (Anchor) */}
                 <div className="flex-shrink-0 relative z-10">
                     <div className={`
-                        w-9 h-9 rounded-full flex items-center justify-center 
+                        w-9 h-9 rounded-full flex items-center justify-center
                         bg-white/5 border border-white/10 shadow-sm backdrop-blur-sm
                     `}>
                         <User className="w-4 h-4 text-white/50" />
@@ -119,16 +119,16 @@ const PrototypeFeedbackItem = ({ feedback }: { feedback: any }) => {
                         <div className="relative animate-in fade-in slide-in-from-top-2 duration-300">
                             {reply ? (
                                 /* ARTIST REPLY UI (Avatar Connected) */
-                                <div className="flex items-start gap-3">
+                                <div className="flex items-start gap-4">
                                     {/* Reply Avatar (Target of Line) */}
-                                    <div className="flex-shrink-0 relative z-10 pt-1">
-                                        <div className="w-6 h-6 rounded-full bg-indigo-500/80 flex items-center justify-center shadow-lg shadow-indigo-500/20">
-                                            <span className="text-[9px] text-white font-bold">A</span>
+                                    <div className="flex-shrink-0 relative z-10">
+                                        <div className="w-9 h-9 rounded-full bg-indigo-500/80 flex items-center justify-center shadow-lg shadow-indigo-500/20">
+                                            <span className="text-[10px] text-white font-bold">A</span>
                                         </div>
                                     </div>
 
                                     {/* Reply Content */}
-                                    <div className="flex-1 pt-0.5">
+                                    <div className="flex-1 pt-1">
                                         <div className="flex items-center gap-2 mb-0.5">
                                             <span className="text-[11px] font-bold text-indigo-300">Artist Reply</span>
                                         </div>
@@ -144,22 +144,22 @@ const PrototypeFeedbackItem = ({ feedback }: { feedback: any }) => {
                                         e.preventDefault();
                                         setInputValue("");
                                     }}
-                                    className="flex items-start gap-3"
+                                    className="flex items-start gap-4"
                                 >
                                     {/* Input Avatar (You) */}
-                                    <div className="flex-shrink-0 pt-1.5">
-                                        <div className="w-6 h-6 rounded-full bg-indigo-500/20 flex items-center justify-center border border-indigo-500/30">
-                                            <div className="w-1.5 h-1.5 bg-indigo-400 rounded-full" />
+                                    <div className="flex-shrink-0">
+                                        <div className="w-9 h-9 rounded-full bg-indigo-500/20 flex items-center justify-center border border-indigo-500/30">
+                                            <div className="w-2 h-2 bg-indigo-400 rounded-full" />
                                         </div>
                                     </div>
 
-                                    <div className="flex-1 relative group/input">
+                                    <div className="flex-1 relative group/input pt-1">
                                         <input
                                             type="text"
                                             value={inputValue}
                                             onChange={(e) => setInputValue(e.target.value)}
                                             placeholder="Write a reply..."
-                                            className="w-full bg-transparent border-b border-white/20 py-2 text-sm text-white placeholder-white/20 focus:outline-none focus:border-indigo-400/50 transition-colors"
+                                            className="w-full bg-transparent border-b border-white/20 py-1.5 text-sm text-white placeholder-white/20 focus:outline-none focus:border-indigo-400/50 transition-colors"
                                         />
                                         <div className="absolute bottom-0 left-0 h-[1px] w-0 bg-indigo-500 transition-all duration-300 group-focus-within/input:w-full" />
                                     </div>
@@ -168,7 +168,7 @@ const PrototypeFeedbackItem = ({ feedback }: { feedback: any }) => {
                                         type="submit"
                                         disabled={!inputValue.trim()}
                                         className={`
-                                            p-2 rounded-full transition-all duration-300 mt-1
+                                            p-2 rounded-full transition-all duration-300 mt-0.5
                                             ${inputValue.trim()
                                                 ? 'text-indigo-400 hover:text-white hover:bg-indigo-500'
                                                 : 'text-white/10 cursor-not-allowed'
