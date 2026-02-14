@@ -123,14 +123,14 @@ const PrototypeFeedbackItem = ({ feedback }: { feedback: any }) => {
                                     {/* Reply Avatar (Target of Line) */}
                                     <div className="flex-shrink-0 relative z-10">
                                         <div className="w-9 h-9 rounded-full bg-indigo-500/80 flex items-center justify-center shadow-lg shadow-indigo-500/20">
-                                            <span className="text-[10px] text-white font-bold">A</span>
+                                            <span className="text-[10px] text-white font-bold">P</span>
                                         </div>
                                     </div>
 
                                     {/* Reply Content */}
                                     <div className="flex-1 pt-1">
                                         <div className="flex items-center gap-2 mb-0.5">
-                                            <span className="text-[11px] font-bold text-indigo-300">Artist Reply</span>
+                                            <span className="text-[11px] font-bold text-indigo-300">Park Se-hyeon</span>
                                         </div>
                                         <p className="text-sm text-slate-400 leading-relaxed">
                                             {reply}

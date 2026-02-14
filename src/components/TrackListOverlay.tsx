@@ -50,7 +50,8 @@ const FeedbackSection = ({
     onReply,
     onUnlock,
     onSubmitFeedback,
-    artistProfileImage
+    artistProfileImage,
+    artistName
 }: {
     track: Track;
     isOwner: boolean;
@@ -58,6 +59,7 @@ const FeedbackSection = ({
     onUnlock: (fid: string, tid: string) => void;
     onSubmitFeedback: (trackId: string, content: string, vibes?: { energy: number; mood: number; style: number }, situations?: string[]) => Promise<void>;
     artistProfileImage?: string | null;
+    artistName?: string;
 }) => {
     const [comment, setComment] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -137,6 +139,7 @@ const FeedbackSection = ({
                     onUnlock={onUnlock}
                     trackId={track.id}
                     artistProfileImage={artistProfileImage}
+                    artistName={artistName}
                 />
             </div>
         </div>
@@ -409,6 +412,7 @@ const TrackListOverlay: React.FC<TrackListOverlayProps> = ({
                                             onUnlock={onUnlock}
                                             onSubmitFeedback={onSubmitFeedback}
                                             artistProfileImage={artistProfileImage}
+                                            artistName={artistName || "Artist"}
                                         />
                                     </div>
                                 </motion.div>

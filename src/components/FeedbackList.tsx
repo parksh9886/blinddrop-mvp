@@ -10,9 +10,8 @@ interface FeedbackListProps {
     onUnlock: (feedbackId: string, trackId: string) => void;
     trackId: string;
     artistProfileImage?: string | null;
+    artistName?: string;
 }
-
-
 
 const FeedbackItem = ({
     feedback,
@@ -20,7 +19,8 @@ const FeedbackItem = ({
     onReply,
     onUnlock,
     trackId,
-    artistProfileImage
+    artistProfileImage,
+    artistName
 }: {
     feedback: Feedback & { isAccessible: boolean };
     isOwner: boolean;
@@ -28,6 +28,7 @@ const FeedbackItem = ({
     onUnlock: (fid: string, tid: string) => void;
     trackId: string;
     artistProfileImage?: string | null;
+    artistName?: string;
 }) => {
     const { isAccessible, content, created_at, reply, id } = feedback;
     const shouldBlur = !isAccessible;
@@ -110,7 +111,9 @@ const FeedbackItem = ({
                                             />
                                         ) : (
                                             <div className="w-9 h-9 rounded-full bg-indigo-500/80 flex items-center justify-center shadow-lg shadow-indigo-500/20">
-                                                <span className="text-[10px] text-white font-bold">A</span>
+                                                <span className="text-[10px] text-white font-bold">
+                                                    {artistName ? artistName.charAt(0).toUpperCase() : "A"}
+                                                </span>
                                             </div>
                                         )}
                                     </div>
@@ -118,7 +121,9 @@ const FeedbackItem = ({
                                     {/* Reply Content */}
                                     <div className="flex-1 pt-1">
                                         <div className="flex items-center gap-2 mb-0.5">
-                                            <span className="text-[11px] font-bold text-indigo-300">Artist Reply</span>
+                                            <span className="text-[11px] font-bold text-indigo-300">
+                                                {artistName || "Artist"}
+                                            </span>
                                         </div>
                                         <p className="text-sm text-slate-400 leading-relaxed">
                                             {reply}
@@ -183,7 +188,8 @@ export const FeedbackList = React.memo<FeedbackListProps>(({
     onReply,
     onUnlock,
     trackId,
-    artistProfileImage
+    artistProfileImage,
+    artistName
 }) => {
     const { displayFeedbacks } = useFeedbackLogic(feedbacks, isOwner);
     const [filter, setFilter] = React.useState<'all' | 'unreplied'>('all');
@@ -230,6 +236,7 @@ export const FeedbackList = React.memo<FeedbackListProps>(({
                         onUnlock={onUnlock}
                         trackId={trackId}
                         artistProfileImage={artistProfileImage}
+                        artistName={artistName}
                     />
                 ))
             ) : (
