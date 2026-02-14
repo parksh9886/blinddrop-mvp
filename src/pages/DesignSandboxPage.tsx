@@ -58,19 +58,19 @@ const PrototypeFeedbackItem = ({ feedback }: { feedback: any }) => {
 
     return (
         <div className={`relative mb-6 group ${shouldBlur ? 'opacity-50' : ''}`}>
-            {/* THREAD CONNECTOR LINE (L-Shape) */}
+            {/* THREAD CONNECTOR LINE (Reddit Style: Avatar-to-Avatar) */}
             {hasReplyOrInput && (
                 <div
-                    className="absolute left-[1.125rem] top-10 bottom-[2.5rem] w-6 border-l border-b border-white/20 rounded-bl-2xl pointer-events-none"
+                    className="absolute left-[1.125rem] top-9 bottom-[1.75rem] w-8 border-l-2 border-b-2 border-white/10 rounded-bl-2xl pointer-events-none"
                     aria-hidden="true"
                 />
             )}
 
             <div className="flex gap-4">
-                {/* LEFT: Avatar Column */}
+                {/* LEFT: Parent Avatar (Anchor) */}
                 <div className="flex-shrink-0 relative z-10">
                     <div className={`
-                        w-9 h-9 rounded-full flex items-center justify-center
+                        w-9 h-9 rounded-full flex items-center justify-center 
                         bg-white/5 border border-white/10 shadow-sm backdrop-blur-sm
                     `}>
                         <User className="w-4 h-4 text-white/50" />
@@ -78,33 +78,21 @@ const PrototypeFeedbackItem = ({ feedback }: { feedback: any }) => {
                 </div>
 
                 {/* RIGHT: Content Column */}
-                <div className="flex-1 min-w-0 pb-6 border-b border-white/5 last:border-0">
+                <div className="flex-1 min-w-0 pb-2">
 
                     {/* Header */}
-                    <div className="flex justify-between items-start mb-2">
-                        <div>
-                            <div className="flex items-center gap-2">
-                                <span className="text-sm font-bold text-white/90">Anonymous</span>
-                                {shouldBlur && (
-                                    <Lock className="w-3 h-3 text-white/30" />
-                                )}
-                            </div>
-                            <div className="text-[10px] text-white/30 font-medium tracking-wide">
-                                {new Date(created_at).toLocaleDateString()}
-                            </div>
+                    <div className="flex justify-between items-start mb-1.5">
+                        <div className="flex items-center gap-2">
+                            <span className="text-sm font-bold text-white/90">Anonymous</span>
+                            {shouldBlur && <Lock className="w-3 h-3 text-white/30" />}
+                            <span className="text-[10px] text-white/30 font-medium tracking-wide">
+                                • {new Date(created_at).toLocaleDateString()}
+                            </span>
                         </div>
-
-                        {/* Status Badges */}
-                        {!shouldBlur && reply && (
-                            <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-indigo-500/10 border border-indigo-500/20">
-                                <MessageCircle className="w-3 h-3 text-indigo-400" />
-                                <span className="text-[10px] font-bold text-indigo-300">Replied</span>
-                            </div>
-                        )}
                     </div>
 
-                    {/* Main Content Text (Highlighted) */}
-                    <div className="relative">
+                    {/* Main Content Text */}
+                    <div className="relative mb-3">
                         <p className={`text-sm font-medium leading-relaxed text-gray-100 ${shouldBlur ? 'blur-sm select-none' : ''}`}>
                             {content}
                         </p>
@@ -128,33 +116,41 @@ const PrototypeFeedbackItem = ({ feedback }: { feedback: any }) => {
 
                     {/* NESTED: Artist Reply or Input */}
                     {hasReplyOrInput && (
-                        <div className="mt-3 animate-in fade-in slide-in-from-top-2 duration-300 pl-4">
+                        <div className="relative animate-in fade-in slide-in-from-top-2 duration-300">
                             {reply ? (
-                                /* ARTIST REPLY UI (Subtle) */
-                                <div className="relative">
-                                    {/* Header */}
-                                    <div className="flex items-center gap-2 mb-1">
-                                        <div className="w-4 h-4 rounded-full bg-indigo-500 flex items-center justify-center">
-                                            <span className="text-[8px] text-white font-bold">A</span>
+                                /* ARTIST REPLY UI (Avatar Connected) */
+                                <div className="flex items-start gap-3">
+                                    {/* Reply Avatar (Target of Line) */}
+                                    <div className="flex-shrink-0 relative z-10 pt-1">
+                                        <div className="w-6 h-6 rounded-full bg-indigo-500/80 flex items-center justify-center shadow-lg shadow-indigo-500/20">
+                                            <span className="text-[9px] text-white font-bold">A</span>
                                         </div>
-                                        <span className="text-[10px] font-bold text-indigo-300/80 uppercase tracking-wider">Artist Reply</span>
                                     </div>
-                                    {/* Reply Text (De-emphasized) */}
-                                    <p className="text-xs md:text-sm text-slate-400 leading-relaxed">
-                                        {reply}
-                                    </p>
+
+                                    {/* Reply Content */}
+                                    <div className="flex-1 pt-0.5">
+                                        <div className="flex items-center gap-2 mb-0.5">
+                                            <span className="text-[11px] font-bold text-indigo-300">Artist Reply</span>
+                                        </div>
+                                        <p className="text-sm text-slate-400 leading-relaxed">
+                                            {reply}
+                                        </p>
+                                    </div>
                                 </div>
                             ) : (
-                                /* INPUT FIELD UI (Line Style) */
+                                /* INPUT FIELD UI (Connected) */
                                 <form
                                     onSubmit={(e) => {
                                         e.preventDefault();
                                         setInputValue("");
                                     }}
-                                    className="relative flex items-end gap-3"
+                                    className="flex items-start gap-3"
                                 >
-                                    <div className="w-6 h-6 rounded-full bg-indigo-500/20 flex items-center justify-center shrink-0 border border-indigo-500/30">
-                                        <div className="w-2 h-2 bg-indigo-400 rounded-full" />
+                                    {/* Input Avatar (You) */}
+                                    <div className="flex-shrink-0 pt-1.5">
+                                        <div className="w-6 h-6 rounded-full bg-indigo-500/20 flex items-center justify-center border border-indigo-500/30">
+                                            <div className="w-1.5 h-1.5 bg-indigo-400 rounded-full" />
+                                        </div>
                                     </div>
 
                                     <div className="flex-1 relative group/input">
@@ -165,7 +161,6 @@ const PrototypeFeedbackItem = ({ feedback }: { feedback: any }) => {
                                             placeholder="Write a reply..."
                                             className="w-full bg-transparent border-b border-white/20 py-2 text-sm text-white placeholder-white/20 focus:outline-none focus:border-indigo-400/50 transition-colors"
                                         />
-                                        {/* Focus Glow Effect */}
                                         <div className="absolute bottom-0 left-0 h-[1px] w-0 bg-indigo-500 transition-all duration-300 group-focus-within/input:w-full" />
                                     </div>
 
@@ -173,7 +168,7 @@ const PrototypeFeedbackItem = ({ feedback }: { feedback: any }) => {
                                         type="submit"
                                         disabled={!inputValue.trim()}
                                         className={`
-                                            p-2 rounded-full transition-all duration-300
+                                            p-2 rounded-full transition-all duration-300 mt-1
                                             ${inputValue.trim()
                                                 ? 'text-indigo-400 hover:text-white hover:bg-indigo-500'
                                                 : 'text-white/10 cursor-not-allowed'
