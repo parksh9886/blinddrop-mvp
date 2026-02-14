@@ -33,159 +33,153 @@ const FeedbackItem = ({
     const shouldBlur = !isAccessible;
     const [inputValue, setInputValue] = useState("");
 
+    const hasReplyOrInput = reply || (isOwner && isAccessible);
+
     return (
-        <div className={`relative mb-8 group ${shouldBlur ? 'opacity-60' : ''}`}>
-            {/* User Feedback Bubble */}
-            <div className={`
-                relative p-5 rounded-3xl rounded-bl-none
-                bg-gradient-to-br from-slate-800/60 to-slate-900/60 border border-white/5
-                backdrop-blur-xl shadow-xl transition-all duration-300
-            `}>
-                {/* Header: Avatar & Date */}
-                <div className="flex justify-between items-start mb-4">
-                    <div className="flex items-center gap-3">
-                        <div className={`
-                            w-9 h-9 rounded-full flex items-center justify-center 
-                            bg-gradient-to-br from-white/10 to-white/5 border border-white/10 shadow-inner
-                        `}>
-                            <User className="w-4 h-4 text-white/70" />
-                        </div>
+        <div className={`relative mb-6 group ${shouldBlur ? 'opacity-50' : ''}`}>
+            {/* THREAD CONNECTOR LINE (L-Shape) */}
+            {hasReplyOrInput && (
+                <div
+                    className="absolute left-[1.125rem] top-10 bottom-[2.5rem] w-6 border-l border-b border-white/20 rounded-bl-2xl pointer-events-none"
+                    aria-hidden="true"
+                />
+            )}
+
+            <div className="flex gap-4">
+                {/* LEFT: Avatar Column */}
+                <div className="flex-shrink-0 relative z-10">
+                    <div className={`
+                        w-9 h-9 rounded-full flex items-center justify-center 
+                        bg-white/5 border border-white/10 shadow-sm backdrop-blur-sm
+                    `}>
+                        <User className="w-4 h-4 text-white/50" />
+                    </div>
+                </div>
+
+                {/* RIGHT: Content Column */}
+                <div className="flex-1 min-w-0 pb-6 border-b border-white/5 last:border-0">
+
+                    {/* Header */}
+                    <div className="flex justify-between items-start mb-2">
                         <div>
-                            <div className="text-sm font-bold text-white tracking-wide">Anonymous</div>
-                            <div className="text-[10px] text-white/40 uppercase tracking-widest">
+                            <div className="flex items-center gap-2">
+                                <span className="text-sm font-bold text-white/90">Anonymous</span>
+                                {shouldBlur && (
+                                    <Lock className="w-3 h-3 text-white/30" />
+                                )}
+                            </div>
+                            <div className="text-[10px] text-white/30 font-medium tracking-wide">
                                 {new Date(created_at).toLocaleDateString()}
                             </div>
                         </div>
-                    </div>
 
-                    {/* Icons */}
-                    {shouldBlur ? (
-                        <div className="bg-black/40 px-2.5 py-1 rounded-full border border-white/5">
-                            <Lock className="w-3 h-3 text-white/40" />
-                        </div>
-                    ) : reply ? (
-                        <div className="bg-indigo-500/20 px-2.5 py-1 rounded-full border border-indigo-500/30">
-                            <MessageCircle className="w-3 h-3 text-indigo-400" />
-                        </div>
-                    ) : null}
-                </div>
-
-                {/* Vibe & Situations - Only Visible if NOT Blurred */}
-
-
-                {/* Main Content */}
-                <div className={`
-                    text-sm leading-relaxed text-white/90 pl-1
-                    ${shouldBlur ? 'blur-sm select-none grayscale opacity-50' : ''}
-                `}>
-                    {content}
-                </div>
-
-                {/* Lock Overlay */}
-                {shouldBlur && (
-                    // Visitor Logic: If hidden, they can't do anything (unless we add 'Request Unlock' later, but for now just 'Hidden')
-                    // Owner Logic: Can 'Unlock'
-                    <div className="absolute inset-0 flex items-center justify-center z-10 rounded-3xl overflow-hidden">
-                        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-black/10 to-black/40" />
-
-                        {isOwner ? (
-                            <button
-                                onClick={() => onUnlock(id, trackId)}
-                                className="bg-slate-900/90 hover:bg-slate-800/90 backdrop-blur-md px-5 py-2.5 rounded-full border border-white/10 shadow-2xl flex items-center gap-2 transform transition-transform hover:scale-105 active:scale-95 cursor-pointer group"
-                            >
-                                <Lock className="w-4 h-4 text-white group-hover:text-indigo-400 transition-colors" />
-                                <span className="text-xs font-bold text-white group-hover:text-indigo-200 transition-colors">Unlock Feedback</span>
-                            </button>
-                        ) : (
-                            <div className="bg-slate-900/90 backdrop-blur-md px-5 py-2.5 rounded-full border border-white/10 shadow-2xl flex items-center gap-2">
-                                <Lock className="w-4 h-4 text-white/50" />
-                                <span className="text-xs font-bold text-white/50">Details Hidden</span>
+                        {/* Status Badges */}
+                        {!shouldBlur && reply && (
+                            <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-indigo-500/10 border border-indigo-500/20">
+                                <MessageCircle className="w-3 h-3 text-indigo-400" />
+                                <span className="text-[10px] font-bold text-indigo-300">Replied</span>
                             </div>
                         )}
                     </div>
-                )}
-            </div>
 
-            {/* ARTIST ACTION AREA */}
-            {reply ? (
-                <div className="relative mt-2 ml-auto w-[90%] md:w-[85%] animate-in fade-in slide-in-from-bottom-2">
-                    <div className="relative bg-[#1e293b] p-5 rounded-3xl rounded-tr-none border border-slate-700/50 shadow-lg">
-                        <div className="flex items-center justify-start gap-3 mb-2">
-                            {artistProfileImage ? (
-                                <img
-                                    src={artistProfileImage}
-                                    alt="Artist"
-                                    className="w-6 h-6 rounded-full object-cover shadow-[0_0_10px_rgba(99,102,241,0.5)] border border-white/10"
-                                />
-                            ) : (
-                                <div className="w-6 h-6 rounded-full bg-indigo-500 flex items-center justify-center text-[10px] font-bold text-white shadow-[0_0_10px_rgba(99,102,241,0.5)]">
-                                    You
-                                </div>
-                            )}
-                            <span className="text-[10px] uppercase font-bold text-indigo-400 tracking-wider">Artist Reply</span>
-                        </div>
-                        <p className="text-sm text-slate-300 leading-relaxed text-left pl-1">
-                            {reply}
+                    {/* Main Content Text */}
+                    <div className="relative">
+                        <p className={`text-sm leading-relaxed text-slate-300 ${shouldBlur ? 'blur-sm select-none' : ''}`}>
+                            {content}
                         </p>
-                    </div>
-                </div>
-            ) : (
-                // If NO reply, but IS owner and unlocked -> Show NEW Input Field Design
-                isOwner && isAccessible ? (
-                    <div className="relative mt-2 ml-auto w-[90%] md:w-[85%] animate-in fade-in slide-in-from-bottom-2">
-                        <form
-                            onSubmit={(e) => {
-                                e.preventDefault();
-                                if (!inputValue.trim()) return;
-                                onReply(id, trackId, inputValue);
-                                setInputValue(""); // Clear local input
-                            }}
-                            className="relative bg-black/40 p-1.5 rounded-3xl rounded-tr-none border border-slate-700/50 shadow-lg flex items-center gap-2 group focus-within:border-indigo-500/50 focus-within:bg-black/60 transition-all duration-300"
-                        >
-                            {/* Avatar (You) */}
-                            <div className="pl-2">
-                                {artistProfileImage ? (
-                                    <img
-                                        src={artistProfileImage}
-                                        alt="You"
-                                        className="w-8 h-8 rounded-full object-cover shadow-lg border border-white/10"
-                                    />
+
+                        {/* Lock Overlay */}
+                        {shouldBlur && (
+                            <div className="absolute inset-0 flex items-center justify-center -top-2">
+                                {isOwner ? (
+                                    <button
+                                        onClick={() => onUnlock(id, trackId)}
+                                        className="bg-black/40 hover:bg-black/60 backdrop-blur-md px-4 py-1.5 rounded-full border border-white/10 flex items-center gap-2 transition-all hover:scale-105"
+                                    >
+                                        <Lock className="w-3 h-3 text-white" />
+                                        <span className="text-xs font-bold text-white">Unlock</span>
+                                    </button>
                                 ) : (
-                                    <div className="w-8 h-8 rounded-full bg-indigo-500 flex items-center justify-center text-[10px] font-bold text-white shadow-lg">
-                                        You
-                                    </div>
+                                    <span className="text-xs text-slate-500 italic">... Hidden Content ...</span>
                                 )}
                             </div>
-
-                            {/* Input Field */}
-                            <input
-                                type="text"
-                                name="reply"
-                                value={inputValue}
-                                onChange={(e) => setInputValue(e.target.value)}
-                                placeholder="Type a reply..."
-                                className="flex-1 bg-transparent border-none text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-0 px-2 py-3"
-                                autoComplete="off"
-                            />
-
-                            {/* Send Action */}
-                            <button
-                                type="submit"
-                                disabled={!inputValue.trim()}
-                                className={`
-                                    p-3 rounded-full transition-all duration-300 flex items-center justify-center
-                                    ${inputValue.trim().length > 0
-                                        ? 'bg-indigo-500 text-white shadow-[0_0_15px_rgba(99,102,241,0.5)] rotate-0 scale-100 hover:scale-110 active:scale-95'
-                                        : 'bg-white/5 text-slate-600 scale-90 hover:bg-white/10'
-                                    }
-                                `}
-                            >
-                                <Send className="w-4 h-4" />
-                            </button>
-                        </form>
+                        )}
                     </div>
-                ) : null
-            )}
+
+                    {/* NESTED: Artist Reply or Input */}
+                    {hasReplyOrInput && (
+                        <div className="mt-4 animate-in fade-in slide-in-from-top-2 duration-300">
+                            {reply ? (
+                                /* ARTIST REPLY UI */
+                                <div className="relative pl-4 border-l-2 border-indigo-500/50">
+                                    <div className="bg-indigo-500/5 p-3 rounded-r-xl rounded-bl-sm">
+                                        {/* Header */}
+                                        <div className="flex items-center gap-2 mb-1.5">
+                                            {artistProfileImage ? (
+                                                <img
+                                                    src={artistProfileImage}
+                                                    alt="Artist"
+                                                    className="w-4 h-4 rounded-full object-cover ring-1 ring-indigo-500/50"
+                                                />
+                                            ) : (
+                                                <div className="w-4 h-4 rounded-full bg-indigo-500 flex items-center justify-center">
+                                                    <span className="text-[8px] text-white font-bold">A</span>
+                                                </div>
+                                            )}
+                                            <span className="text-[10px] font-bold text-indigo-200 uppercase tracking-wider">Artist Reply</span>
+                                        </div>
+                                        {/* Reply Text */}
+                                        <p className="text-sm text-indigo-50/90 leading-relaxed">
+                                            {reply}
+                                        </p>
+                                    </div>
+                                </div>
+                            ) : (
+                                /* INPUT FIELD UI (Line Style) */
+                                <form
+                                    onSubmit={(e) => {
+                                        e.preventDefault();
+                                        if (!inputValue.trim()) return;
+                                        onReply(id, trackId, inputValue);
+                                        setInputValue("");
+                                    }}
+                                    className="relative flex items-end gap-3"
+                                >
+                                    <div className="w-6 h-6 rounded-full bg-indigo-500/20 flex items-center justify-center shrink-0 border border-indigo-500/30">
+                                        <div className="w-2 h-2 bg-indigo-400 rounded-full" />
+                                    </div>
+
+                                    <div className="flex-1 relative group/input">
+                                        <input
+                                            type="text"
+                                            value={inputValue}
+                                            onChange={(e) => setInputValue(e.target.value)}
+                                            placeholder="Write a reply..."
+                                            className="w-full bg-transparent border-b border-white/20 py-2 text-sm text-white placeholder-white/20 focus:outline-none focus:border-indigo-400/50 transition-colors"
+                                        />
+                                        {/* Focus Glow Effect */}
+                                        <div className="absolute bottom-0 left-0 h-[1px] w-0 bg-indigo-500 transition-all duration-300 group-focus-within/input:w-full" />
+                                    </div>
+
+                                    <button
+                                        type="submit"
+                                        disabled={!inputValue.trim()}
+                                        className={`
+                                            p-2 rounded-full transition-all duration-300 
+                                            ${inputValue.trim()
+                                                ? 'text-indigo-400 hover:text-white hover:bg-indigo-500'
+                                                : 'text-white/10 cursor-not-allowed'
+                                            }
+                                        `}
+                                    >
+                                        <Send className="w-4 h-4" />
+                                    </button>
+                                </form>
+                            )}
+                        </div>
+                    )}
+                </div>
+            </div>
         </div>
     );
 };
