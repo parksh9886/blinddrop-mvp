@@ -41,16 +41,18 @@ interface Track {
     feedbacks: Feedback[];
 }
 
-// --- Sortable Track Item Component ---
+// SortableTrackItem Component
 interface SortableTrackItemProps {
     track: Track;
-    userHandle: string; // Add this prop
+    userHandle: string;
+    artistName?: string;
+    artistProfileImage?: string | null;
     editingTrack: Track | null;
     expandedTrackId: string | null;
     setEditingTrack: (track: Track | null) => void;
     setExpandedTrackId: (id: string | null) => void;
     handleUpdateTrack: () => void;
-    setEditingTrackState: (t: any) => void; // Helper to update local editing state
+    setEditingTrackState: (t: any) => void;
     handleDelete: (id: string) => void;
     handleCopyLink: (id: string) => void;
     handleReply: (fid: string, tid: string, content: string) => void;
@@ -61,6 +63,8 @@ interface SortableTrackItemProps {
 const SortableTrackItem = ({
     track,
     userHandle,
+    artistName,
+    artistProfileImage,
     editingTrack,
     expandedTrackId,
     setEditingTrack,
@@ -230,6 +234,8 @@ const SortableTrackItem = ({
                                 onReply={handleReply}
                                 onUnlock={handleUnlock}
                                 trackId={track.id}
+                                artistName={artistName}
+                                artistProfileImage={artistProfileImage}
                             />
                         </div>
                     </motion.div>
@@ -260,22 +266,24 @@ const TracksPage: React.FC = () => {
         useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
     );
 
-
-
-    const [userHandle, setUserHandle] = useState<string | null>(null);
+    const [userProfile, setUserProfile] = useState<{ handle: string; name: string; avatar: string | null } | null>(null);
 
     const fetchData = async () => {
         if (!user) return;
         try {
-            // Fetch User Handle
+            // Fetch User Handle & Profile
             const { data: userData, error: userError } = await supabase
                 .from('users')
-                .select('handle')
+                .select('handle, display_name, avatar_url')
                 .eq('id', user.id)
                 .single();
 
             if (!userError && userData) {
-                setUserHandle(userData.handle);
+                setUserProfile({
+                    handle: userData.handle,
+                    name: userData.display_name,
+                    avatar: userData.avatar_url
+                });
             }
 
             // Fetch Tracks
@@ -461,7 +469,7 @@ const TracksPage: React.FC = () => {
     };
 
     const handleCopyLink = (trackId: string) => {
-        const url = `${window.location.origin}/u/${userHandle || user?.user_metadata?.handle || 'user'}?track=${trackId}`;
+        const url = `${window.location.origin}/u/${userProfile?.handle || user?.user_metadata?.handle || 'user'}?track=${trackId}`;
         navigator.clipboard.writeText(url).then(() => showToast('Copied!', 'success'));
     };
 
@@ -522,7 +530,9 @@ const TracksPage: React.FC = () => {
                                         <SortableTrackItem
                                             key={track.id}
                                             track={track}
-                                            userHandle={userHandle || user?.user_metadata?.handle || 'user'}
+                                            userHandle={userProfile?.handle || user?.user_metadata?.handle || 'user'}
+                                            artistName={userProfile?.name}
+                                            artistProfileImage={userProfile?.avatar}
                                             editingTrack={editingTrack}
                                             expandedTrackId={expandedTrackId}
                                             setEditingTrack={setEditingTrack}
