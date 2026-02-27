@@ -1,0 +1,13 @@
+Data: Binance ETHUSDT 4h, last 1080 candles (~180.0 days)
+Total detected extrema: 214
+Detected swings: 213
+Found 49 potential 5-wave impulse(s). Showing the most recent:
+ Wave 1: 2026-02-17 08:00 -> 2026-02-18 04:00 : 1968.47 -> 2018.07 (up)
+ Wave 2: 2026-02-18 04:00 -> 2026-02-18 16:00 : 2018.07 -> 1941.03 (down)
+ Wave 3: 2026-02-18 16:00 -> 2026-02-19 04:00 : 1941.03 -> 1981.76 (up)
+ Wave 4: 2026-02-19 04:00 -> 2026-02-19 12:00 : 1981.76 -> 1926.30 (down)
+ Wave 5: 2026-02-19 12:00 -> 2026-02-20 08:00 : 1926.30 -> 1943.98 (up)
+Impulse period: 2026-02-17 08:00 -> 2026-02-20 08:00
+Latest peak: 2026-02-22 08:00 @ 1980.78
+Latest trough: 2026-02-23 00:00 @ 1862.87
+Note: This is an automated, naive NeoWave/Elliott-like scan. Manual review needed for precise labeling.

@@ -4,6 +4,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
 import { Music, LogOut, User, Menu, LayoutDashboard, Globe, Settings } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { t } from '../i18n';
 
 const Navbar: React.FC = () => {
     const { user, signOut } = useAuth();
@@ -71,8 +72,8 @@ const Navbar: React.FC = () => {
 
                     {/* Logo Logic: Guest -> Home, User -> Dashboard */}
                     <Link to={user ? "/dashboard" : "/"} className="flex items-center gap-2 font-bold text-xl tracking-tighter text-white hover:opacity-80 transition-opacity">
-                        <img src="/img/linkdrop_logo_img.png" alt="LinkDrop" className="w-12 h-12 object-contain" />
-                        <span>LinkDrop</span>
+                        <img src="/img/linkdrop_logo_img.png" alt={t('navbar.brandAlt')} className="w-12 h-12 object-contain" />
+                        <span>BlindDrop</span>
                     </Link>
 
                     {/* Right Side Menu */}
@@ -113,7 +114,7 @@ const Navbar: React.FC = () => {
                                                     className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-slate-300 hover:text-white hover:bg-white/10 transition-all"
                                                 >
                                                     <LayoutDashboard className="w-4 h-4 text-indigo-400" />
-                                                    Dashboard
+                                                    {t('navbar.dashboard') }
                                                 </Link>
 
                                                 {/* My Tracks */}
@@ -123,7 +124,7 @@ const Navbar: React.FC = () => {
                                                     className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-slate-300 hover:text-white hover:bg-white/10 transition-all"
                                                 >
                                                     <Music className="w-4 h-4 text-purple-400" />
-                                                    My Tracks
+                                                    {t('navbar.myTracks')}
                                                 </Link>
 
                                                 {/* My Artist Page (Only if handle exists) */}
@@ -134,7 +135,7 @@ const Navbar: React.FC = () => {
                                                         className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-slate-300 hover:text-white hover:bg-white/10 transition-all"
                                                     >
                                                         <Globe className="w-4 h-4 text-pink-400" />
-                                                        Profile Page
+                                                        {t('navbar.profilePage')}
                                                     </Link>
                                                 )}
 
@@ -145,7 +146,7 @@ const Navbar: React.FC = () => {
                                                     className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-slate-300 hover:text-white hover:bg-white/10 transition-all"
                                                 >
                                                     <Settings className="w-4 h-4 text-slate-400" />
-                                                    Settings
+                                                    {t('navbar.settings')}
                                                 </Link>
 
                                                 <div className="h-px bg-white/10 my-1 mx-2" />
@@ -156,7 +157,7 @@ const Navbar: React.FC = () => {
                                                     className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-red-400 hover:text-red-300 hover:bg-red-500/10 transition-all"
                                                 >
                                                     <LogOut className="w-4 h-4" />
-                                                    Sign Out
+                                                    {t('navbar.signOut')}
                                                 </button>
                                             </div>
                                         </motion.div>
@@ -169,7 +170,7 @@ const Navbar: React.FC = () => {
                                 to={`/login?returnUrl=${encodeURIComponent(location.pathname)}`}
                                 className="px-5 py-2 rounded-full bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold transition-all shadow-lg shadow-indigo-500/20"
                             >
-                                Login
+                                {t('navbar.login') }
                             </Link>
                         )}
                     </div>

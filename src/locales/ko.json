@@ -1,0 +1,48 @@
+{
+  "common": {
+    "startButton": "피드백 받기 시작",
+    "signIn": "로그인",
+    "myTracks": "내 트랙",
+    "addTrack": "트랙 추가",
+    "noTracks": "아직 트랙이 없습니다.",
+    "addTrackPlaceholderTitle": "트랙 제목",
+    "addTrackPlaceholderUrl": "YouTube / SoundCloud 링크",
+    "addTrackButton": "트랙 추가",
+    "deleteTrackTitle": "트랙 삭제",
+    "deleteTrackMessage": "이 트랙을 삭제하시겠습니까? 이 작업은 취소할 수 없습니다.",
+    "delete": "삭제",
+    "cancel": "취소",
+    "copied": "복사됨!",
+    "trackUpdated": "트랙이 업데이트되었습니다",
+    "trackAdded": "트랙이 추가되었습니다",
+    "trackDeleted": "트랙이 삭제되었습니다"
+  },
+  "landing": {
+    "mvp": "MVP 출시",
+    "headline": "음악에 대한 솔직한 피드백",
+    "description": "트랙을 업로드하고, 보안 링크를 공유해 편견없는 익명 피드백을 받아보세요.",
+    "features": {
+      "anonymous": {
+        "title": "100% 익명",
+        "desc": "청취자는 누구의 기분도 상하지 않게 솔직하게 말할 수 있습니다."
+      },
+      "platform": {
+        "title": "플랫폼 무관",
+        "desc": "기존의 YouTube나 SoundCloud 링크와 함께 작동합니다."
+      },
+      "engagement": {
+        "title": "청취 조건 확보",
+        "desc": "청취자는 30초 이상 들어야 피드백을 제출할 수 있습니다."
+      }
+    }
+  },
+  "navbar": {
+    "dashboard": "대시보드",
+    "myTracks": "내 트랙",
+    "profilePage": "프로필 페이지",
+    "settings": "설정",
+    "signOut": "로그아웃",
+    "login": "로그인",
+    "brandAlt": "BlindDrop"
+  }
+}

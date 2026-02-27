@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Music, ArrowRight, Shield, Zap } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useAuth } from '../contexts/AuthContext';
+import { t } from '../i18n';
 
 const LandingPage: React.FC = () => {
     const { user } = useAuth();
@@ -23,7 +24,7 @@ const LandingPage: React.FC = () => {
                     <span>BlindDrop</span>
                 </div>
                 <Link to="/login" className="px-5 py-2 rounded-full border border-slate-700 hover:bg-slate-800 transition text-sm font-medium">
-                    Sign In
+                    {t('common.signIn')}
                 </Link>
             </nav>
 
@@ -34,20 +35,20 @@ const LandingPage: React.FC = () => {
                     transition={{ duration: 0.5 }}
                 >
                     <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 text-xs font-semibold uppercase tracking-wider mb-6">
-                        <Zap className="w-3 h-3" /> MVP Launch
+                        <Zap className="w-3 h-3" /> {t('landing.mvp')}
                     </div>
                     <h1 className="text-5xl md:text-7xl font-bold tracking-tight mb-6 bg-clip-text text-transparent bg-gradient-to-br from-white to-slate-400">
-                        Honest feedback <br /> for your music.
+                        {t('landing.headline')}
                     </h1>
                     <p className="text-lg md:text-xl text-slate-400 mb-8 max-w-2xl mx-auto leading-relaxed">
-                        Upload your tracks, share a secure link, and get unfiltered, anonymous feedback from your listeners. No bias, just the truth.
+                        {t('landing.description')}
                     </p>
 
                     <Link
                         to="/login"
                         className="group relative inline-flex items-center gap-2 px-8 py-4 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold rounded-full transition-all hover:scale-105 shadow-[0_0_40px_-10px_rgba(79,70,229,0.5)]"
                     >
-                        Start Getting Feedback <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                        {t('common.startButton')} <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                     </Link>
                 </motion.div>
 
@@ -59,18 +60,18 @@ const LandingPage: React.FC = () => {
                 >
                     <FeatureCard
                         icon={<Shield className="w-6 h-6 text-indigo-400" />}
-                        title="100% Anonymous"
-                        desc="Listeners can speak their mind without fear of hurting feelings."
+                        title={t('landing.features.anonymous.title')}
+                        desc={t('landing.features.anonymous.desc')}
                     />
                     <FeatureCard
                         icon={<Music className="w-6 h-6 text-pink-400" />}
-                        title="Platform Agnostic"
-                        desc="Works with your existing YouTube or SoundCloud links."
+                        title={t('landing.features.platform.title')}
+                        desc={t('landing.features.platform.desc')}
                     />
                     <FeatureCard
                         icon={<Zap className="w-6 h-6 text-yellow-400" />}
-                        title="Engagement Locked"
-                        desc="Listeners must listen for 30s before they can submit feedback."
+                        title={t('landing.features.engagement.title')}
+                        desc={t('landing.features.engagement.desc')}
                     />
                 </motion.div>
             </main>
