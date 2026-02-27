@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
 import { Music, LogOut, User, Menu, LayoutDashboard, Globe, Settings } from 'lucide-react';
@@ -9,6 +9,7 @@ import { t } from '../i18n';
 const Navbar: React.FC = () => {
     const { user, signOut } = useAuth();
     const navigate = useNavigate();
+    const location = useLocation();
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -73,7 +74,7 @@ const Navbar: React.FC = () => {
                     {/* Logo Logic: Guest -> Home, User -> Dashboard */}
                     <Link to={user ? "/dashboard" : "/"} className="flex items-center gap-2 font-bold text-xl tracking-tighter text-white hover:opacity-80 transition-opacity">
                         <img src="/img/linkdrop_logo_img.png" alt={t('navbar.brandAlt')} className="w-12 h-12 object-contain" />
-                        <span>BlindDrop</span>
+                        <span>{t('navbar.brandAlt')}</span>
                     </Link>
 
                     {/* Right Side Menu */}
@@ -170,7 +171,7 @@ const Navbar: React.FC = () => {
                                 to={`/login?returnUrl=${encodeURIComponent(location.pathname)}`}
                                 className="px-5 py-2 rounded-full bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-semibold transition-all shadow-lg shadow-indigo-500/20"
                             >
-                                {t('navbar.login') }
+                                {t('navbar.login')}
                             </Link>
                         )}
                     </div>
