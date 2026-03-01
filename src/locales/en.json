@@ -1,0 +1,48 @@
+{
+    "common": {
+        "startButton": "Start Getting Feedback",
+        "signIn": "Sign In",
+        "myTracks": "My Tracks",
+        "addTrack": "Add Track",
+        "noTracks": "No tracks yet.",
+        "addTrackPlaceholderTitle": "Track Title",
+        "addTrackPlaceholderUrl": "YouTube / SoundCloud URL",
+        "addTrackButton": "Add Track",
+        "deleteTrackTitle": "Delete Track",
+        "deleteTrackMessage": "Are you sure you want to delete this track? This action cannot be undone.",
+        "delete": "Delete",
+        "cancel": "Cancel",
+        "copied": "Copied!",
+        "trackUpdated": "Track updated",
+        "trackAdded": "Track added",
+        "trackDeleted": "Track deleted"
+    },
+    "landing": {
+        "mvp": "MVP Launch",
+        "headline": "Honest Feedback for Your Music",
+        "description": "Upload your tracks and share secure links to get unbiased, anonymous feedback.",
+        "features": {
+            "anonymous": {
+                "title": "100% Anonymous",
+                "desc": "Listeners can be completely honest without hurting anyone's feelings."
+            },
+            "platform": {
+                "title": "Platform Agnostic",
+                "desc": "Works flawlessly with your existing YouTube or SoundCloud links."
+            },
+            "engagement": {
+                "title": "Verified Engagement",
+                "desc": "Listeners must engage for at least 30 seconds before submitting feedback."
+            }
+        }
+    },
+    "navbar": {
+        "dashboard": "Dashboard",
+        "myTracks": "My Tracks",
+        "profilePage": "Profile Page",
+        "settings": "Settings",
+        "signOut": "Sign Out",
+        "login": "Log In",
+        "brandAlt": "BlindDrop"
+    }
+}

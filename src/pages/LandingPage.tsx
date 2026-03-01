@@ -3,10 +3,11 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Music, ArrowRight, Shield, Zap } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useAuth } from '../contexts/AuthContext';
-import { t } from '../i18n';
+import { useLanguage } from '../contexts/LanguageContext';
 
 const LandingPage: React.FC = () => {
     const { user } = useAuth();
+    const { t } = useLanguage();
     const navigate = useNavigate();
 
     React.useEffect(() => {
