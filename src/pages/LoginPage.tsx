@@ -4,9 +4,12 @@ import { supabase } from '../lib/supabase';
 import { Music, Loader2 } from 'lucide-react';
 import { motion } from 'framer-motion';
 
+import { useLanguage } from '../contexts/LanguageContext';
+
 const LoginPage: React.FC = () => {
     const navigate = useNavigate();
     const [loading, setLoading] = React.useState(false);
+    const { t } = useLanguage();
 
     useEffect(() => {
         // Parse returnUrl from query params
@@ -56,8 +59,8 @@ const LoginPage: React.FC = () => {
                     <div className="w-12 h-12 bg-indigo-500/10 rounded-xl flex items-center justify-center mb-4">
                         <Music className="w-6 h-6 text-indigo-400" />
                     </div>
-                    <h1 className="text-2xl font-bold tracking-tight">Welcome to BlindDrop</h1>
-                    <p className="text-slate-400 mt-2 text-sm">Sign in to start receiving feedback on your music.</p>
+                    <h1 className="text-2xl font-bold tracking-tight">{t('auth.welcome')}</h1>
+                    <p className="text-slate-400 mt-2 text-sm">{t('auth.description')}</p>
                 </div>
 
                 <button
@@ -87,13 +90,13 @@ const LoginPage: React.FC = () => {
                                     fill="#EA4335"
                                 />
                             </svg>
-                            Continue with Google
+                            {t('auth.continueGoogle')}
                         </>
                     )}
                 </button>
 
                 <p className="mt-6 text-center text-xs text-slate-500">
-                    By signing in, you agree to our Terms of Service and Privacy Policy.
+                    {t('auth.tos')}
                 </p>
             </motion.div>
         </div>

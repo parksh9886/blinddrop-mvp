@@ -1,6 +1,7 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AlertTriangle, X } from 'lucide-react';
+import { useLanguage } from '../contexts/LanguageContext';
 
 interface ConfirmModalProps {
     isOpen: boolean;
@@ -23,6 +24,11 @@ const ConfirmModal: React.FC<ConfirmModalProps> = ({
     onConfirm,
     onCancel
 }) => {
+    const { t } = useLanguage();
+
+    const finalConfirmLabel = confirmLabel === 'Confirm' ? t('common.save') : confirmLabel;
+    const finalCancelLabel = cancelLabel === 'Cancel' ? t('common.cancel') : cancelLabel;
+
     return (
         <AnimatePresence>
             {isOpen && (
@@ -71,7 +77,7 @@ const ConfirmModal: React.FC<ConfirmModalProps> = ({
                                     onClick={onCancel}
                                     className="flex-1 py-2.5 px-4 bg-slate-800 hover:bg-slate-700 text-slate-300 font-medium rounded-xl transition-colors border border-slate-700"
                                 >
-                                    {cancelLabel}
+                                    {finalCancelLabel}
                                 </button>
                                 <button
                                     onClick={onConfirm}
@@ -80,7 +86,7 @@ const ConfirmModal: React.FC<ConfirmModalProps> = ({
                                         : 'bg-indigo-600 hover:bg-indigo-500 text-white shadow-indigo-500/20'
                                         }`}
                                 >
-                                    {confirmLabel}
+                                    {finalConfirmLabel}
                                 </button>
                             </div>
                         </div>
