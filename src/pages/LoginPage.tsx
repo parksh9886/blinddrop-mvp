@@ -11,7 +11,7 @@ const LoginPage: React.FC = () => {
     useEffect(() => {
         // Parse returnUrl from query params
         const params = new URLSearchParams(window.location.search);
-        const returnUrl = params.get('returnUrl') || '/dashboard';
+        const returnUrl = params.get('returnUrl') || '/profile';
 
         // Check if user is already logged in
         supabase.auth.getSession().then(({ data: { session } }) => {

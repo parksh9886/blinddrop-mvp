@@ -4,7 +4,6 @@ import { AuthProvider } from './contexts/AuthContext';
 import { ToastProvider } from './contexts/ToastContext';
 import LandingPage from './pages/LandingPage';
 import LoginPage from './pages/LoginPage';
-import DashboardPage from './pages/DashboardPage';
 import TracksPage from './pages/TracksPage';
 import ProfilePage from './pages/ProfilePage';
 import ArtistPublicPage from './pages/ArtistPublicPage';
@@ -26,7 +25,6 @@ function App() {
             <Route path="/design-sandbox" element={<DesignSandboxPage />} />
 
             {/* Protected Routes */}
-            <Route path="/dashboard" element={<DashboardPage />} />
             <Route path="/tracks" element={<TracksPage />} />
             <Route path="/profile" element={<ProfilePage />} />
 
