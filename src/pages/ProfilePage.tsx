@@ -103,7 +103,7 @@ const SortableLinkItem = ({ link, handleDeleteLink }: SortableLinkItemProps) => 
         <div
             ref={setNodeRef}
             style={style}
-            className="group flex items-center gap-3 bg-slate-800/50 p-3 rounded-xl border border-slate-700 hover:border-slate-500 transition-colors relative"
+            className="group flex items-center gap-3 bg-transparent p-4 border-b border-white/10 hover:bg-white/5 transition-colors relative"
         >
             <div {...attributes} {...listeners} className="text-slate-500 cursor-move touch-none">
                 <GripVertical className="w-5 h-5" />
@@ -536,7 +536,7 @@ const ProfilePage: React.FC = () => {
                 {activeTab === 'profile' ? (
                     <div className="space-y-8">
                         {/* --- Profile Data Section --- */}
-                        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 md:p-8 space-y-8 relative">
+                        <div className="space-y-12 relative pb-10 border-b border-white/10">
                             {/* Header & Status Indicator */}
                             <div className="flex items-center justify-between mb-2">
                                 <h2 className="text-xl font-bold text-white">Profile</h2>
@@ -560,39 +560,39 @@ const ProfilePage: React.FC = () => {
                             </div>
 
                             {/* Avatar */}
-                            <div className="flex flex-col items-center">
+                            <div className="flex flex-col items-center pt-4">
                                 <div className="relative group">
-                                    <div className="w-24 h-24 md:w-32 md:h-32 rounded-full bg-slate-800 flex items-center justify-center overflow-hidden border-2 border-slate-700 group-hover:border-indigo-500 transition-colors">
+                                    <div className="w-28 h-28 md:w-32 md:h-32 rounded-full bg-slate-900 flex items-center justify-center overflow-hidden ring-1 ring-white/20 shadow-[0_0_30px_rgba(255,255,255,0.05)] group-hover:ring-white/40 transition-all">
                                         {avatarUrl ? (
                                             <img src={avatarUrl} alt="Profile" className="w-full h-full object-cover" />
                                         ) : (
-                                            <UserIcon className="w-10 h-10 text-slate-500" />
+                                            <UserIcon className="w-10 h-10 text-slate-600" />
                                         )}
                                     </div>
-                                    <label className="absolute bottom-0 right-0 p-2 bg-indigo-600 rounded-full text-white cursor-pointer hover:bg-indigo-500 transition-colors shadow-lg">
-                                        <Camera className="w-4 h-4" />
+                                    <label className="absolute bottom-1 right-1 p-2 bg-slate-800/80 backdrop-blur-sm rounded-full text-white cursor-pointer hover:bg-slate-700 ring-1 ring-white/20 transition-all shadow-xl">
+                                        <Camera className="w-3.5 h-3.5" />
                                         <input type="file" accept="image/*" className="hidden" onChange={handleAvatarUpload} />
                                     </label>
                                 </div>
-                                <p className="mt-3 text-sm text-slate-400">Tap icon to change photo</p>
+                                <p className="text-[11px] uppercase tracking-widest text-gray-500 mt-5">Tap icon to change photo</p>
                             </div>
 
                             {/* Display Name */}
                             <div>
-                                <label className="block text-sm font-medium text-slate-300 mb-2">Activity Name (Display Name)</label>
+                                <label className="block text-[11px] uppercase tracking-widest text-gray-500 mb-2">Activity Name</label>
                                 <input
                                     type="text"
                                     value={displayName}
                                     onChange={(e) => setDisplayName(e.target.value)}
                                     placeholder="e.g. The Weeknd"
-                                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+                                    className="w-full bg-transparent border-b border-white/20 px-0 py-3 text-white text-lg focus:outline-none focus:border-indigo-400 placeholder:text-slate-600 transition-colors"
                                 />
                             </div>
 
                             {/* Roles */}
                             <div>
-                                <label className="block text-sm font-medium text-slate-300 mb-3">Roles</label>
-                                <div className="flex flex-wrap gap-2">
+                                <label className="block text-[11px] uppercase tracking-widest text-gray-500 mb-4">Roles</label>
+                                <div className="flex flex-wrap gap-2.5">
                                     {ROLES.map((role) => {
                                         const isSelected = selectedRoles.includes(role.value);
                                         return (
@@ -600,9 +600,9 @@ const ProfilePage: React.FC = () => {
                                                 key={role.value}
                                                 type="button"
                                                 onClick={() => toggleRole(role.value)}
-                                                className={`px-4 py-2 rounded-full text-sm font-medium transition-all flex items-center gap-2 border ${isSelected
-                                                    ? 'bg-indigo-600 border-indigo-500 text-white'
-                                                    : 'bg-slate-950 border-slate-800 text-slate-400 hover:border-slate-600'
+                                                className={`px-5 py-2 rounded-full text-xs tracking-wide font-medium transition-all flex items-center gap-2 border ${isSelected
+                                                    ? 'border-indigo-500 bg-indigo-500/10 text-indigo-300 shadow-[0_0_15px_rgba(99,102,241,0.2)]'
+                                                    : 'border-white/10 bg-transparent text-slate-400 hover:border-white/30'
                                                     }`}
                                             >
                                                 {role.label}
@@ -614,26 +614,27 @@ const ProfilePage: React.FC = () => {
                             </div>
 
                             {/* Collaboration Settings */}
-                            <div className="pt-6 border-t border-slate-800">
-                                <h3 className="text-lg font-bold text-white mb-4">Collaboration Preferences</h3>
-
-                                <div className="flex items-center justify-between mb-6 bg-slate-950 p-4 rounded-xl border border-slate-800">
+                            <div className="pt-2">
+                                <div className="flex items-center justify-between mb-8">
                                     <div>
-                                        <div className="text-sm font-medium text-white mb-1">Accepting Collaborations?</div>
-                                        <div className="text-xs text-slate-500">Turn this off if you are fully booked.</div>
+                                        <div className="text-[11px] uppercase tracking-widest text-gray-500 mb-1">Collaboration</div>
+                                        <div className="text-sm text-slate-300">Accepting Collaborations?</div>
                                     </div>
                                     <button
                                         type="button"
                                         onClick={() => setCollabStatus(prev => prev === 'OPEN' ? 'CLOSED' : 'OPEN')}
-                                        className={`relative w-14 h-8 rounded-full transition-colors flex items-center px-1 ${collabStatus === 'OPEN' ? 'bg-green-500' : 'bg-slate-700'}`}
+                                        className={`relative w-12 h-6 rounded-full transition-all flex items-center px-1 ${collabStatus === 'OPEN'
+                                            ? 'bg-indigo-500/20 border border-indigo-500/50 shadow-[0_0_15px_rgba(99,102,241,0.3)]'
+                                            : 'bg-white/5 border border-white/10'
+                                            }`}
                                     >
-                                        <div className={`w-6 h-6 rounded-full bg-white shadow-md transform transition-transform ${collabStatus === 'OPEN' ? 'translate-x-6' : 'translate-x-0'}`} />
+                                        <div className={`w-4 h-4 rounded-full transition-transform ${collabStatus === 'OPEN' ? 'translate-x-6 bg-indigo-400 shadow-[0_0_10px_rgba(99,102,241,0.8)]' : 'translate-x-0 bg-slate-500'}`} />
                                     </button>
                                 </div>
 
                                 <div className={`transition-opacity duration-300 ${collabStatus === 'CLOSED' ? 'opacity-50 pointer-events-none' : 'opacity-100'}`}>
-                                    <label className="block text-sm font-medium text-slate-300 mb-3">Interests</label>
-                                    <div className="flex flex-wrap gap-2">
+                                    <label className="block text-[11px] uppercase tracking-widest text-gray-500 mb-4">Interests</label>
+                                    <div className="flex flex-wrap gap-2.5">
                                         {COLLAB_OPTIONS.map((type) => {
                                             const isSelected = collabTypes.includes(type);
                                             return (
@@ -641,9 +642,9 @@ const ProfilePage: React.FC = () => {
                                                     key={type}
                                                     type="button"
                                                     onClick={() => toggleCollabType(type)}
-                                                    className={`px-4 py-2 rounded-full text-sm font-medium transition-all border ${isSelected
-                                                        ? 'bg-white text-black border-white'
-                                                        : 'bg-slate-950 border-slate-800 text-slate-400 hover:border-slate-600'
+                                                    className={`px-5 py-2 rounded-full text-xs tracking-wide font-medium transition-all border ${isSelected
+                                                        ? 'border-indigo-500 bg-indigo-500/10 text-indigo-300 shadow-[0_0_15px_rgba(99,102,241,0.2)]'
+                                                        : 'border-white/10 bg-transparent text-slate-400 hover:border-white/30'
                                                         }`}
                                                 >
                                                     {type}
@@ -656,7 +657,7 @@ const ProfilePage: React.FC = () => {
                         </div>
 
                         {/* --- Unique Handle Section (Group B) --- */}
-                        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 md:p-8 space-y-6">
+                        <div className="space-y-8 relative pb-10 border-b border-white/10">
                             <div className="flex items-center gap-2">
                                 <h2 className="text-xl font-bold text-white">Unique Handle</h2>
                                 <Info className="w-4 h-4 text-slate-500" />
@@ -668,10 +669,10 @@ const ProfilePage: React.FC = () => {
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium text-slate-300 mb-2">My Page URL</label>
-                                <div className="flex items-center gap-3">
-                                    <div className="relative flex-1">
-                                        <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 text-sm">blinddrop.com/u/</span>
+                                <label className="block text-[11px] uppercase tracking-widest text-gray-500 mb-2">My Page URL</label>
+                                <div className="flex items-end gap-3">
+                                    <div className="relative flex-1 flex items-center border-b border-white/20 transition-colors focus-within:border-indigo-400">
+                                        <span className="text-slate-500 text-lg mr-1 pb-2 shrink-0">blinddrop.com/u/</span>
                                         <input
                                             type="text"
                                             value={newHandle}
@@ -682,13 +683,13 @@ const ProfilePage: React.FC = () => {
                                             autoCorrect="off"
                                             spellCheck="false"
                                             style={{ imeMode: 'disabled' } as any}
-                                            className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-36 pr-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+                                            className="w-full bg-transparent px-0 py-2 pb-2 text-white text-lg focus:outline-none placeholder:text-slate-600 transition-colors"
                                         />
                                     </div>
                                     <button
                                         onClick={checkHandle}
                                         disabled={newHandle === currentHandle || !newHandle}
-                                        className="px-4 py-3 bg-slate-800 hover:bg-slate-700 text-white text-sm font-bold rounded-xl transition-colors disabled:opacity-50 whitespace-nowrap"
+                                        className="px-6 py-2.5 bg-white/5 hover:bg-white/10 border border-white/10 text-white text-sm font-bold rounded-full transition-colors disabled:opacity-50 whitespace-nowrap"
                                     >
                                         Check
                                     </button>
@@ -711,7 +712,7 @@ const ProfilePage: React.FC = () => {
                             {handleStatus === 'available' && (
                                 <button
                                     onClick={updateHandle}
-                                    className="w-full py-3 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl transition-colors shadow-lg shadow-indigo-500/20"
+                                    className="w-full py-3 bg-indigo-500/20 hover:bg-indigo-500/30 border border-indigo-500/50 text-indigo-300 font-bold rounded-full transition-all shadow-[0_0_15px_rgba(99,102,241,0.2)]"
                                 >
                                     Confirm Update
                                 </button>
@@ -720,30 +721,30 @@ const ProfilePage: React.FC = () => {
                     </div>
                 ) : (
                     // --- Manage Links Tab ---
-                    <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 md:p-8 space-y-8">
+                    <div className="space-y-10 relative pb-10">
                         {/* Add New Link Form */}
-                        <form onSubmit={handleAddLink} className="bg-slate-950 p-4 rounded-xl border border-slate-800 space-y-4">
-                            <h3 className="text-sm font-medium text-white mb-2 flex items-center gap-2">
-                                <Plus className="w-4 h-4" /> Add New Link
+                        <form onSubmit={handleAddLink} className="space-y-6">
+                            <h3 className="text-xl font-bold text-white mb-2 flex items-center gap-2">
+                                <Plus className="w-5 h-5" /> Add New Link
                             </h3>
 
-                            <div className="space-y-4">
+                            <div className="space-y-6">
                                 <div>
-                                    <label className="block text-xs font-medium text-slate-400 mb-1.5 ml-1">Link Title</label>
+                                    <label className="block text-[11px] uppercase tracking-widest text-gray-500 mb-2">Link Title</label>
                                     <input
                                         type="text"
                                         placeholder="e.g. Listen on Spotify"
                                         value={newLink.title}
                                         onChange={(e) => setNewLink({ ...newLink, title: e.target.value })}
-                                        className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                        className="w-full bg-transparent border-b border-white/20 px-0 py-3 text-white text-lg focus:outline-none focus:border-indigo-400 placeholder:text-slate-600 transition-colors"
                                         required
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-xs font-medium text-slate-400 mb-1.5 ml-1">Link URL</label>
-                                    <div className="relative flex items-center">
-                                        <div className="absolute left-3 text-slate-400 pointer-events-none">
-                                            {getIconForPlatform(newLink.platform, "w-4 h-4")}
+                                    <label className="block text-[11px] uppercase tracking-widest text-gray-500 mb-2">Link URL</label>
+                                    <div className="relative flex items-center border-b border-white/20 focus-within:border-indigo-400 transition-colors">
+                                        <div className="text-slate-400 pointer-events-none mr-3">
+                                            {getIconForPlatform(newLink.platform, "w-5 h-5")}
                                         </div>
                                         <input
                                             type="text"
@@ -754,11 +755,11 @@ const ProfilePage: React.FC = () => {
                                                 const detected = detectPlatform(url);
                                                 setNewLink({ ...newLink, url, platform: detected });
                                             }}
-                                            className="w-full bg-slate-900 border border-slate-700 rounded-lg pl-10 pr-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all placeholder:text-slate-600"
+                                            className="w-full bg-transparent px-0 py-3 pb-3 text-white text-lg focus:outline-none placeholder:text-slate-600 transition-colors"
                                             required
                                         />
                                         {newLink.url && (
-                                            <div className="absolute right-3 text-xs text-indigo-400 font-medium animate-in fade-in slide-in-from-left-1">
+                                            <div className="absolute right-0 text-xs text-indigo-400 font-medium animate-in fade-in slide-in-from-left-1">
                                                 {newLink.platform}
                                             </div>
                                         )}
@@ -769,14 +770,14 @@ const ProfilePage: React.FC = () => {
                             <button
                                 type="submit"
                                 disabled={isLinkAdding}
-                                className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-bold rounded-lg transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                                className="w-full py-3.5 bg-white/5 hover:bg-white/10 border border-white/10 text-white text-sm font-bold rounded-full transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
                             >
                                 {isLinkAdding ? 'Adding...' : 'Add to Profile'}
                             </button>
                         </form>
 
                         {/* Links List */}
-                        <div className="space-y-3">
+                        <div className="space-y-3 pt-6 border-t border-white/10">
                             <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
                                 <SortableContext items={links} strategy={verticalListSortingStrategy}>
                                     {links.map((link) => (
