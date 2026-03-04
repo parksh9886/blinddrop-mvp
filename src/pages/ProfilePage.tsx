@@ -585,7 +585,7 @@ const ProfilePage: React.FC = () => {
                                     value={displayName}
                                     onChange={(e) => setDisplayName(e.target.value)}
                                     placeholder="e.g. The Weeknd"
-                                    className="w-full bg-transparent border-b border-white/20 px-0 py-3 text-white text-lg focus:outline-none focus:border-indigo-400 placeholder:text-slate-600 transition-colors"
+                                    className="w-full bg-white/5 px-4 py-2.5 rounded-lg text-white text-lg focus:outline-none focus:ring-1 focus:ring-indigo-500/50 placeholder:text-slate-600 transition-all border border-transparent focus:border-indigo-500/30"
                                 />
                             </div>
 
@@ -670,9 +670,9 @@ const ProfilePage: React.FC = () => {
 
                             <div>
                                 <label className="block text-[11px] uppercase tracking-widest text-gray-500 mb-2">My Page URL</label>
-                                <div className="flex items-end gap-3">
-                                    <div className="relative flex-1 flex items-center border-b border-white/20 transition-colors focus-within:border-indigo-400">
-                                        <span className="text-slate-500 text-lg mr-1 pb-2 shrink-0">blinddrop.com/u/</span>
+                                <div className="flex items-center gap-3">
+                                    <div className="relative flex-1 flex items-center border-b border-white/20 transition-colors focus-within:border-indigo-400 pb-2">
+                                        <span className="text-slate-500 text-lg mr-1 shrink-0">blinddrop.com/u/</span>
                                         <input
                                             type="text"
                                             value={newHandle}
@@ -683,7 +683,7 @@ const ProfilePage: React.FC = () => {
                                             autoCorrect="off"
                                             spellCheck="false"
                                             style={{ imeMode: 'disabled' } as any}
-                                            className="w-full bg-transparent px-0 py-2 pb-2 text-white text-lg focus:outline-none placeholder:text-slate-600 transition-colors"
+                                            className="w-full bg-transparent px-0 py-0 text-white text-lg focus:outline-none placeholder:text-slate-600 transition-colors"
                                         />
                                     </div>
                                     <button
@@ -736,30 +736,30 @@ const ProfilePage: React.FC = () => {
                                         placeholder="e.g. Listen on Spotify"
                                         value={newLink.title}
                                         onChange={(e) => setNewLink({ ...newLink, title: e.target.value })}
-                                        className="w-full bg-transparent border-b border-white/20 px-0 py-3 text-white text-lg focus:outline-none focus:border-indigo-400 placeholder:text-slate-600 transition-colors"
+                                        className="w-full bg-white/5 px-4 py-2.5 rounded-lg text-white text-lg focus:outline-none focus:ring-1 focus:ring-indigo-500/50 placeholder:text-slate-600 transition-all border border-transparent focus:border-indigo-500/30"
                                         required
                                     />
                                 </div>
                                 <div>
                                     <label className="block text-[11px] uppercase tracking-widest text-gray-500 mb-2">Link URL</label>
-                                    <div className="relative flex items-center border-b border-white/20 focus-within:border-indigo-400 transition-colors">
+                                    <div className="relative flex items-center bg-white/5 rounded-lg px-4 focus-within:ring-1 focus-within:ring-indigo-500/50 border border-transparent focus-within:border-indigo-500/30 transition-all">
                                         <div className="text-slate-400 pointer-events-none mr-3">
                                             {getIconForPlatform(newLink.platform, "w-5 h-5")}
                                         </div>
                                         <input
                                             type="text"
-                                            placeholder="Paste any link (YouTube, Instagram, Spotify...)"
+                                            placeholder="Paste any link..."
                                             value={newLink.url}
                                             onChange={(e) => {
                                                 const url = e.target.value;
                                                 const detected = detectPlatform(url);
                                                 setNewLink({ ...newLink, url, platform: detected });
                                             }}
-                                            className="w-full bg-transparent px-0 py-3 pb-3 text-white text-lg focus:outline-none placeholder:text-slate-600 transition-colors"
+                                            className="w-full bg-transparent px-0 py-2.5 text-white text-lg focus:outline-none placeholder:text-slate-600"
                                             required
                                         />
                                         {newLink.url && (
-                                            <div className="absolute right-0 text-xs text-indigo-400 font-medium animate-in fade-in slide-in-from-left-1">
+                                            <div className="absolute right-4 text-xs text-indigo-400 font-medium animate-in fade-in slide-in-from-left-1">
                                                 {newLink.platform}
                                             </div>
                                         )}
