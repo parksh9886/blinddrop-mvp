@@ -97,17 +97,17 @@ const SortableTrackItem = ({
         <div
             ref={setNodeRef}
             style={style}
-            className="group bg-slate-900/50 border border-slate-800 hover:border-indigo-500/30 rounded-2xl p-3 transition-all hover:bg-slate-900 relative"
+            className="group bg-transparent border border-white/10 hover:border-white/20 rounded-2xl p-4 transition-all hover:bg-white/5 relative flex flex-col"
         >
-            <div className="flex items-start justify-between">
-                <div className="flex gap-3 flex-1 min-w-0">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div className="flex items-center gap-4 flex-1 min-w-0">
                     {/* Drag Handle */}
-                    <div {...attributes} {...listeners} className="mt-4 cursor-move text-slate-600 hover:text-white touch-none">
+                    <div {...attributes} {...listeners} className="cursor-move text-slate-600 hover:text-white touch-none shrink-0 flex items-center justify-center p-1">
                         <GripVertical className="w-5 h-5" />
                     </div>
 
-                    {/* Thumbnail Logic (Compact: w-12 h-12) */}
-                    <div className="w-12 h-12 bg-slate-800 rounded-lg flex-shrink-0 overflow-hidden relative mt-1">
+                    {/* Thumbnail */}
+                    <div className="w-14 h-14 bg-slate-900 rounded-xl shrink-0 overflow-hidden relative shadow-lg ring-1 ring-white/10">
                         {getThumbnailUrl(track.url) ? (
                             <img
                                 src={getThumbnailUrl(track.url)!}
@@ -115,8 +115,8 @@ const SortableTrackItem = ({
                                 className="w-full h-full object-cover"
                             />
                         ) : (
-                            <div className="w-full h-full flex items-center justify-center">
-                                <Music className="w-5 h-5 text-slate-500" />
+                            <div className="w-full h-full flex items-center justify-center bg-white/5">
+                                <Music className="w-6 h-6 text-slate-500" />
                             </div>
                         )}
                     </div>
@@ -128,94 +128,69 @@ const SortableTrackItem = ({
                                 type="text"
                                 value={editingTrack.title}
                                 onChange={(e) => setEditingTrackState({ ...editingTrack, title: e.target.value })}
-                                className="w-full bg-slate-950 border border-slate-700 rounded px-2 py-1 text-sm text-white"
-                            />
-                            <input
-                                type="text"
-                                value={editingTrack.url}
-                                onChange={(e) => setEditingTrackState({ ...editingTrack, url: e.target.value })}
-                                className="w-full bg-slate-950 border border-slate-700 rounded px-2 py-1 text-xs text-slate-400"
+                                className="w-full bg-slate-900 border border-white/10 rounded-lg px-3 py-1.5 text-sm text-white focus:outline-none focus:border-indigo-500"
+                                placeholder="Track Title"
                             />
                             <div className="flex gap-2">
                                 <button
                                     onClick={handleUpdateTrack}
-                                    className="text-xs bg-indigo-600 text-white px-3 py-1 rounded hover:bg-indigo-500"
+                                    className="text-xs bg-indigo-500/20 text-indigo-300 border border-indigo-500/50 px-3 py-1.5 rounded-lg hover:bg-indigo-500/30 transition-all font-medium"
                                 >
                                     Save
                                 </button>
                                 <button
                                     onClick={() => setEditingTrack(null)}
-                                    className="text-xs bg-slate-700 text-white px-3 py-1 rounded hover:bg-slate-600"
+                                    className="text-xs bg-white/5 text-slate-300 border border-white/10 px-3 py-1.5 rounded-lg hover:bg-white/10 transition-all font-medium"
                                 >
                                     Cancel
                                 </button>
                             </div>
                         </div>
                     ) : (
-                        <div className="flex-1 min-w-0 pt-0.5">
-                            <h4 className="font-medium text-white line-clamp-1 text-sm truncate pr-2">{track.title || "Untitled Track"}</h4>
-                            <div className="text-[10px] text-slate-500 hover:text-indigo-400 line-clamp-1 leading-relaxed truncate">
-                                {track.url}
-                            </div>
-                            <div className="flex items-center gap-2 mt-1">
-                                <span className={`text-[9px] px-1.5 py-0.5 rounded-full uppercase font-bold tracking-wider ${track.platform === 'youtube' ? 'bg-red-500/10 text-red-500' : 'bg-orange-500/10 text-orange-500'}`}>
+                        <div className="flex-1 min-w-0">
+                            <h4 className="font-bold text-white text-base md:text-lg line-clamp-1 truncate pr-2">{track.title || "Untitled Track"}</h4>
+                            <div className="flex items-center gap-3 mt-1.5 opacity-80">
+                                <span className="flex items-center gap-1.5 text-[10px] font-bold tracking-wider uppercase text-slate-400">
+                                    {track.platform === 'youtube' ? <div className="w-2 h-2 rounded-full bg-red-500" /> : <div className="w-2 h-2 rounded-full bg-orange-500" />}
                                     {track.platform}
                                 </span>
-                                <span className="text-[10px] text-slate-600">
-                                    {new Date(track.created_at).toLocaleDateString()}
+                                <span className="w-1 h-1 rounded-full bg-slate-700" />
+                                <span className="text-[11px] text-slate-500 font-medium">
+                                    {new Date(track.created_at).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })}
                                 </span>
                             </div>
                         </div>
                     )}
                 </div>
 
-                <div className="flex items-center gap-1 flex-shrink-0 ml-2 mt-1">
-                    <a
-                        href={`/u/${userHandle}?track=${track.id}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="p-2 text-slate-400 hover:text-indigo-400 transition-colors"
-                        title="View Public Link"
-                    >
-                        <ExternalLink className="w-4 h-4" />
-                    </a>
-
+                {/* Actions & Feedbacks */}
+                <div className="flex items-center gap-3 ml-12 md:ml-0 pt-3 md:pt-0 border-t border-white/5 md:border-t-0 mt-2 md:mt-0">
+                    {/* CTA Feedback Button */}
                     <button
-                        onClick={() => setEditingTrack(track)}
-                        className="p-2 text-slate-400 hover:text-white transition-colors"
-                        title="Edit Track"
+                        onClick={() => setExpandedTrackId(expandedTrackId === track.id ? null : track.id)}
+                        className={`flex items-center justify-center gap-2 text-[11px] font-bold px-4 py-2.5 rounded-full uppercase tracking-wide transition-all ${((track.feedbacks?.length || 0) > 0)
+                            ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-[0_0_15px_rgba(99,102,241,0.4)] hover:shadow-[0_0_20px_rgba(99,102,241,0.6)] hover:scale-105'
+                            : 'bg-white/5 text-slate-400 hover:bg-white/10 hover:text-white border border-white/10'
+                            }`}
                     >
-                        <Pencil className="w-4 h-4" />
+                        <MessageSquare className="w-3.5 h-3.5" />
+                        Feedbacks {(track.feedbacks?.length || 0) > 0 && `(${track.feedbacks?.length})`}
                     </button>
 
-                    <button
-                        onClick={() => handleDelete(track.id)}
-                        className="p-2 text-slate-400 hover:text-red-400 transition-colors"
-                        title="Delete Track"
-                    >
-                        <Trash2 className="w-4 h-4" />
-                    </button>
+                    <div className="w-px h-8 bg-white/10 mx-1 hidden md:block"></div>
+
+                    <div className="flex items-center gap-1">
+                        <button onClick={() => handleCopyLink(track.id)} className="p-2 text-slate-500 hover:text-white transition-colors rounded-full hover:bg-white/5" title="Copy Link">
+                            <LinkIcon className="w-4 h-4" />
+                        </button>
+                        <button onClick={() => setEditingTrack(track)} className="p-2 text-slate-500 hover:text-white transition-colors rounded-full hover:bg-white/5" title="Edit Track">
+                            <Pencil className="w-4 h-4" />
+                        </button>
+                        <button onClick={() => handleDelete(track.id)} className="p-2 text-slate-500 hover:text-red-400 transition-colors rounded-full hover:bg-white/5" title="Delete Track">
+                            <Trash2 className="w-4 h-4" />
+                        </button>
+                    </div>
                 </div>
-            </div>
-
-            {/* Feedback Section Toggle (Compact) */}
-            <div className="mt-2 flex items-center justify-between border-t border-slate-800/50 pt-2">
-                <button
-                    onClick={() => handleCopyLink(track.id)}
-                    className="flex items-center gap-1.5 text-xs text-slate-500 hover:text-indigo-400 transition-colors ml-9"
-                >
-                    <LinkIcon className="w-3 h-3" />
-                    <span className="truncate max-w-[150px] md:max-w-none">Copy Link</span>
-                </button>
-
-                <button
-                    onClick={() => setExpandedTrackId(expandedTrackId === track.id ? null : track.id)}
-                    className="flex items-center gap-1.5 text-[10px] font-bold text-indigo-400 hover:text-indigo-300 transition-colors bg-indigo-500/10 px-2 py-1 rounded-full uppercase tracking-wide"
-                >
-                    <MessageSquare className="w-3 h-3" />
-                    Feedbacks ({track.feedbacks?.length || 0})
-                    {expandedTrackId === track.id ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
-                </button>
             </div>
 
             {/* Accordion Content */}
@@ -227,7 +202,7 @@ const SortableTrackItem = ({
                         exit={{ height: 0, opacity: 0 }}
                         className="overflow-hidden"
                     >
-                        <div className="pt-3 space-y-2 ml-9">
+                        <div className="pt-4 mt-4 border-t border-white/10">
                             <FeedbackList
                                 feedbacks={track.feedbacks}
                                 isOwner={true}
@@ -495,37 +470,53 @@ const TracksPage: React.FC = () => {
             {/* Toast */}
 
 
-            <div className="max-w-4xl mx-auto space-y-6 pb-20">
-                <header>
-                    <h1 className="text-3xl font-bold">My Tracks</h1>
+            <div className="max-w-4xl mx-auto space-y-8 pb-32 mt-10 px-4 md:px-0">
+                <header className="mb-12 text-center md:text-left">
+                    <h1 className="text-3xl md:text-4xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-white to-slate-400">My Studio</h1>
+                    <p className="text-slate-500 mt-2 text-sm md:text-base max-w-lg">Manage your tracks and view incoming feedbacks in one place.</p>
                 </header>
 
-                {/* Add Track */}
-                <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6">
-                    <h3 className="text-lg font-semibold mb-4 flex items-center gap-2"><Plus className="w-5 h-5 text-indigo-400" /> Add New Track</h3>
-                    <form onSubmit={handleAddTrack} className="flex flex-col gap-3">
-                        <div className="relative">
-                            <Music className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500" />
-                            <input type="text" placeholder="Track Title" value={newTrackTitle} onChange={e => setNewTrackTitle(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-12 pr-4 py-3 focus:ring-2 focus:ring-indigo-500 text-white" />
+                {/* Smart Add Track */}
+                <div className="mb-14 pb-10 border-b border-white/10">
+                    <form onSubmit={handleAddTrack} className="relative group max-w-3xl">
+                        <div className="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none">
+                            {submitting ? (
+                                <Loader2 className="w-5 h-5 animate-spin text-indigo-500" />
+                            ) : (
+                                <Plus className="w-5 h-5 text-indigo-400 group-focus-within:text-indigo-300 transition-colors" />
+                            )}
                         </div>
-                        <div className="relative">
-                            <LinkIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500" />
-                            <input type="url" placeholder="YouTube / SoundCloud Link" value={newTrackUrl} onChange={e => setNewTrackUrl(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-12 pr-4 py-3 focus:ring-2 focus:ring-indigo-500 text-white" required />
-                        </div>
-                        {errorMsg && <div className="text-red-400 text-sm">{errorMsg}</div>}
-                        <button type="submit" disabled={submitting} className="self-end px-6 py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold rounded-lg text-sm disabled:opacity-50">{submitting ? 'Adding...' : 'Add Track'}</button>
+                        <input
+                            type="url"
+                            placeholder="🎵 YouTube 또는 SoundCloud 링크를 붙여넣고 엔터를 치세요..."
+                            value={newTrackUrl}
+                            onChange={e => setNewTrackUrl(e.target.value)}
+                            disabled={submitting}
+                            className="w-full bg-white/5 border border-white/10 rounded-full pl-14 pr-6 py-4 text-white text-sm md:text-base placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500/50 focus:bg-white/10 hover:bg-white/10 transition-all shadow-lg backdrop-blur-sm disabled:opacity-50"
+                            required
+                        />
+                        {errorMsg && <div className="absolute -bottom-8 left-4 text-red-400 text-xs font-medium bg-red-500/10 px-3 py-1.5 rounded-full">{errorMsg}</div>}
                     </form>
                 </div>
 
                 {/* Sortable Track List */}
-                <div className="space-y-4">
-                    <h3 className="text-lg font-semibold">Your Tracks ({tracks.length})</h3>
+                <div className="space-y-6">
+                    <div className="flex items-center justify-between mb-2">
+                        <h3 className="text-lg font-bold text-white tracking-wide">Your Tracks <span className="text-slate-500 font-medium ml-2 text-sm bg-white/5 px-2 py-0.5 rounded-full">{tracks.length}</span></h3>
+                    </div>
+
                     {tracks.length === 0 ? (
-                        <p className="text-slate-500 text-center py-10 border border-dashed border-slate-800 rounded-xl">No tracks yet.</p>
+                        <div className="flex flex-col items-center justify-center py-20 bg-white/5 border border-dashed border-white/10 rounded-3xl transition-all">
+                            <div className="w-16 h-16 bg-white/5 rounded-full flex items-center justify-center mb-4">
+                                <Music className="w-8 h-8 text-slate-500" />
+                            </div>
+                            <p className="text-slate-300 font-bold text-lg">No tracks yet</p>
+                            <p className="text-slate-500 text-sm mt-1">Paste a link above to add your first track.</p>
+                        </div>
                     ) : (
                         <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
                             <SortableContext items={tracks} strategy={verticalListSortingStrategy}>
-                                <div className="space-y-2">
+                                <div className="space-y-3">
                                     {tracks.map(track => (
                                         <SortableTrackItem
                                             key={track.id}
