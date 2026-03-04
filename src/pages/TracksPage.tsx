@@ -4,7 +4,6 @@ import { supabase } from '../lib/supabase';
 import Layout from '../components/Layout';
 import { useToast } from '../contexts/ToastContext';
 import ConfirmModal from '../components/ConfirmModal';
-import { useLanguage } from '../contexts/LanguageContext';
 import { Plus, Loader2, Music, ExternalLink, Trash2, Link as LinkIcon, MessageSquare, ChevronDown, ChevronUp, Pencil, GripVertical } from 'lucide-react';
 // import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -86,7 +85,6 @@ const SortableTrackItem = ({
         transition,
         isDragging
     } = useSortable({ id: track.id });
-    const { t } = useLanguage();
 
     const style = {
         transform: CSS.Transform.toString(transform),
@@ -143,19 +141,19 @@ const SortableTrackItem = ({
                                     onClick={handleUpdateTrack}
                                     className="text-xs bg-indigo-600 text-white px-3 py-1 rounded hover:bg-indigo-500"
                                 >
-                                    {t('common.save')}
+                                    Save
                                 </button>
                                 <button
                                     onClick={() => setEditingTrack(null)}
                                     className="text-xs bg-slate-700 text-white px-3 py-1 rounded hover:bg-slate-600"
                                 >
-                                    {t('common.cancel')}
+                                    Cancel
                                 </button>
                             </div>
                         </div>
                     ) : (
                         <div className="flex-1 min-w-0 pt-0.5">
-                            <h4 className="font-medium text-white line-clamp-1 text-sm truncate pr-2">{track.title || t('common.untitledTrack')}</h4>
+                            <h4 className="font-medium text-white line-clamp-1 text-sm truncate pr-2">{track.title || "Untitled Track"}</h4>
                             <div className="text-[10px] text-slate-500 hover:text-indigo-400 line-clamp-1 leading-relaxed truncate">
                                 {track.url}
                             </div>
@@ -177,7 +175,7 @@ const SortableTrackItem = ({
                         target="_blank"
                         rel="noopener noreferrer"
                         className="p-2 text-slate-400 hover:text-indigo-400 transition-colors"
-                        title={t('tracks.viewPublicLink')}
+                        title="View Public Link"
                     >
                         <ExternalLink className="w-4 h-4" />
                     </a>
@@ -185,7 +183,7 @@ const SortableTrackItem = ({
                     <button
                         onClick={() => setEditingTrack(track)}
                         className="p-2 text-slate-400 hover:text-white transition-colors"
-                        title={t('tracks.editTrack')}
+                        title="Edit Track"
                     >
                         <Pencil className="w-4 h-4" />
                     </button>
@@ -193,7 +191,7 @@ const SortableTrackItem = ({
                     <button
                         onClick={() => handleDelete(track.id)}
                         className="p-2 text-slate-400 hover:text-red-400 transition-colors"
-                        title={t('common.deleteTrackTitle')}
+                        title="Delete Track"
                     >
                         <Trash2 className="w-4 h-4" />
                     </button>
@@ -207,7 +205,7 @@ const SortableTrackItem = ({
                     className="flex items-center gap-1.5 text-xs text-slate-500 hover:text-indigo-400 transition-colors ml-9"
                 >
                     <LinkIcon className="w-3 h-3" />
-                    <span className="truncate max-w-[150px] md:max-w-none">{t('tracks.copyLink')}</span>
+                    <span className="truncate max-w-[150px] md:max-w-none">Copy Link</span>
                 </button>
 
                 <button
@@ -215,7 +213,7 @@ const SortableTrackItem = ({
                     className="flex items-center gap-1.5 text-[10px] font-bold text-indigo-400 hover:text-indigo-300 transition-colors bg-indigo-500/10 px-2 py-1 rounded-full uppercase tracking-wide"
                 >
                     <MessageSquare className="w-3 h-3" />
-                    {t('tracks.feedbacksCount').replace('{{count}}', String(track.feedbacks?.length || 0))}
+                    Feedbacks ({track.feedbacks?.length || 0})
                     {expandedTrackId === track.id ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
                 </button>
             </div>
@@ -261,7 +259,6 @@ const TracksPage: React.FC = () => {
     const [editingTrack, setEditingTrack] = useState<Track | null>(null);
     const [trackToDelete, setTrackToDelete] = useState<string | null>(null);
     const { showToast } = useToast();
-    const { t } = useLanguage();
 
     // Sensors for DnD
     const sensors = useSensors(
@@ -372,7 +369,7 @@ const TracksPage: React.FC = () => {
         else if (newTrackUrl.includes('soundcloud.com')) platform = 'soundcloud';
 
         if (!platform) {
-            setErrorMsg(t('tracks.supportedLinksMsg'));
+            setErrorMsg('Only YouTube and SoundCloud links are supported.');
             setSubmitting(false);
             return;
         }
@@ -400,7 +397,7 @@ const TracksPage: React.FC = () => {
             setTracks([data, ...tracks]);
             setNewTrackUrl('');
             setNewTrackTitle('');
-            showToast(t('toast.trackAdded'), 'success');
+            showToast('Track added successfully!', 'success');
         } catch (error: any) {
             console.error('Error adding track:', error);
             setErrorMsg(error.message);
@@ -419,9 +416,9 @@ const TracksPage: React.FC = () => {
             const { error } = await supabase.from('tracks').delete().eq('id', trackToDelete);
             if (error) throw error;
             setTracks(tracks.filter(t => t.id !== trackToDelete));
-            showToast(t('toast.trackDeleted'), 'success');
+            showToast('Track deleted.', 'success');
         } catch (err: any) {
-            showToast(t('toast.trackDeleteError'), 'error');
+            showToast('Error deleting track.', 'error');
         } finally {
             setTrackToDelete(null);
         }
@@ -438,9 +435,10 @@ const TracksPage: React.FC = () => {
             if (error) throw error;
             setTracks(tracks.map(t => t.id === editingTrack.id ? { ...t, title: editingTrack.title, url: editingTrack.url } : t));
             setEditingTrack(null);
-            showToast(t('toast.trackUpdated'), 'success');
+            setEditingTrack(null);
+            showToast('Track updated!', 'success');
         } catch (error: any) {
-            showToast(t('toast.trackUpdateFailed'), 'error');
+            showToast('Update failed.', 'error');
         }
     };
 
@@ -451,9 +449,9 @@ const TracksPage: React.FC = () => {
             setTracks(prev => prev.map(t => t.id === trackId ? {
                 ...t, feedbacks: t.feedbacks.map(f => f.id === feedbackId ? { ...f, reply: replyContent } : f)
             } : t));
-            showToast(t('toast.replySaved'), 'success');
+            showToast('Reply saved!', 'success');
         } catch (error) {
-            showToast(t('toast.replyFailed'), 'error');
+            showToast('Failed to reply.', 'error');
         }
     };
 
@@ -464,15 +462,15 @@ const TracksPage: React.FC = () => {
             setTracks(prev => prev.map(t => t.id === trackId ? {
                 ...t, feedbacks: t.feedbacks.map(f => f.id === feedbackId ? { ...f, is_unlocked: true } : f)
             } : t));
-            showToast(t('toast.unlocked'), 'success');
+            showToast('Unlocked!', 'success');
         } catch (error) {
-            showToast(t('toast.unlockFailed'), 'error');
+            showToast('Failed to unlock.', 'error');
         }
     };
 
     const handleCopyLink = (trackId: string) => {
         const url = `${window.location.origin}/u/${userProfile?.handle || user?.user_metadata?.handle || 'user'}?track=${trackId}`;
-        navigator.clipboard.writeText(url).then(() => showToast(t('toast.copied'), 'success'));
+        navigator.clipboard.writeText(url).then(() => showToast('Copied!', 'success'));
     };
 
     const getThumbnailUrl = (url: string) => {
@@ -487,9 +485,9 @@ const TracksPage: React.FC = () => {
         <Layout>
             <ConfirmModal
                 isOpen={!!trackToDelete}
-                title={t('common.deleteTrackTitle')}
-                message={t('common.deleteTrackMessage')}
-                confirmLabel={t('common.delete')}
+                title="Delete Track"
+                message="Are you sure you want to delete this track? This action cannot be undone."
+                confirmLabel="Delete"
                 isDestructive
                 onConfirm={confirmDeleteTrack}
                 onCancel={() => setTrackToDelete(null)}
@@ -499,31 +497,31 @@ const TracksPage: React.FC = () => {
 
             <div className="max-w-4xl mx-auto space-y-6 pb-20">
                 <header>
-                    <h1 className="text-3xl font-bold">{t('tracks.pageTitle')}</h1>
+                    <h1 className="text-3xl font-bold">My Tracks</h1>
                 </header>
 
                 {/* Add Track */}
                 <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6">
-                    <h3 className="text-lg font-semibold mb-4 flex items-center gap-2"><Plus className="w-5 h-5 text-indigo-400" /> {t('tracks.addNewTrack')}</h3>
+                    <h3 className="text-lg font-semibold mb-4 flex items-center gap-2"><Plus className="w-5 h-5 text-indigo-400" /> Add New Track</h3>
                     <form onSubmit={handleAddTrack} className="flex flex-col gap-3">
                         <div className="relative">
                             <Music className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500" />
-                            <input type="text" placeholder={t('common.addTrackPlaceholderTitle')} value={newTrackTitle} onChange={e => setNewTrackTitle(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-12 pr-4 py-3 focus:ring-2 focus:ring-indigo-500 text-white" />
+                            <input type="text" placeholder="Track Title" value={newTrackTitle} onChange={e => setNewTrackTitle(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-12 pr-4 py-3 focus:ring-2 focus:ring-indigo-500 text-white" />
                         </div>
                         <div className="relative">
                             <LinkIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500" />
-                            <input type="url" placeholder={t('common.addTrackPlaceholderUrl')} value={newTrackUrl} onChange={e => setNewTrackUrl(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-12 pr-4 py-3 focus:ring-2 focus:ring-indigo-500 text-white" required />
+                            <input type="url" placeholder="YouTube / SoundCloud Link" value={newTrackUrl} onChange={e => setNewTrackUrl(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-12 pr-4 py-3 focus:ring-2 focus:ring-indigo-500 text-white" required />
                         </div>
                         {errorMsg && <div className="text-red-400 text-sm">{errorMsg}</div>}
-                        <button type="submit" disabled={submitting} className="self-end px-6 py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold rounded-lg text-sm disabled:opacity-50">{submitting ? t('tracks.adding') : t('common.addTrackButton')}</button>
+                        <button type="submit" disabled={submitting} className="self-end px-6 py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold rounded-lg text-sm disabled:opacity-50">{submitting ? 'Adding...' : 'Add Track'}</button>
                     </form>
                 </div>
 
                 {/* Sortable Track List */}
                 <div className="space-y-4">
-                    <h3 className="text-lg font-semibold">{t('tracks.yourTracks').replace('{{count}}', String(tracks.length))}</h3>
+                    <h3 className="text-lg font-semibold">Your Tracks ({tracks.length})</h3>
                     {tracks.length === 0 ? (
-                        <p className="text-slate-500 text-center py-10 border border-dashed border-slate-800 rounded-xl">{t('common.noTracks')}</p>
+                        <p className="text-slate-500 text-center py-10 border border-dashed border-slate-800 rounded-xl">No tracks yet.</p>
                     ) : (
                         <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
                             <SortableContext items={tracks} strategy={verticalListSortingStrategy}>

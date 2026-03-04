@@ -2,7 +2,6 @@ import React, { useState, useCallback } from 'react';
 import Cropper from 'react-easy-crop';
 import { X, Check, ZoomIn } from 'lucide-react';
 import getCroppedImg from '../lib/cropUtils';
-import { useLanguage } from '../contexts/LanguageContext';
 
 interface ImageCropModalProps {
     imageSrc: string;
@@ -15,7 +14,6 @@ const ImageCropModal: React.FC<ImageCropModalProps> = ({ imageSrc, onCancel, onC
     const [zoom, setZoom] = useState(1);
     const [croppedAreaPixels, setCroppedAreaPixels] = useState<any>(null);
     const [isProcessing, setIsProcessing] = useState(false);
-    const { t } = useLanguage();
 
     const onCropChange = (crop: { x: number; y: number }) => {
         setCrop(crop);
@@ -53,7 +51,7 @@ const ImageCropModal: React.FC<ImageCropModalProps> = ({ imageSrc, onCancel, onC
                 >
                     <X className="w-6 h-6" />
                 </button>
-                <h3 className="text-white font-bold text-lg">{t('modal.adjustPhoto')}</h3>
+                <h3 className="text-white font-bold text-lg">Adjust Photo</h3>
                 <button
                     onClick={handleSave}
                     disabled={isProcessing}
@@ -86,7 +84,7 @@ const ImageCropModal: React.FC<ImageCropModalProps> = ({ imageSrc, onCancel, onC
                 {/* Mobile Preview Guide Overlay */}
                 <div className="pointer-events-none absolute inset-0 flex items-center justify-center z-10">
                     <div className="text-center opacity-50">
-                        <p className="text-white text-sm font-medium drop-shadow-md">{t('modal.mobileViewGuide')}</p>
+                        <p className="text-white text-sm font-medium drop-shadow-md">Mobile View</p>
                     </div>
                 </div>
             </div>
@@ -107,7 +105,7 @@ const ImageCropModal: React.FC<ImageCropModalProps> = ({ imageSrc, onCancel, onC
                     />
                 </div>
                 <p className="text-center text-xs text-slate-500">
-                    {t('modal.dragToMove')}
+                    Drag to move • Pinch to zoom
                 </p>
             </div>
         </div>

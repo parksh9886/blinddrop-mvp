@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { User, Lock, MessageCircle, Send } from 'lucide-react';
 import { useFeedbackLogic } from '../hooks/useFeedbackLogic';
 import type { Feedback } from '../hooks/useFeedbackLogic';
-import { useLanguage } from '../contexts/LanguageContext';
 
 interface FeedbackListProps {
     feedbacks: Feedback[] | undefined;
@@ -34,7 +33,6 @@ const FeedbackItem = ({
     const { isAccessible, content, created_at, reply, id } = feedback;
     const shouldBlur = !isAccessible;
     const [inputValue, setInputValue] = useState("");
-    const { t } = useLanguage();
 
     const hasReplyOrInput = reply || (isOwner && isAccessible);
 
@@ -65,7 +63,7 @@ const FeedbackItem = ({
                     {/* Header */}
                     <div className="flex justify-between items-start mb-1.5">
                         <div className="flex items-center gap-2">
-                            <span className="text-sm font-bold text-white/90">{t('feedback.anonymous')}</span>
+                            <span className="text-sm font-bold text-white/90">Anonymous</span>
                             {shouldBlur && <Lock className="w-3 h-3 text-white/30" />}
                             <span className="text-[10px] text-white/30 font-medium tracking-wide">
                                 • {new Date(created_at).toLocaleDateString()}
@@ -88,10 +86,10 @@ const FeedbackItem = ({
                                         className="bg-black/40 hover:bg-black/60 backdrop-blur-md px-4 py-1.5 rounded-full border border-white/10 flex items-center gap-2 transition-all hover:scale-105"
                                     >
                                         <Lock className="w-3 h-3 text-white" />
-                                        <span className="text-xs font-bold text-white">{t('feedback.unlockBtn')}</span>
+                                        <span className="text-xs font-bold text-white">Unlock</span>
                                     </button>
                                 ) : (
-                                    <span className="text-xs text-slate-500 italic">{t('feedback.hiddenContent')}</span>
+                                    <span className="text-xs text-slate-500 italic">... Hidden Content ...</span>
                                 )}
                             </div>
                         )}
@@ -165,7 +163,7 @@ const FeedbackItem = ({
                                             type="text"
                                             value={inputValue}
                                             onChange={(e) => setInputValue(e.target.value)}
-                                            placeholder={t('feedback.replyPlaceholder').replace('{{artistName}}', artistName || t('common.artist'))}
+                                            placeholder={`Reply as ${artistName || 'Artist'}...`}
                                             className="w-full bg-transparent border-b border-white/20 py-1.5 text-sm text-white placeholder-white/20 focus:outline-none focus:border-indigo-400/50 transition-colors"
                                         />
                                         <div className="absolute bottom-0 left-0 h-[1px] w-0 bg-indigo-500 transition-all duration-300 group-focus-within/input:w-full" />
@@ -205,7 +203,6 @@ export const FeedbackList = React.memo<FeedbackListProps>(({
 }) => {
     const { displayFeedbacks } = useFeedbackLogic(feedbacks, isOwner);
     const [filter, setFilter] = React.useState<'all' | 'unreplied'>('all');
-    const { t } = useLanguage();
 
     const filteredFeedbacks = displayFeedbacks.filter(fb => {
         if (filter === 'unreplied') return !fb.reply;
@@ -217,7 +214,7 @@ export const FeedbackList = React.memo<FeedbackListProps>(({
             {/* Filter Tabs (Owner Only) */}
             {isOwner && (
                 <div className="flex gap-2 mb-4 justify-end">
-                    <span className="text-xs text-white/30 font-medium mr-2 self-center uppercase tracking-widest">{t('feedback.filterLabel')}</span>
+                    <span className="text-xs text-white/30 font-medium mr-2 self-center uppercase tracking-widest">Filter:</span>
                     <button
                         onClick={() => setFilter('all')}
                         className={`px-4 py-1.5 text-[10px] font-bold rounded-full transition-all uppercase tracking-wider border ${filter === 'all'
@@ -225,7 +222,7 @@ export const FeedbackList = React.memo<FeedbackListProps>(({
                             : 'bg-transparent text-white/40 border-white/10 hover:border-white/20'
                             }`}
                     >
-                        {t('feedback.filterAll')}
+                        All
                     </button>
                     <button
                         onClick={() => setFilter('unreplied')}
@@ -234,7 +231,7 @@ export const FeedbackList = React.memo<FeedbackListProps>(({
                             : 'bg-transparent text-white/40 border-white/10 hover:border-white/20'
                             }`}
                     >
-                        {t('feedback.filterUnreplied')}
+                        Unreplied
                     </button>
                 </div>
             )}
@@ -256,7 +253,7 @@ export const FeedbackList = React.memo<FeedbackListProps>(({
                 <div className="text-center py-12 px-6 rounded-3xl bg-black/20 border border-dashed border-slate-700/50">
                     <MessageCircle className="w-8 h-8 text-slate-700 mx-auto mb-3" />
                     <p className="text-slate-500 text-sm font-medium">
-                        {filter === 'unreplied' ? t('feedback.noUnreplied') : (isOwner ? t('feedback.noFeedbackYetOwner') : t('feedback.noFeedbackYetGuest'))}
+                        {filter === 'unreplied' ? "All caught up! No unreplied feedback." : (isOwner ? "No feedback yet." : "Be the first to share your thoughts")}
                     </p>
                 </div>
             )}

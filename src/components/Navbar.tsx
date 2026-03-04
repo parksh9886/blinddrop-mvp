@@ -4,11 +4,10 @@ import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
 import { Music, LogOut, User, Menu, Globe, Settings } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useLanguage } from '../contexts/LanguageContext';
+import { t } from '../i18n';
 
 const Navbar: React.FC = () => {
     const { user, signOut } = useAuth();
-    const { t, language, setLanguage } = useLanguage();
     const navigate = useNavigate();
     const location = useLocation();
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -79,14 +78,7 @@ const Navbar: React.FC = () => {
                     </Link>
 
                     {/* Right Side Menu */}
-                    <div className="flex items-center gap-4">
-                        {/* Language Toggle */}
-                        <button
-                            onClick={() => setLanguage(language === 'en' ? 'ko' : 'en')}
-                            className="px-2 py-1 text-xs font-semibold rounded-md border border-slate-700 text-slate-300 hover:text-white hover:border-slate-500 transition-colors uppercase"
-                        >
-                            {language === 'en' ? 'EN' : 'KR'}
-                        </button>
+                    <div className="flex items-center">
                         {user ? (
                             <div className="relative" ref={dropdownRef}>
                                 {/* Hamburger Trigger: Avatar + Menu Icon */}

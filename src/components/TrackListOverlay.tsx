@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronLeft, X, Play, Link as LinkIcon, MessageSquare, Music } from 'lucide-react';
 import { FeedbackList } from './FeedbackList';
-import { useLanguage } from '../contexts/LanguageContext';
 
 interface Feedback {
     id: string;
@@ -64,7 +63,6 @@ const FeedbackSection = ({
 }) => {
     const [comment, setComment] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const { t } = useLanguage();
 
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -94,7 +92,7 @@ const FeedbackSection = ({
     return (
         <div className="space-y-8">
             <h3 className="text-lg font-bold flex items-center gap-2 text-white/90">
-                <MessageSquare className="w-5 h-5" /> {t('feedback.secretFeedback')}
+                <MessageSquare className="w-5 h-5" /> Secret Feedback
             </h3>
 
             {/* Submit Form (Public Only) - Glass Pill Design */}
@@ -105,7 +103,7 @@ const FeedbackSection = ({
                             type="text"
                             value={comment}
                             onChange={(e) => setComment(e.target.value)}
-                            placeholder={t('feedback.sendSecretPlaceholder')}
+                            placeholder="Send a secret message..."
                             className="w-full bg-white/5 backdrop-blur-md rounded-full border border-white/10 py-3.5 pl-6 pr-14 text-sm text-white placeholder-white/40 focus:outline-none focus:ring-1 focus:ring-white/30 transition-all shadow-[0_4px_20px_-5px_rgba(0,0,0,0.3)] hover:bg-white/10"
                         />
 
@@ -214,7 +212,6 @@ const TrackListOverlay: React.FC<TrackListOverlayProps> = ({
     artistProfileImage
 }) => {
     const [tapSelectedId, setTapSelectedId] = useState<string | null>(null);
-    const { t } = useLanguage();
 
     const handleItemTap = (trackId: string) => {
         setTapSelectedId(prev => (prev === trackId ? null : trackId));
@@ -273,7 +270,7 @@ const TrackListOverlay: React.FC<TrackListOverlayProps> = ({
                         )}
 
                         <h2 className="text-lg font-bold text-white/90 tracking-tight">
-                            {view === 'list' ? t('publicArtist.discography') : t('publicArtist.nowPlaying')}
+                            {view === 'list' ? 'Discography' : 'Now Playing'}
                         </h2>
 
                         <button onClick={onClose} className="p-2 rounded-full hover:bg-white/10 transition-colors">
@@ -397,7 +394,7 @@ const TrackListOverlay: React.FC<TrackListOverlayProps> = ({
                                         </div>
                                         <div className="flex items-center gap-2">
                                             <span className="text-lg text-white/60 font-semibold tracking-tight">
-                                                {artistName || t('common.artist')}
+                                                {artistName || "Artist"}
                                             </span>
                                             <span className="w-1 h-1 rounded-full bg-white/20" />
                                             <span className="text-[10px] text-white/30 uppercase font-black tracking-[0.2em]">
@@ -415,7 +412,7 @@ const TrackListOverlay: React.FC<TrackListOverlayProps> = ({
                                             onUnlock={onUnlock}
                                             onSubmitFeedback={onSubmitFeedback}
                                             artistProfileImage={artistProfileImage}
-                                            artistName={artistName || t('common.artist')}
+                                            artistName={artistName || "Artist"}
                                         />
                                     </div>
                                 </motion.div>
@@ -425,7 +422,7 @@ const TrackListOverlay: React.FC<TrackListOverlayProps> = ({
                         {view === 'list' && sortedTracks.length === 0 && (
                             <div className="flex flex-col items-center justify-center py-20 text-white/30 space-y-4">
                                 <Music className="w-12 h-12 opacity-20" />
-                                <p>{t('tracks.noTracksFound')}</p>
+                                <p>No tracks found.</p>
                             </div>
                         )}
                     </div>

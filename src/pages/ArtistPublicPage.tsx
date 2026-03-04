@@ -10,7 +10,6 @@ import {
 import { useToast } from '../contexts/ToastContext';
 import Navbar from '../components/Navbar';
 import TrackListOverlay from '../components/TrackListOverlay';
-import { useLanguage } from '../contexts/LanguageContext';
 
 // --- Interfaces ---
 interface UserProfile {
@@ -73,7 +72,6 @@ const ArtistPublicPage: React.FC = () => {
     const [overlayView, setOverlayView] = useState<'list' | 'detail'>('list');
     const [selectedTrack, setSelectedTrack] = useState<Track | null>(null);
     const { showToast } = useToast();
-    const { t } = useLanguage();
 
     // Scroll Progress for Blur
 
@@ -84,7 +82,7 @@ const ArtistPublicPage: React.FC = () => {
     useEffect(() => {
         const fetchData = async () => {
             if (!handle) {
-                setError(t('public.noHandleSpecified'));
+                setError('No handle specified');
                 return;
             }
             try {
@@ -140,7 +138,7 @@ const ArtistPublicPage: React.FC = () => {
 
             } catch (err: any) {
                 console.error('Error:', err);
-                setError(t('public.artistNotFound'));
+                setError('Artist not found.');
             } finally {
                 setLoading(false);
             }
@@ -197,7 +195,7 @@ const ArtistPublicPage: React.FC = () => {
         // Use standard /u/:handle format to ensure reliability
         const deepLink = `${window.location.origin}/u/${profile?.handle}?track=${trackId}`;
         navigator.clipboard.writeText(deepLink).then(() => {
-            showToast(t('toast.copied'), "success");
+            showToast("Link copied to clipboard!", "success");
         });
     };
 
@@ -220,10 +218,10 @@ const ArtistPublicPage: React.FC = () => {
                     ...prev, feedbacks: prev.feedbacks?.map(f => f.id === feedbackId ? { ...f, reply: replyContent } : f)
                 } : null);
             }
-            showToast(t('toast.replySaved'), "success");
+            showToast("Reply saved!", "success");
         } catch (error) {
             console.error("Failed to reply", error);
-            showToast(t('toast.replyFailed'), "error");
+            showToast("Failed to reply", "error");
         }
     };
 
@@ -242,10 +240,10 @@ const ArtistPublicPage: React.FC = () => {
                     ...prev, feedbacks: prev.feedbacks?.map(f => f.id === feedbackId ? { ...f, is_unlocked: true } : f)
                 } : null);
             }
-            showToast(t('toast.unlocked'), "success");
+            showToast("Feedback unlocked!", "success");
         } catch (error) {
             console.error("Failed to unlock", error);
-            showToast(t('toast.unlockFailed'), "error");
+            showToast("Failed to unlock", "error");
         }
     };
 
@@ -280,7 +278,7 @@ const ArtistPublicPage: React.FC = () => {
     const placeholderImage = "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&q=80&w=1080";
 
     if (loading) return <div className="min-h-screen bg-black flex items-center justify-center text-white"><Loader2 className="w-8 h-8 animate-spin text-white/50" /></div>;
-    if (error || !profile) return <div className="min-h-screen bg-black flex items-center justify-center text-white">{error || t('profile.errorStatus')}</div>;
+    if (error || !profile) return <div className="min-h-screen bg-black flex items-center justify-center text-white">{error || 'Error'}</div>;
 
     const displayImage = profile.avatar_url || placeholderImage;
     const displayName = profile.display_name || profile.handle;
@@ -376,14 +374,14 @@ const ArtistPublicPage: React.FC = () => {
                                         {displayName}
                                     </h1>
                                     <p className="text-lg text-white/60 font-medium tracking-wide drop-shadow-lg leading-relaxed">
-                                        {profile.bio || t('public.defaultRole')}
+                                        {profile.bio || "Artist"}
                                     </p>
                                 </div>
                                 <div className="space-y-4">
                                     {/* Collab Badge */}
                                     <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full backdrop-blur-md transition-colors ${isCollabOpen ? 'bg-green-500/20 text-green-200' : 'bg-red-500/20 text-red-200'}`}>
                                         <div className={`w-2 h-2 rounded-full ${isCollabOpen ? 'bg-green-400 shadow-[0_0_8px_rgba(74,222,128,0.5)]' : 'bg-red-400 shadow-[0_0_8px_rgba(248,113,113,0.5)]'}`} />
-                                        <span className="text-xs font-bold tracking-wide">{isCollabOpen ? t('public.collabOpen') : t('public.collabClosed')}</span>
+                                        <span className="text-xs font-bold tracking-wide">{isCollabOpen ? 'OPEN FOR COLLAB' : 'NOT TAKING REQUESTS'}</span>
                                     </div>
 
                                     {/* Collab Types */}
@@ -422,7 +420,7 @@ const ArtistPublicPage: React.FC = () => {
                                             <div className="p-2 bg-white/20 rounded-lg backdrop-blur-sm">
                                                 <Disc3 className="w-5 h-5 text-white" />
                                             </div>
-                                            <span className="font-bold text-lg tracking-wide">{t('public.discography')}</span>
+                                            <span className="font-bold text-lg tracking-wide">Discography</span>
                                         </div>
                                         <ArrowUpRight className="w-5 h-5 opacity-50 group-hover:opacity-100 transition-opacity" />
                                     </button>
@@ -448,7 +446,7 @@ const ArtistPublicPage: React.FC = () => {
 
                                     {isOwner && (
                                         <Link to="/profile?tab=links" className="flex items-center justify-center p-3 rounded-xl border border-dashed border-white/20 text-white/50 hover:text-white hover:border-white/40 transition-colors text-sm">
-                                            <Plus className="w-4 h-4 mr-2" /> {t('profile.tabLinks')}
+                                            <Plus className="w-4 h-4 mr-2" /> Manage Links
                                         </Link>
                                     )}
                                 </div>
@@ -499,7 +497,7 @@ const ArtistPublicPage: React.FC = () => {
                         } : null);
                     }
 
-                    showToast(t('toast.feedbackSent'), "success");
+                    showToast("Feedback sent!", "success");
                 }}
             />
 

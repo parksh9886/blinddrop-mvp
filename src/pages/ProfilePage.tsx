@@ -10,7 +10,6 @@ import {
 } from 'lucide-react';
 import ImageCropModal from '../components/ImageCropModal';
 import { useToast } from '../contexts/ToastContext';
-import { useLanguage } from '../contexts/LanguageContext';
 import {
     DndContext,
     closestCenter,
@@ -92,7 +91,6 @@ const SortableLinkItem = ({ link, handleDeleteLink }: SortableLinkItemProps) => 
         transition,
         isDragging
     } = useSortable({ id: link.id });
-    const { t } = useLanguage();
 
     const style = {
         transform: CSS.Transform.toString(transform),
@@ -124,7 +122,7 @@ const SortableLinkItem = ({ link, handleDeleteLink }: SortableLinkItemProps) => 
             <button
                 onClick={() => handleDeleteLink(link.id)}
                 className="p-2 text-slate-400 hover:text-red-400 hover:bg-slate-700 rounded-lg transition-colors"
-                title={t('common.delete')}
+                title="Delete Link"
             >
                 <Trash2 className="w-4 h-4" />
             </button>
@@ -139,7 +137,6 @@ const ProfilePage: React.FC = () => {
     const { showToast } = useToast();
     const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState<'profile' | 'links'>('profile');
-    const { t } = useLanguage();
 
     // Crop Modal State
     const [cropModalOpen, setCropModalOpen] = useState(false);
@@ -350,21 +347,21 @@ const ProfilePage: React.FC = () => {
 
             if (data && data.id !== user?.id) {
                 setHandleStatus('taken');
-                setHandleMsg(t('profile.handleTaken'));
+                setHandleMsg('This handle is already taken.');
             } else {
                 setHandleStatus('available');
-                setHandleMsg(t('profile.handleAvailable'));
+                setHandleMsg('Handle available.');
             }
         } catch (error) {
             // .single() returns error if no rows found, which means available
             setHandleStatus('available');
-            setHandleMsg(t('profile.handleAvailable'));
+            setHandleMsg('Handle available.');
         }
     };
 
     const updateHandle = async () => {
         if (handleStatus !== 'available') return;
-        if (!confirm(t('profile.handleUpdatedContext'))) return;
+        if (!confirm('Changing your handle will break any existing links you have shared. Are you sure you want to proceed?')) return;
 
         setHandleStatus('checking'); // reuse checking state for loading
         try {
@@ -380,7 +377,7 @@ const ProfilePage: React.FC = () => {
             setCurrentHandle(newHandle);
             setHandleStatus('idle');
             setHandleMsg('');
-            showToast(t('toast.handleUpdated'), 'success');
+            showToast('Handle updated successfully.', 'success');
             // window.location.reload(); // Reload might clear toast, maybe remove? Or keep?
             // If I reload, toast won't show.
             // Let's keep reload for now as handle change might require full re-fetch/context update if not handled reactively.
@@ -398,7 +395,7 @@ const ProfilePage: React.FC = () => {
         } catch (err: any) {
             console.error('Handle update error:', err);
             setHandleStatus('taken'); // Fallback
-            setHandleMsg(t('profile.handleError'));
+            setHandleMsg('Error updating handle.');
         }
     };
 
@@ -438,7 +435,7 @@ const ProfilePage: React.FC = () => {
     };
 
     const handleDeleteLink = async (id: string) => {
-        if (!confirm(t('profile.deleteLinkConfirm'))) return;
+        if (!confirm('Are you sure you want to delete this link?')) return;
         try {
             const { error } = await supabase.from('artist_links').delete().eq('id', id);
             if (error) throw error;
@@ -518,7 +515,7 @@ const ProfilePage: React.FC = () => {
     return (
         <Layout>
             <div className="max-w-xl mx-auto px-4 pb-20">
-                <h1 className="text-3xl font-bold mb-6">{t('profile.settings')}</h1>
+                <h1 className="text-3xl font-bold mb-6">Settings</h1>
 
                 {/* Tabs */}
                 <div className="flex gap-4 mb-8 border-b border-slate-800">
@@ -526,13 +523,13 @@ const ProfilePage: React.FC = () => {
                         onClick={() => setActiveTab('profile')}
                         className={`pb-3 text-sm font-medium transition-colors ${activeTab === 'profile' ? 'text-indigo-400 border-b-2 border-indigo-500' : 'text-slate-400 hover:text-white'}`}
                     >
-                        {t('profile.tabProfile')}
+                        Profile & Collab
                     </button>
                     <button
                         onClick={() => setActiveTab('links')}
                         className={`pb-3 text-sm font-medium transition-colors ${activeTab === 'links' ? 'text-indigo-400 border-b-2 border-indigo-500' : 'text-slate-400 hover:text-white'}`}
                     >
-                        {t('profile.tabLinks')}
+                        Manage Links
                     </button>
                 </div>
 
@@ -542,21 +539,21 @@ const ProfilePage: React.FC = () => {
                         <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 md:p-8 space-y-8 relative">
                             {/* Header & Status Indicator */}
                             <div className="flex items-center justify-between mb-2">
-                                <h2 className="text-xl font-bold text-white">{t('profile.profileHeader')}</h2>
+                                <h2 className="text-xl font-bold text-white">Profile</h2>
                                 <div className="flex items-center gap-2">
                                     {saveStatus === 'saving' && (
                                         <div className="flex items-center gap-2 text-indigo-400 text-sm animate-pulse">
-                                            <Loader2 className="w-4 h-4 animate-spin" /> {t('profile.saving')}
+                                            <Loader2 className="w-4 h-4 animate-spin" /> Saving...
                                         </div>
                                     )}
                                     {saveStatus === 'saved' && (
                                         <div className="flex items-center gap-2 text-green-500 text-sm">
-                                            <Check className="w-4 h-4" /> {t('profile.saved')}
+                                            <Check className="w-4 h-4" /> Saved
                                         </div>
                                     )}
                                     {saveStatus === 'error' && (
                                         <div className="flex items-center gap-2 text-red-400 text-sm">
-                                            <AlertTriangle className="w-4 h-4" /> {t('profile.errorStatus')}
+                                            <AlertTriangle className="w-4 h-4" /> Error
                                         </div>
                                     )}
                                 </div>
@@ -577,24 +574,24 @@ const ProfilePage: React.FC = () => {
                                         <input type="file" accept="image/*" className="hidden" onChange={handleAvatarUpload} />
                                     </label>
                                 </div>
-                                <p className="mt-3 text-sm text-slate-400">{t('profile.tapToChangePhoto')}</p>
+                                <p className="mt-3 text-sm text-slate-400">Tap icon to change photo</p>
                             </div>
 
                             {/* Display Name */}
                             <div>
-                                <label className="block text-sm font-medium text-slate-300 mb-2">{t('profile.activityNameLabel')}</label>
+                                <label className="block text-sm font-medium text-slate-300 mb-2">Activity Name (Display Name)</label>
                                 <input
                                     type="text"
                                     value={displayName}
                                     onChange={(e) => setDisplayName(e.target.value)}
-                                    placeholder={t('profile.activityNamePlaceholder')}
+                                    placeholder="e.g. The Weeknd"
                                     className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
                                 />
                             </div>
 
                             {/* Roles */}
                             <div>
-                                <label className="block text-sm font-medium text-slate-300 mb-3">{t('profile.rolesLabel')}</label>
+                                <label className="block text-sm font-medium text-slate-300 mb-3">Roles</label>
                                 <div className="flex flex-wrap gap-2">
                                     {ROLES.map((role) => {
                                         const isSelected = selectedRoles.includes(role.value);
@@ -618,12 +615,12 @@ const ProfilePage: React.FC = () => {
 
                             {/* Collaboration Settings */}
                             <div className="pt-6 border-t border-slate-800">
-                                <h3 className="text-lg font-bold text-white mb-4">{t('profile.collabSettingsHeader')}</h3>
+                                <h3 className="text-lg font-bold text-white mb-4">Collaboration Preferences</h3>
 
                                 <div className="flex items-center justify-between mb-6 bg-slate-950 p-4 rounded-xl border border-slate-800">
                                     <div>
-                                        <div className="text-sm font-medium text-white mb-1">{t('profile.collabAcceptingHeader')}</div>
-                                        <div className="text-xs text-slate-500">{t('profile.collabAcceptingDesc')}</div>
+                                        <div className="text-sm font-medium text-white mb-1">Accepting Collaborations?</div>
+                                        <div className="text-xs text-slate-500">Turn this off if you are fully booked.</div>
                                     </div>
                                     <button
                                         type="button"
@@ -635,7 +632,7 @@ const ProfilePage: React.FC = () => {
                                 </div>
 
                                 <div className={`transition-opacity duration-300 ${collabStatus === 'CLOSED' ? 'opacity-50 pointer-events-none' : 'opacity-100'}`}>
-                                    <label className="block text-sm font-medium text-slate-300 mb-3">{t('profile.collabInterests')}</label>
+                                    <label className="block text-sm font-medium text-slate-300 mb-3">Interests</label>
                                     <div className="flex flex-wrap gap-2">
                                         {COLLAB_OPTIONS.map((type) => {
                                             const isSelected = collabTypes.includes(type);
@@ -661,17 +658,17 @@ const ProfilePage: React.FC = () => {
                         {/* --- Unique Handle Section (Group B) --- */}
                         <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 md:p-8 space-y-6">
                             <div className="flex items-center gap-2">
-                                <h2 className="text-xl font-bold text-white">{t('profile.uniqueHandleHeader')}</h2>
+                                <h2 className="text-xl font-bold text-white">Unique Handle</h2>
                                 <Info className="w-4 h-4 text-slate-500" />
                             </div>
 
                             <div className="p-4 rounded-xl bg-orange-500/10 border border-orange-500/20 text-orange-200 text-sm">
                                 <span className="font-bold flex items-center gap-2 mb-1"><AlertTriangle className="w-4 h-4" /> Warning:</span>
-                                {t('profile.handleWarning')}
+                                Changing your handle will break your existing profile link (blinddrop.com/u/{currentHandle}).
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium text-slate-300 mb-2">{t('profile.myPageUrl')}</label>
+                                <label className="block text-sm font-medium text-slate-300 mb-2">My Page URL</label>
                                 <div className="flex items-center gap-3">
                                     <div className="relative flex-1">
                                         <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 text-sm">blinddrop.com/u/</span>
@@ -679,7 +676,7 @@ const ProfilePage: React.FC = () => {
                                             type="text"
                                             value={newHandle}
                                             onChange={handleNewHandleInput}
-                                            placeholder={t('profile.handlePlaceholder')}
+                                            placeholder="your_handle"
                                             autoComplete="off"
                                             autoCapitalize="off"
                                             autoCorrect="off"
@@ -693,7 +690,7 @@ const ProfilePage: React.FC = () => {
                                         disabled={newHandle === currentHandle || !newHandle}
                                         className="px-4 py-3 bg-slate-800 hover:bg-slate-700 text-white text-sm font-bold rounded-xl transition-colors disabled:opacity-50 whitespace-nowrap"
                                     >
-                                        {t('profile.btnCheck')}
+                                        Check
                                     </button>
                                 </div>
                                 {/* Handle Check Message */}
@@ -705,7 +702,7 @@ const ProfilePage: React.FC = () => {
                                         {handleStatus === 'checking' && <Loader2 className="w-4 h-4 animate-spin" />}
                                         {handleStatus === 'available' && <Check className="w-4 h-4" />}
                                         {handleStatus === 'taken' && <AlertTriangle className="w-4 h-4" />}
-                                        {handleMsg || (handleStatus === 'same' && t('profile.handleSame'))}
+                                        {handleMsg || (handleStatus === 'same' && "This is your current handle.")}
                                     </div>
                                 )}
                             </div>
@@ -716,7 +713,7 @@ const ProfilePage: React.FC = () => {
                                     onClick={updateHandle}
                                     className="w-full py-3 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl transition-colors shadow-lg shadow-indigo-500/20"
                                 >
-                                    {t('profile.btnUpdateHandle')}
+                                    Confirm Update
                                 </button>
                             )}
                         </div>
@@ -727,15 +724,15 @@ const ProfilePage: React.FC = () => {
                         {/* Add New Link Form */}
                         <form onSubmit={handleAddLink} className="bg-slate-950 p-4 rounded-xl border border-slate-800 space-y-4">
                             <h3 className="text-sm font-medium text-white mb-2 flex items-center gap-2">
-                                <Plus className="w-4 h-4" /> {t('profile.addNewLink')}
+                                <Plus className="w-4 h-4" /> Add New Link
                             </h3>
 
                             <div className="space-y-4">
                                 <div>
-                                    <label className="block text-xs font-medium text-slate-400 mb-1.5 ml-1">{t('profile.linkTitleLabel')}</label>
+                                    <label className="block text-xs font-medium text-slate-400 mb-1.5 ml-1">Link Title</label>
                                     <input
                                         type="text"
-                                        placeholder={t('profile.linkTitlePlaceholder')}
+                                        placeholder="e.g. Listen on Spotify"
                                         value={newLink.title}
                                         onChange={(e) => setNewLink({ ...newLink, title: e.target.value })}
                                         className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
@@ -743,14 +740,14 @@ const ProfilePage: React.FC = () => {
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-xs font-medium text-slate-400 mb-1.5 ml-1">{t('profile.linkUrlLabel')}</label>
+                                    <label className="block text-xs font-medium text-slate-400 mb-1.5 ml-1">Link URL</label>
                                     <div className="relative flex items-center">
                                         <div className="absolute left-3 text-slate-400 pointer-events-none">
                                             {getIconForPlatform(newLink.platform, "w-4 h-4")}
                                         </div>
                                         <input
                                             type="text"
-                                            placeholder={t('profile.linkUrlPlaceholder')}
+                                            placeholder="Paste any link (YouTube, Instagram, Spotify...)"
                                             value={newLink.url}
                                             onChange={(e) => {
                                                 const url = e.target.value;
@@ -774,7 +771,7 @@ const ProfilePage: React.FC = () => {
                                 disabled={isLinkAdding}
                                 className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-bold rounded-lg transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
                             >
-                                {isLinkAdding ? t('profile.btnAdding') : t('profile.btnAddProfile')}
+                                {isLinkAdding ? 'Adding...' : 'Add to Profile'}
                             </button>
                         </form>
 
@@ -790,8 +787,8 @@ const ProfilePage: React.FC = () => {
 
                             {links.length === 0 && (
                                 <div className="text-center py-10 bg-slate-900/50 rounded-xl border border-dashed border-slate-800">
-                                    <p className="text-slate-400 text-sm">{t('profile.noLinksYet')}</p>
-                                    <p className="text-slate-600 text-xs mt-1">{t('profile.noLinksDesc')}</p>
+                                    <p className="text-slate-400 text-sm">No links yet.</p>
+                                    <p className="text-slate-600 text-xs mt-1">Add your social media to fill up your generic link hub.</p>
                                 </div>
                             )}
                         </div>
