@@ -27,11 +27,11 @@ const DashboardRedirect: React.FC = () => {
                 if (data && data.handle) {
                     navigate(`/u/${data.handle}`, { replace: true });
                 } else {
-                    navigate('/profile', { replace: true }); // Fallback to settings if no handle
+                    navigate('/', { replace: true }); // Fallback to landing if no handle
                 }
             } catch (error) {
                 console.error('Error fetching handle for redirect:', error);
-                navigate('/profile', { replace: true });
+                navigate('/', { replace: true });
             }
         };
 
