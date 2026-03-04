@@ -4,7 +4,7 @@ import { supabase } from '../lib/supabase';
 import Layout from '../components/Layout';
 import { useToast } from '../contexts/ToastContext';
 import ConfirmModal from '../components/ConfirmModal';
-import { Plus, Loader2, Music, ExternalLink, Trash2, Link as LinkIcon, MessageSquare, ChevronDown, ChevronUp, Pencil, GripVertical } from 'lucide-react';
+import { Plus, Loader2, Music, Trash2, Link as LinkIcon, MessageSquare, Pencil, GripVertical } from 'lucide-react';
 // import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -44,7 +44,6 @@ interface Track {
 // SortableTrackItem Component
 interface SortableTrackItemProps {
     track: Track;
-    userHandle: string;
     artistName?: string;
     artistProfileImage?: string | null;
     editingTrack: Track | null;
@@ -62,7 +61,6 @@ interface SortableTrackItemProps {
 
 const SortableTrackItem = ({
     track,
-    userHandle,
     artistName,
     artistProfileImage,
     editingTrack,
@@ -521,7 +519,6 @@ const TracksPage: React.FC = () => {
                                         <SortableTrackItem
                                             key={track.id}
                                             track={track}
-                                            userHandle={userProfile?.handle || user?.user_metadata?.handle || 'user'}
                                             artistName={userProfile?.name}
                                             artistProfileImage={userProfile?.avatar}
                                             editingTrack={editingTrack}
