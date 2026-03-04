@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
-import { Music, LogOut, User, Menu, Globe, Settings } from 'lucide-react';
+import { Music, LogOut, User, Menu, LayoutDashboard, Globe, Settings } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { t } from '../i18n';
 
@@ -71,8 +71,8 @@ const Navbar: React.FC = () => {
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="flex justify-between items-center h-16">
 
-                    {/* Logo Logic: Guest -> Home, User -> Tracks */}
-                    <Link to={user ? "/tracks" : "/"} className="flex items-center gap-2 font-bold text-xl tracking-tighter text-white hover:opacity-80 transition-opacity">
+                    {/* Logo Logic: Guest -> Home, User -> Dashboard */}
+                    <Link to={user ? "/dashboard" : "/"} className="flex items-center gap-2 font-bold text-xl tracking-tighter text-white hover:opacity-80 transition-opacity">
                         <img src="/img/linkdrop_logo_img.png" alt={t('navbar.brandAlt')} className="w-12 h-12 object-contain" />
                         <span>{t('navbar.brandAlt')}</span>
                     </Link>
@@ -107,6 +107,16 @@ const Navbar: React.FC = () => {
                                             className="absolute right-0 top-full mt-3 w-56 bg-slate-900/90 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl overflow-hidden ring-1 ring-black/5"
                                         >
                                             <div className="p-1 space-y-1">
+
+                                                {/* Dashboard */}
+                                                <Link
+                                                    to="/dashboard"
+                                                    onClick={() => setIsDropdownOpen(false)}
+                                                    className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-slate-300 hover:text-white hover:bg-white/10 transition-all"
+                                                >
+                                                    <LayoutDashboard className="w-4 h-4 text-indigo-400" />
+                                                    {t('navbar.dashboard')}
+                                                </Link>
 
                                                 {/* My Tracks */}
                                                 <Link
