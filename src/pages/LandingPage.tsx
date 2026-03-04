@@ -10,7 +10,7 @@ const LandingPage: React.FC = () => {
     const navigate = useNavigate();
 
     React.useEffect(() => {
-        if (user) navigate('/profile');
+        if (user) navigate('/dashboard'); // Handled by DashboardRedirect
     }, [user, navigate]);
     return (
         <div className="min-h-screen flex flex-col items-center justify-center bg-slate-950 text-white relative overflow-hidden">
