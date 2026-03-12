@@ -75,7 +75,7 @@ const LandingPage: React.FC = () => {
             </main>
 
             <footer className="absolute bottom-6 text-slate-500 text-sm">
-                &copy; {new Date().getFullYear()} BlindDrop. Built for musicians.
+                &copy; {new Date().getFullYear()} Blindrop. Built for musicians.
             </footer>
         </div>
     );

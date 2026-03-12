@@ -73,7 +73,7 @@ const Navbar: React.FC = () => {
 
                     {/* Logo Logic: Guest -> Home, User -> Public Profile or Profile */}
                     <Link to={user ? (handle ? `/u/${handle}` : "/profile") : "/"} className="flex items-center gap-2 font-bold text-xl tracking-tighter text-white hover:opacity-80 transition-opacity">
-                        <img src="/img/linkdrop_logo_img.png" alt={t('navbar.brandAlt')} className="w-12 h-12 object-contain" />
+                        <img src="/img/blindrop_logo.png" alt={t('navbar.brandAlt')} className="w-12 h-12 object-contain rounded-md" />
                         <span>{t('navbar.brandAlt')}</span>
                     </Link>
 

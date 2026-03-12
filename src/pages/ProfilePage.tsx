@@ -665,14 +665,14 @@ const ProfilePage: React.FC = () => {
 
                             <div className="p-4 rounded-xl bg-orange-500/10 border border-orange-500/20 text-orange-200 text-sm">
                                 <span className="font-bold flex items-center gap-2 mb-1"><AlertTriangle className="w-4 h-4" /> Warning:</span>
-                                Changing your handle will break your existing profile link (blinddrop.com/u/{currentHandle}).
+                                Changing your handle will break your existing profile link (blindrop.com/u/{currentHandle}).
                             </div>
 
                             <div>
                                 <label className="block text-[11px] uppercase tracking-widest text-gray-500 mb-2">My Page URL</label>
                                 <div className="flex items-center gap-3">
                                     <div className="relative flex-1 flex items-center border-b border-white/20 transition-colors focus-within:border-indigo-400 pb-2">
-                                        <span className="text-slate-500 text-lg mr-1 shrink-0">blinddrop.com/u/</span>
+                                        <span className="text-slate-500 text-lg mr-1 shrink-0">blindrop.com/u/</span>
                                         <input
                                             type="text"
                                             value={newHandle}

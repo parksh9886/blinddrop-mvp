@@ -56,7 +56,7 @@ const LoginPage: React.FC = () => {
                     <div className="w-12 h-12 bg-indigo-500/10 rounded-xl flex items-center justify-center mb-4">
                         <Music className="w-6 h-6 text-indigo-400" />
                     </div>
-                    <h1 className="text-2xl font-bold tracking-tight">Welcome to BlindDrop</h1>
+                    <h1 className="text-2xl font-bold tracking-tight">Welcome to Blindrop</h1>
                     <p className="text-slate-400 mt-2 text-sm">Sign in to start receiving feedback on your music.</p>
                 </div>
 
