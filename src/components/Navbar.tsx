@@ -72,9 +72,8 @@ const Navbar: React.FC = () => {
                 <div className="flex justify-between items-center h-16">
 
                     {/* Logo Logic: Guest -> Home, User -> Public Profile or Profile */}
-                    <Link to={user ? (handle ? `/u/${handle}` : "/profile") : "/"} className="flex items-center gap-2 font-bold text-xl tracking-tighter text-white hover:opacity-80 transition-opacity">
-                        <img src="/img/blindrop_logo.png" alt={t('navbar.brandAlt')} className="w-12 h-12 object-contain rounded-md" />
-                        <span>{t('navbar.brandAlt')}</span>
+                    <Link to={user ? (handle ? `/u/${handle}` : "/profile") : "/"} className="flex items-center hover:opacity-80 transition-opacity">
+                        <img src="/img/blindrop_logo.png" alt={t('navbar.brandAlt')} className="h-10 object-contain rounded-md" />
                     </Link>
 
                     {/* Right Side Menu */}
